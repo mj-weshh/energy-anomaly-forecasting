@@ -1,5 +1,9 @@
-pandas>=2.0.0
+﻿pandas>=2.0.0
 numpy>=1.24.0
 python-dotenv>=1.0.0
 jupyter>=1.0.0
 ipykernel>=6.0.0
+
+# Documentation (optional — for mkdocs serve / mkdocs build)
+mkdocs>=1.6.0
+mkdocs-material>=9.5.0
