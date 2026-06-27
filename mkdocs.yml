@@ -1,0 +1,39 @@
+﻿site_name: Energy Anomaly Forecasting
+site_description: Open-source energy anomaly detection and time-series forecasting
+repo_url: https://github.com/your-org/energy-anomaly-forecasting
+repo_name: energy-anomaly-forecasting
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Data Schema: data-schema.md
+  - Verification Report: verification-report.md
+  - Architecture: architecture.md
+
+docs_dir: docs
+
+markdown_extensions:
+  - tables
+  - fenced_code
+  - toc:
+      permalink: true
