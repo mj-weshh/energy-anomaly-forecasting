@@ -1,6 +1,6 @@
 ﻿site_name: Energy Anomaly Forecasting
 site_description: Open-source energy anomaly detection and time-series forecasting
-repo_url: https://github.com/your-org/energy-anomaly-forecasting
+repo_url: https://github.com/mj-weshh/energy-anomaly-forecasting
 repo_name: energy-anomaly-forecasting
 
 theme:
@@ -29,6 +29,8 @@ nav:
   - Data Schema: data-schema.md
   - Verification Report: verification-report.md
   - Architecture: architecture.md
+  - Research & Insights:
+      - EDA Insights: eda-insights.md
 
 docs_dir: docs
 
