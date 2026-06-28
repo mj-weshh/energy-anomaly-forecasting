@@ -16,7 +16,8 @@ All work uses publicly available data only. No proprietary systems or datasets a
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| Phase 1 | Environment setup, data ingestion, schema validation | **Complete** |
+| Phase 1 Week 1 | Environment setup, data ingestion, schema validation | **Complete** |
+| Phase 1 Week 2 | Exploratory data analysis and load profiling | **Complete** |
 | Phase 2 | Unsupervised anomaly detection (Isolation Forest, DBSCAN) | Planned |
 | Phase 3 | Time-series forecasting (XGBoost, LSTM) | Planned |
 
@@ -28,6 +29,7 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | [Data Schema](data-schema.md) | Formal data dictionary for `smart_meter_data.csv` |
 | [Verification Report](verification-report.md) | Evidence that Phase 1 Week 1 acceptance criteria are met |
 | [Architecture](architecture.md) | Repository layout, data flow, and design decisions |
+| [EDA Insights](eda-insights.md) | Phase 1 Week 2 exploratory analysis findings |
 
 ## Quick Command
 
