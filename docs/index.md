@@ -21,6 +21,17 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | Phase 2 | Unsupervised anomaly detection (Isolation Forest, DBSCAN) | Planned |
 | Phase 3 | Time-series forecasting (XGBoost, LSTM) | Planned |
 
+### Phase 1 Week 2 highlights
+
+- Peak mean consumption at **02:00** (hour 2); modest diurnal variation on normalized data
+- **Weak weather correlation** with consumption (|r| &lt; 0.01 for temperature, humidity, wind)
+- Strongest linear predictor: `Avg_Past_Consumption` (**r = +0.317**)
+- Anomaly label baseline: **5% Abnormal** (250 / 5,000 rows; 19:1 imbalance)
+
+![Feature correlation heatmap from Phase 1 Week 2 EDA](assets/eda/correlation-heatmap.png)
+
+Full analysis: [EDA Insights](eda-insights.md)
+
 ## Documentation
 
 | Document | Purpose |
@@ -29,7 +40,7 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | [Data Schema](data-schema.md) | Formal data dictionary for `smart_meter_data.csv` |
 | [Verification Report](verification-report.md) | Evidence that Phase 1 Week 1 acceptance criteria are met |
 | [Architecture](architecture.md) | Repository layout, data flow, and design decisions |
-| [EDA Insights](eda-insights.md) | Phase 1 Week 2 exploratory analysis findings |
+| [EDA Insights](eda-insights.md) | Phase 1 Week 2 exploratory analysis findings with figures |
 
 ## Quick Command
 

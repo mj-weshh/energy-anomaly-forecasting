@@ -14,7 +14,8 @@ This repository implements a phased ML pipeline:
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| **Phase 1** | Environment setup, data ingestion, schema validation, EDA | Ingestion **complete** |
+| **Phase 1 Week 1** | Environment setup, data ingestion, schema validation | **Complete** |
+| **Phase 1 Week 2** | Exploratory data analysis and load profiling | **Complete** |
 | **Phase 2** | Unsupervised anomaly detection (Isolation Forest, DBSCAN) | Planned |
 | **Phase 3** | Time-series forecasting (XGBoost, LSTM) | Planned |
 
@@ -25,7 +26,7 @@ All work uses publicly available data. No proprietary datasets or systems are re
 ## Quick Start
 
 ```bash
-git clone https://github.com/<your-org>/energy-anomaly-forecasting.git
+git clone https://github.com/mj-weshh/energy-anomaly-forecasting.git
 cd energy-anomaly-forecasting
 
 python -m venv .venv
@@ -59,18 +60,44 @@ Full evidence: [Verification Report](docs/verification-report.md)
 
 ---
 
+## EDA Results (Phase 1, Week 2)
+
+Key findings from exploratory analysis on the same dataset:
+
+| Finding | Result |
+|---------|--------|
+| Peak mean consumption hour | **02:00** |
+| Weather correlation with consumption | Negligible (|r| &lt; 0.01) |
+| Strongest linear predictor | `Avg_Past_Consumption` (r = +0.317) |
+| Anomaly label baseline | **5% Abnormal** (250 / 5,000) |
+
+![Daily and weekly load profiles](docs/assets/eda/load-profiles.png)
+
+Full report with all figures: [EDA Insights](docs/eda-insights.md)
+
+Regenerate doc figures: `python scripts/export_eda_assets.py`
+
+---
+
 ## Project Structure
 
 ```
 energy-anomaly-forecasting/
 ├── data/raw/                       # Canonical raw data location (optional)
 ├── docs/                           # Documentation (MkDocs source)
-│   └── assets/                     # Verification screenshots
+│   └── assets/                     # Verification screenshots and EDA figures
+│       └── eda/                    # Exported Phase 1 Week 2 plots (PNG)
 ├── notebooks/
-│   └── 01_data_ingestion_and_schema_check.ipynb
+│   ├── 01_data_ingestion_and_schema_check.ipynb
+│   └── 02_exploratory_data_analysis.ipynb
+├── scripts/
+│   ├── export_eda_assets.py        # Regenerate EDA doc figures
+│   └── setup-git-hooks.ps1
 ├── src/
-│   └── data/
-│       └── ingest_data.py          # Canonical ingestion module
+│   ├── data/
+│   │   └── ingest_data.py          # Canonical ingestion module
+│   └── visualization/
+│       └── visualize.py            # EDA plotting functions
 ├── Smart Meter Electricity Consumption Dataset/
 │   └── smart_meter_data.csv
 ├── requirements.txt
@@ -103,7 +130,8 @@ Schema reference: [Data Schema](docs/data-schema.md)
 |----------|-------------|
 | [Getting Started](docs/getting-started.md) | Local, Colab, and Kaggle setup |
 | [Data Schema](docs/data-schema.md) | Formal data dictionary |
-| [Verification Report](docs/verification-report.md) | Phase 1 QA evidence |
+| [Verification Report](docs/verification-report.md) | Phase 1 Week 1 QA evidence |
+| [EDA Insights](docs/eda-insights.md) | Phase 1 Week 2 findings with figures |
 | [Architecture](docs/architecture.md) | Repository layout and data flow |
 
 ### Build docs site locally
@@ -122,6 +150,7 @@ mkdocs build    # output to site/
 
 ```bash
 python -m src.data.ingest_data
+python scripts/export_eda_assets.py
 ```
 
 ### Python API
@@ -134,9 +163,10 @@ df = load_smart_meter_data(csv_path)
 print(df.shape)  # (5000, 7)
 ```
 
-### Notebook
+### Notebooks
 
-Run [`notebooks/01_data_ingestion_and_schema_check.ipynb`](notebooks/01_data_ingestion_and_schema_check.ipynb) for an interactive version with Colab and Kaggle setup options.
+- [`notebooks/01_data_ingestion_and_schema_check.ipynb`](notebooks/01_data_ingestion_and_schema_check.ipynb) — ingestion and schema validation
+- [`notebooks/02_exploratory_data_analysis.ipynb`](notebooks/02_exploratory_data_analysis.ipynb) — Phase 1 Week 2 EDA
 
 ---
 

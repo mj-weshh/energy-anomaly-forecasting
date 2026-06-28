@@ -79,7 +79,7 @@ Expected output sections:
 
 ---
 
-## 4. Run the Notebook
+## 4. Run the Ingestion Notebook
 
 Open and execute all cells in:
 
@@ -123,7 +123,33 @@ Alternatively, add the dataset through the Kaggle notebook **Add Data** sidebar 
 
 ---
 
-## 5. Build Documentation Site (Optional)
+## 5. Run the EDA Notebook
+
+After ingestion passes, open and execute:
+
+```
+notebooks/02_exploratory_data_analysis.ipynb
+```
+
+This notebook profiles feature distributions, temporal load patterns, weather correlations, and the anomaly label baseline using `src/visualization/visualize.py`.
+
+Documented findings and figures: [EDA Insights](eda-insights.md).
+
+---
+
+## 6. Regenerate EDA Documentation Assets
+
+To refresh PNG figures embedded in the docs site:
+
+```bash
+python scripts/export_eda_assets.py
+```
+
+Output directory: `docs/assets/eda/`
+
+---
+
+## 7. Build Documentation Site (Optional)
 
 ```bash
 pip install mkdocs mkdocs-material
@@ -181,4 +207,5 @@ After ingestion passes:
 
 1. Review the [Data Schema](data-schema.md) reference
 2. Confirm results in the [Verification Report](verification-report.md)
-3. Proceed to Phase 1, Week 2 — exploratory data analysis (not yet implemented)
+3. Run `notebooks/02_exploratory_data_analysis.ipynb` and review [EDA Insights](eda-insights.md)
+4. Proceed to Phase 2 — unsupervised anomaly detection (planned)
