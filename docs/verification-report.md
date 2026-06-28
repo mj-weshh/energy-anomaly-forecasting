@@ -107,7 +107,13 @@ Phase 1, Week 1 is considered **complete** when all of the following hold:
 3. Continuity check reports **PASS**
 4. Notebook `notebooks/01_data_ingestion_and_schema_check.ipynb` runs the same logic on local, Colab, or Kaggle
 
-**Status:** All criteria met. Ready to proceed to exploratory data analysis (Phase 1, Week 2+).
+**Status:** All criteria met.
+
+---
+
+## Phase 1, Week 2 — EDA (Follow-Up)
+
+Exploratory data analysis, load profiling, and documented findings are available in the [EDA Insights](eda-insights.md) report, including exported figures under `docs/assets/eda/`.
 
 ---
 

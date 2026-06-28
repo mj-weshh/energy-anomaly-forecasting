@@ -18,13 +18,17 @@ The dataset is clean (zero nulls, perfect 30-minute continuity) with normalized 
 
 **Method:** Boxplot of `Electricity_Consumed` by hour of day (0–23), derived via `add_temporal_features()`.
 
+![Daily and weekly load profiles](assets/eda/load-profiles.png)
+
+**Figure 1.** Daily load profile (left): consumption boxplots by hour of day. Weekly load profile (right): consumption by day of week.
+
 **Findings:**
 
 | Metric | Value |
 |--------|-------|
 | Peak mean consumption hour | **02:00** (hour 2) |
 | Peak mean consumption | **0.398** (normalized) |
-| Secondary peaks | Hours 11 and 6 (~0.390, ~0.389) |
+| Secondary peaks | Hours 11 and 6 (0.390, 0.389) |
 
 **Interpretation:** On normalized synthetic data, diurnal variation is present but moderate. The highest mean consumption occurs in the early morning (02:00), with secondary peaks mid-morning and early morning. Phase 2 anomaly detectors should account for hour-of-day baselines rather than treating all intervals as exchangeable.
 
@@ -32,7 +36,7 @@ The dataset is clean (zero nulls, perfect 30-minute continuity) with normalized 
 
 ## 2. Weekly Seasonality (Weekdays vs Weekends)
 
-**Method:** Boxplot by day of week; compare weekday vs weekend means.
+**Method:** Boxplot by day of week; compare weekday vs weekend means (see right panel of Figure 1).
 
 **Findings:**
 
@@ -51,14 +55,18 @@ The dataset is clean (zero nulls, perfect 30-minute continuity) with normalized 
 
 **Method:** Pearson correlation heatmap for numeric features.
 
+![Feature correlation heatmap](assets/eda/correlation-heatmap.png)
+
+**Figure 2.** Pearson correlation matrix for consumption, weather, and historical average features.
+
 **Findings — correlation with `Electricity_Consumed`:**
 
 | Feature | Correlation |
 |---------|-------------|
 | `Avg_Past_Consumption` | **+0.317** |
 | `Wind_Speed` | +0.001 |
-| `Temperature` | -0.003 |
 | `Humidity` | -0.003 |
+| `Temperature` | -0.003 |
 
 **Interpretation:** Weather variables (Temperature, Humidity, Wind_Speed) show **negligible linear correlation** with consumption in this normalized dataset. `Avg_Past_Consumption` — a rolling historical average — is the strongest linear predictor, as expected. Phase 2 unsupervised methods should not rely on weather alone for anomaly scoring; multivariate patterns including consumption history matter more.
 
@@ -67,6 +75,10 @@ The dataset is clean (zero nulls, perfect 30-minute continuity) with normalized 
 ## 4. Baseline Anomaly Rate
 
 **Method:** Value counts on `Anomaly_Label` (`Normal` / `Abnormal`).
+
+![Anomaly label distribution](assets/eda/anomaly-label-distribution.png)
+
+**Figure 3.** Count of pre-assigned anomaly labels with percentage annotations.
 
 **Findings:**
 
@@ -84,6 +96,10 @@ The dataset is clean (zero nulls, perfect 30-minute continuity) with normalized 
 
 **Method:** Full-series line plot with 48-period (24-hour) rolling mean.
 
+![Consumption time series with rolling mean](assets/eda/consumption-timeseries.png)
+
+**Figure 4.** Raw 30-minute consumption readings with 48-period (24-hour) rolling mean overlay.
+
 **Findings:**
 
 - The series spans ~104 days with no visible gaps (consistent with Week 1 continuity PASS).
@@ -93,6 +109,12 @@ The dataset is clean (zero nulls, perfect 30-minute continuity) with normalized 
 ---
 
 ## 6. Feature Distribution Notes
+
+**Method:** Histograms with KDE overlays for numeric consumption and weather features.
+
+![Feature distributions](assets/eda/feature-distributions.png)
+
+**Figure 5.** Distribution of `Electricity_Consumed`, `Temperature`, `Humidity`, and `Wind_Speed`.
 
 All numeric features (`Electricity_Consumed`, `Temperature`, `Humidity`, `Wind_Speed`) are approximately uniformly distributed in the 0–1 range, consistent with prior normalization. No heavy skewness or extreme outliers visible in histograms — appropriate for distance-based anomaly methods in Phase 2.
 
@@ -118,8 +140,16 @@ All numeric features (`Electricity_Consumed`, `Temperature`, `Humidity`, `Wind_S
 
 ## Reproducibility
 
+Regenerate all figures and verify metrics:
+
 ```bash
 pip install -r requirements.txt
+python scripts/export_eda_assets.py
+```
+
+Interactive analysis:
+
+```bash
 jupyter notebook notebooks/02_exploratory_data_analysis.ipynb
 ```
 

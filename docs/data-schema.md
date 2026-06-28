@@ -42,8 +42,10 @@ All numeric columns except `Timestamp` appear **normalized** (values roughly in 
 
 `Anomaly_Label` is a binary categorical field:
 
-- `Normal` — majority class
-- `Abnormal` — minority class (~100 rows in the verified dataset)
+- `Normal` — majority class (95.0%, 4,750 rows)
+- `Abnormal` — minority class (5.0%, 250 rows)
+
+Baseline label distribution and figures: [EDA Insights](eda-insights.md).
 
 Phase 2 unsupervised methods will not rely on this label for training; it is retained for evaluation and supervised baselines.
 
