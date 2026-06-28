@@ -325,3 +325,52 @@ def plot_consumption_timeseries(
     fig.autofmt_xdate()
     fig.tight_layout()
     return fig
+
+
+def plot_anomaly_label_distribution(
+    df: pd.DataFrame,
+    label_col: str = "Anomaly_Label",
+    *,
+    figsize: tuple[float, float] = (8, 5),
+    ax: plt.Axes | None = None,
+) -> plt.Figure:
+    """Plot bar chart of ``Anomaly_Label`` counts with percentage annotations.
+
+    Args:
+        df: Loaded smart meter DataFrame.
+        label_col: Column containing ``Normal`` / ``Abnormal`` labels.
+        figsize: Figure size when creating a new figure.
+        ax: Optional axes to draw on.
+
+    Returns:
+        matplotlib Figure with label count bar chart.
+
+    Raises:
+        KeyError: If ``label_col`` is missing from ``df``.
+    """
+    if label_col not in df.columns:
+        raise KeyError(f"Column '{label_col}' not found in DataFrame.")
+
+    label_counts = df[label_col].value_counts()
+    label_pct = df[label_col].value_counts(normalize=True) * 100
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
+
+    sns.barplot(
+        x=label_counts.index,
+        y=label_counts.values,
+        hue=label_counts.index,
+        palette="Set2",
+        legend=False,
+        ax=ax,
+    )
+    ax.set_title("Anomaly Label Distribution")
+    ax.set_xlabel("Label")
+    ax.set_ylabel("Count")
+    for i, (label, count) in enumerate(label_counts.items()):
+        ax.text(i, count + 20, f"{label_pct[label]:.1f}%", ha="center")
+    fig.tight_layout()
+    return fig

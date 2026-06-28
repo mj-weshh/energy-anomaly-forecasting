@@ -7,6 +7,7 @@ Public API is defined in :mod:`src.visualization.visualize`. Import directly::
 
 __all__ = [
     "add_temporal_features",
+    "plot_anomaly_label_distribution",
     "plot_consumption_timeseries",
     "plot_correlation_heatmap",
     "plot_feature_histograms",
