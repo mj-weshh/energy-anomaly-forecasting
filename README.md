@@ -91,8 +91,7 @@ energy-anomaly-forecasting/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
 │   └── 02_exploratory_data_analysis.ipynb
 ├── scripts/
-│   ├── export_eda_assets.py        # Regenerate EDA doc figures
-│   └── setup-git-hooks.ps1
+│   └── export_eda_assets.py        # Regenerate EDA doc figures
 ├── src/
 │   ├── data/
 │   │   └── ingest_data.py          # Canonical ingestion module
