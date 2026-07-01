@@ -41,6 +41,7 @@ Full analysis: [EDA Insights](eda-insights.md)
 | [Verification Report](verification-report.md) | Evidence that Phase 1 Week 1 acceptance criteria are met |
 | [Architecture](architecture.md) | Repository layout, data flow, and design decisions |
 | [EDA Insights](eda-insights.md) | Phase 1 Week 2 exploratory analysis findings with figures |
+| [Phase 2 Strategy](phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
 
 ## Quick Command
 
