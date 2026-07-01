@@ -6,17 +6,7 @@ Repository layout, data flow, and design decisions for Phase 1.
 
 ## System Overview
 
-```mermaid
-flowchart LR
-    kaggle[KaggleDataset] --> rawCsv[smart_meter_data.csv]
-    rawCsv --> ingest[src/data/ingest_data.py]
-    ingest --> validatedDF[ValidatedDataFrame]
-    validatedDF --> visualize[src/visualization/visualize.py]
-    validatedDF --> eda[Phase1_EDA]
-    validatedDF --> anomaly[Phase2_AnomalyDetection]
-    validatedDF --> forecast[Phase3_Forecasting]
-    visualize --> docAssets[docs/assets/eda]
-```
+![System Overview — data flow from Kaggle dataset through ingestion to downstream phases](assets/system-overview.png)
 
 The ingestion layer is the **single gate** between raw CSV files and all downstream work. Every notebook and script in later phases should import from `src.data.ingest_data` rather than reading CSVs directly.
 
@@ -69,16 +59,7 @@ energy-anomaly-forecasting/
 
 ## Ingestion Pipeline
 
-```mermaid
-flowchart TD
-    start[main] --> findCsv[find_dataset_csv]
-    findCsv --> load[load_smart_meter_data]
-    load --> parseTimestamp[Parse Timestamp to datetime64]
-    parseTimestamp --> sortRows[Sort chronologically]
-    sortRows --> schema[print_schema_summary]
-    schema --> continuity[check_time_continuity]
-    continuity --> done[Report PASS or REVIEW]
-```
+![Ingestion Pipeline — CSV discovery through schema and continuity checks](assets/ingestion-pipeline.png)
 
 ### Module: `src/data/ingest_data.py`
 

@@ -17,7 +17,7 @@ Install the project, load the dataset, and verify schema completeness.
 ## 1. Clone and Set Up (Local)
 
 ```bash
-git clone https://github.com/<your-org>/energy-anomaly-forecasting.git
+git clone https://github.com/mj-weshh/energy-anomaly-forecasting.git
 cd energy-anomaly-forecasting
 
 python -m venv .venv
