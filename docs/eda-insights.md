@@ -1,6 +1,6 @@
 # EDA Insights — Phase 1, Week 2
 
-Professional summary of exploratory data analysis findings on the public Kaggle Smart Meter Electricity Consumption Dataset. These insights form the baseline for the research report and inform Phase 2 anomaly detection design.
+I ran exploratory analysis on the public Kaggle Smart Meter Electricity Consumption Dataset after Week 1 ingestion passed. These are the findings I'm basing the Phase 2 anomaly detection design on.
 
 **Analysis date:** Phase 1, Week 2  
 **Dataset:** 5,000 rows, 30-minute intervals, Jan 1 – Apr 14, 2024  
@@ -8,7 +8,7 @@ Professional summary of exploratory data analysis findings on the public Kaggle 
 
 ---
 
-## Executive Summary
+## Summary
 
 The dataset is clean (zero nulls, perfect 30-minute continuity) with normalized numeric features. Consumption shows modest diurnal variation, weak weekly seasonality, near-zero linear correlation with weather variables, and a strong relationship with `Avg_Past_Consumption`. The anomaly label is imbalanced at 5% `Abnormal` — a key constraint for Phase 2 evaluation.
 
