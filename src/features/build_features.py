@@ -26,3 +26,28 @@ Usage:
 """
 
 from __future__ import annotations
+
+import pandas as pd
+
+
+def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Derive basic temporal context columns from ``Timestamp``.
+
+    Args:
+        df: DataFrame with a parsed ``Timestamp`` column
+            (as produced by ``src.data.ingest_data.load_smart_meter_data``).
+
+    Returns:
+        Copy of ``df`` with added integer columns:
+        ``hour`` (0-23) and ``day_of_week`` (0=Monday .. 6=Sunday).
+
+    Raises:
+        KeyError: If ``Timestamp`` is not present in ``df``.
+    """
+    if "Timestamp" not in df.columns:
+        raise KeyError("Required column 'Timestamp' not found in DataFrame.")
+
+    df = df.copy()
+    df["hour"] = df["Timestamp"].dt.hour
+    df["day_of_week"] = df["Timestamp"].dt.dayofweek
+    return df

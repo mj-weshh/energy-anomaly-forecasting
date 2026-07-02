@@ -8,4 +8,6 @@ Functions will be added incrementally during Phase 2 (temporal features,
 rolling statistics) and re-exported here once stable.
 """
 
-__all__: list[str] = []
+__all__ = [
+    "add_temporal_features",
+]
