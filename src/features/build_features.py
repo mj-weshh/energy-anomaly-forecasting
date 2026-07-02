@@ -10,10 +10,10 @@ on time of day (peak mean load at 02:00) and, more subtly, on day of week.
 Context-aware detectors therefore need explicit temporal features rather
 than raw timestamps.
 
-Planned public API (implemented incrementally during Phase 2, Week 3):
+Public API (Phase 2, Week 3):
 
 - ``add_temporal_features(df)`` — hour, day-of-week, month, weekend flag
-- Rolling statistics (local mean / standard deviation) in a later step
+- Rolling statistics (local mean / standard deviation) planned for a later step
 
 Usage:
     Import in downstream scripts and notebooks::
@@ -39,7 +39,8 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
 
     Returns:
         Copy of ``df`` with added integer columns:
-        ``hour`` (0-23) and ``day_of_week`` (0=Monday .. 6=Sunday).
+        ``hour`` (0-23), ``day_of_week`` (0=Monday .. 6=Sunday),
+        ``month`` (1-12), and ``is_weekend`` (1 if Saturday/Sunday else 0).
 
     Raises:
         KeyError: If ``Timestamp`` is not present in ``df``.
@@ -50,4 +51,6 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["hour"] = df["Timestamp"].dt.hour
     df["day_of_week"] = df["Timestamp"].dt.dayofweek
+    df["month"] = df["Timestamp"].dt.month
+    df["is_weekend"] = (df["day_of_week"] >= 5).astype(int)
     return df
