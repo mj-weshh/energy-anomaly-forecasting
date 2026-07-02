@@ -25,12 +25,16 @@ energy-anomaly-forecasting/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
 │   └── 02_exploratory_data_analysis.ipynb
 ├── scripts/
-│   └── export_eda_assets.py          # Regenerate EDA doc figures
+│   ├── export_eda_assets.py          # Regenerate EDA doc figures
+│   └── verify_temporal.py            # Sanity-check temporal features
 ├── src/
 │   ├── __init__.py
 │   ├── data/
 │   │   ├── __init__.py
 │   │   └── ingest_data.py            # Canonical ingestion module
+│   ├── features/
+│   │   ├── __init__.py
+│   │   └── build_features.py         # Phase 2 feature engineering
 │   └── visualization/
 │       ├── __init__.py
 │       └── visualize.py              # EDA plotting functions
@@ -52,7 +56,8 @@ energy-anomaly-forecasting/
 | `data/raw/` | Future canonical storage for raw files |
 | `docs/` | Human-readable documentation source |
 | `docs/assets/eda/` | Exported EDA plots for MkDocs |
-| `scripts/` | CLI utilities (e.g. EDA asset export) |
+| `src/features/` | Model-ready feature engineering (Phase 2) |
+| `scripts/` | CLI utilities (EDA asset export, feature verification) |
 | `Smart Meter Electricity Consumption Dataset/` | Legacy download location; supported by dynamic discovery |
 
 ---
@@ -104,6 +109,26 @@ Writes PNGs to `docs/assets/eda/` for embedding in [EDA Insights](eda-insights.m
 
 ---
 
+## Feature Engineering Module
+
+### Module: `src/features/build_features.py`
+
+| Function | Responsibility |
+|----------|----------------|
+| `add_temporal_features(df)` | Derive `hour`, `day_of_week`, `month`, and `is_weekend` integer columns from `Timestamp` |
+
+Rolling statistics (local mean / standard deviation) are planned as the next addition. See [Feature Engineering](feature-engineering.md) for design notes and verification output.
+
+**Verification:**
+
+```bash
+python scripts/verify_temporal.py
+```
+
+Loads the dataset via `src.data.ingest_data`, applies the temporal features, and asserts value ranges.
+
+---
+
 ## Design Decisions
 
 ### Canonical source vs. notebook duplication
@@ -152,7 +177,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Phase | Deliverables | Key modules |
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
-| **2 — Anomaly Detection** | Isolation Forest, DBSCAN, evaluation | `src/models/` (planned) |
+| **2 — Anomaly Detection** | Feature engineering, Isolation Forest, DBSCAN, evaluation | `src/features/build_features.py`, `src/models/` (planned) |
 | **3 — Forecasting** | XGBoost, LSTM, evaluation | `src/models/` (planned) |
 
 ---
