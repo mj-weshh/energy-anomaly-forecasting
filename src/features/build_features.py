@@ -61,23 +61,31 @@ def add_rolling_metrics(df: pd.DataFrame) -> pd.DataFrame:
     """Derive rolling consumption statistics for local-context anomaly scoring.
 
     Rolling windows are only meaningful on chronologically ordered data, so
-    rows are sorted by ``Timestamp`` before any window math. Window columns
-    (3-hour and 24-hour rolling mean / standard deviation) are added in
-    subsequent steps.
+    rows are sorted by ``Timestamp`` before any window math. The 24-hour
+    window (rolling mean / standard deviation) is added in a subsequent step.
 
     Args:
         df: DataFrame with parsed ``Timestamp`` and ``Electricity_Consumed``
             columns (as produced by ``src.data.ingest_data``).
 
     Returns:
-        Chronologically sorted copy of ``df``. Rolling metric columns will
-        be appended here in later steps.
+        Chronologically sorted copy of ``df`` with added columns:
+        ``rolling_mean_3h`` and ``rolling_std_3h`` (3-hour window over
+        ``Electricity_Consumed``; the first ``window - 1`` rows are NaN
+        until the window fills).
 
     Raises:
-        KeyError: If ``Timestamp`` is not present in ``df``.
+        KeyError: If ``Timestamp`` or ``Electricity_Consumed`` is not
+            present in ``df``.
     """
-    if "Timestamp" not in df.columns:
-        raise KeyError("Required column 'Timestamp' not found in DataFrame.")
+    for column in ("Timestamp", "Electricity_Consumed"):
+        if column not in df.columns:
+            raise KeyError(f"Required column '{column}' not found in DataFrame.")
 
     df = df.sort_values("Timestamp").copy()
+
+    window_3h = 6  # 3 hours at 30-minute intervals
+    rolling_3h = df["Electricity_Consumed"].rolling(window=window_3h)
+    df["rolling_mean_3h"] = rolling_3h.mean()
+    df["rolling_std_3h"] = rolling_3h.std()
     return df
