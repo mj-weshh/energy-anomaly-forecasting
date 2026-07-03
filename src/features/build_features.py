@@ -13,7 +13,8 @@ than raw timestamps.
 Public API (Phase 2, Week 3):
 
 - ``add_temporal_features(df)`` — hour, day-of-week, month, weekend flag
-- Rolling statistics (local mean / standard deviation) planned for a later step
+- ``add_rolling_metrics(df)`` — rolling consumption statistics (windows added
+  incrementally: 3-hour and 24-hour mean / standard deviation)
 
 Usage:
     Import in downstream scripts and notebooks::
@@ -53,4 +54,30 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     df["day_of_week"] = df["Timestamp"].dt.dayofweek
     df["month"] = df["Timestamp"].dt.month
     df["is_weekend"] = (df["day_of_week"] >= 5).astype(int)
+    return df
+
+
+def add_rolling_metrics(df: pd.DataFrame) -> pd.DataFrame:
+    """Derive rolling consumption statistics for local-context anomaly scoring.
+
+    Rolling windows are only meaningful on chronologically ordered data, so
+    rows are sorted by ``Timestamp`` before any window math. Window columns
+    (3-hour and 24-hour rolling mean / standard deviation) are added in
+    subsequent steps.
+
+    Args:
+        df: DataFrame with parsed ``Timestamp`` and ``Electricity_Consumed``
+            columns (as produced by ``src.data.ingest_data``).
+
+    Returns:
+        Chronologically sorted copy of ``df``. Rolling metric columns will
+        be appended here in later steps.
+
+    Raises:
+        KeyError: If ``Timestamp`` is not present in ``df``.
+    """
+    if "Timestamp" not in df.columns:
+        raise KeyError("Required column 'Timestamp' not found in DataFrame.")
+
+    df = df.sort_values("Timestamp").copy()
     return df
