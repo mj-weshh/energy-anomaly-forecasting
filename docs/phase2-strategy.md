@@ -113,7 +113,7 @@ Both models are context-friendly when fed the engineered features above. Static 
 
 I'll resolve these when implementation starts:
 
-1. **Rolling window length** — 24-hour (48 periods) matched EDA; may tune for detection sensitivity.
+1. **Rolling window length** — *resolved in Week 3:* rather than picking one, I implemented both a 3-hour and a 24-hour window — short-term reaction plus daily baseline. See [Feature Engineering](feature-engineering.md).
 2. **DBSCAN hyperparameters** — `eps` and `min_samples` need grid search; normalized features help but density still matters.
 3. **Ensemble vs pick-one** — run both IF and DBSCAN independently first, then decide if a combined score adds value.
 
