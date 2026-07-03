@@ -13,7 +13,8 @@ than raw timestamps.
 Public API (Phase 2, Week 3):
 
 - ``add_temporal_features(df)`` — hour, day-of-week, month, weekend flag
-- Rolling statistics (local mean / standard deviation) planned for a later step
+- ``add_rolling_metrics(df)`` — 3-hour and 24-hour rolling mean / standard
+  deviation over consumption
 
 Usage:
     Import in downstream scripts and notebooks::
@@ -53,4 +54,43 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     df["day_of_week"] = df["Timestamp"].dt.dayofweek
     df["month"] = df["Timestamp"].dt.month
     df["is_weekend"] = (df["day_of_week"] >= 5).astype(int)
+    return df
+
+
+def add_rolling_metrics(df: pd.DataFrame) -> pd.DataFrame:
+    """Derive rolling consumption statistics for local-context anomaly scoring.
+
+    Rolling windows are only meaningful on chronologically ordered data, so
+    rows are sorted by ``Timestamp`` before any window math.
+
+    Args:
+        df: DataFrame with parsed ``Timestamp`` and ``Electricity_Consumed``
+            columns (as produced by ``src.data.ingest_data``).
+
+    Returns:
+        Chronologically sorted copy of ``df`` with added columns over
+        ``Electricity_Consumed``: ``rolling_mean_3h`` and ``rolling_std_3h``
+        (3-hour window) plus ``rolling_mean_24h`` and ``rolling_std_24h``
+        (24-hour window). For each window the first ``window - 1`` rows are
+        NaN until the window fills.
+
+    Raises:
+        KeyError: If ``Timestamp`` or ``Electricity_Consumed`` is not
+            present in ``df``.
+    """
+    for column in ("Timestamp", "Electricity_Consumed"):
+        if column not in df.columns:
+            raise KeyError(f"Required column '{column}' not found in DataFrame.")
+
+    df = df.sort_values("Timestamp").copy()
+
+    window_3h = 6  # 3 hours at 30-minute intervals
+    rolling_3h = df["Electricity_Consumed"].rolling(window=window_3h)
+    df["rolling_mean_3h"] = rolling_3h.mean()
+    df["rolling_std_3h"] = rolling_3h.std()
+
+    window_24h = 48  # 24 hours at 30-minute intervals
+    rolling_24h = df["Electricity_Consumed"].rolling(window=window_24h)
+    df["rolling_mean_24h"] = rolling_24h.mean()
+    df["rolling_std_24h"] = rolling_24h.std()
     return df
