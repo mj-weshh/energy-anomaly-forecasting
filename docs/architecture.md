@@ -26,7 +26,7 @@ energy-anomaly-forecasting/
 │   └── 02_exploratory_data_analysis.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py          # Regenerate EDA doc figures
-│   └── verify_features.py            # Sanity-check engineered features
+│   └── verify_temporal.py            # Sanity-check temporal features
 ├── src/
 │   ├── __init__.py
 │   ├── data/
@@ -116,17 +116,16 @@ Writes PNGs to `docs/assets/eda/` for embedding in [EDA Insights](eda-insights.m
 | Function | Responsibility |
 |----------|----------------|
 | `add_temporal_features(df)` | Derive `hour`, `day_of_week`, `month`, and `is_weekend` integer columns from `Timestamp` |
-| `add_rolling_metrics(df)` | Derive 3-hour and 24-hour rolling mean / standard deviation over `Electricity_Consumed` (chronologically sorted) |
 
-See [Feature Engineering](feature-engineering.md) for design notes and verification output.
+Rolling statistics (local mean / standard deviation) are planned as the next addition. See [Feature Engineering](feature-engineering.md) for design notes and verification output.
 
 **Verification:**
 
 ```bash
-python scripts/verify_features.py
+python scripts/verify_temporal.py
 ```
 
-Loads the dataset via `src.data.ingest_data`, applies both feature functions, and asserts column presence, value ranges, and NaN warm-up behavior.
+Loads the dataset via `src.data.ingest_data`, applies the temporal features, and asserts value ranges.
 
 ---
 

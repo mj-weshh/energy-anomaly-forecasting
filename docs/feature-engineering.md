@@ -1,8 +1,8 @@
 # Feature Engineering — Phase 2, Week 3
 
-Working notes on the feature engineering module. This is the first coding step of Phase 2 — turning raw timestamps into the temporal context our anomaly detectors need, plus rolling statistics that give the models short-term and daily memory.
+Working notes on the feature engineering module. This is the first coding step of Phase 2 — turning raw timestamps into the temporal context our anomaly detectors need.
 
-**Status:** Temporal and rolling features complete; model training (Week 4) next  
+**Status:** In progress (temporal features done; rolling statistics next)  
 **Module:** `src/features/build_features.py`  
 **Strategy background:** [Phase 2 Strategy](phase2-strategy.md)
 
@@ -16,7 +16,7 @@ Models don't read datetimes. They need that context as plain numeric columns. So
 
 ---
 
-## What's Implemented — Temporal Features
+## What's Implemented
 
 `add_temporal_features(df)` takes the validated DataFrame from `src.data.ingest_data` and returns a **copy** with four integer columns added:
 
@@ -44,41 +44,19 @@ df = add_temporal_features(load_smart_meter_data(find_dataset_csv(get_project_ro
 
 ---
 
-## What's Implemented — Rolling Metrics
-
-`add_rolling_metrics(df)` gives the models **memory**. A high reading isn't suspicious if the last three hours were also high — the models need to see each interval against its recent neighborhood, not just in isolation. Four columns, all computed over `Electricity_Consumed`:
-
-| Column | Window | Meaning |
-|--------|--------|---------|
-| `rolling_mean_3h` | 6 intervals (3 h) | Short-term local average |
-| `rolling_std_3h` | 6 intervals (3 h) | Short-term local volatility |
-| `rolling_mean_24h` | 48 intervals (24 h) | Daily baseline average |
-| `rolling_std_24h` | 48 intervals (24 h) | Daily baseline volatility |
-
-Why two windows: the **3-hour** window reacts fast and catches sudden deviations from the immediate trend (equipment kicking on, short spikes); the **24-hour** window holds the broader daily baseline. On the real data you can see the contrast — the 3h mean swings from 0.33 to 0.50 within a few intervals while the 24h mean stays anchored near 0.38.
-
-Design details:
-
-- **Chronological safety sort.** Rolling windows are garbage on out-of-order data, so the function does `df.sort_values("Timestamp").copy()` before any window math. Same copy semantics as the temporal function — the caller's frame is never touched.
-- **NaN warm-up.** The first `window - 1` rows of each metric are NaN until the window fills (5 rows for 3h, 47 for 24h). That's expected pandas behavior; Week 4 will decide whether to drop or impute those rows before training.
-- **Fail fast.** Missing `Timestamp` or `Electricity_Consumed` raises `KeyError` immediately.
-
----
-
 ## How to Verify
 
-`scripts/verify_features.py` (which replaced the earlier `verify_temporal.py`) loads the real dataset, applies both functions, and sanity-checks everything:
+There's a small script that loads the real dataset, applies the function, and sanity-checks the output:
 
 ```bash
-python scripts/verify_features.py
+python scripts/verify_temporal.py
 ```
 
 Output from the actual run:
 
 ```
-Shape after feature engineering: (5000, 15)
+Shape after feature extraction: (5000, 11)
 
-Temporal features (head):
           Timestamp  hour  day_of_week  month  is_weekend
 2024-01-01 00:00:00     0            0      1           0
 2024-01-01 00:30:00     0            0      1           0
@@ -86,18 +64,10 @@ Temporal features (head):
 2024-01-01 01:30:00     1            0      1           0
 2024-01-01 02:00:00     2            0      1           0
 
-Rolling metrics (tail — windows fully filled):
-          Timestamp  rolling_mean_3h  rolling_std_3h  rolling_mean_24h  rolling_std_24h
-2024-04-14 01:30:00         0.328597        0.169606          0.377784         0.169480
-2024-04-14 02:00:00         0.406674        0.092049          0.381593         0.169995
-2024-04-14 02:30:00         0.474165        0.221625          0.390893         0.185203
-2024-04-14 03:00:00         0.499800        0.213968          0.392865         0.185968
-2024-04-14 03:30:00         0.460499        0.240648          0.385569         0.185183
-
-PASS — temporal and rolling feature columns present with valid values.
+PASS — all temporal columns present with valid value ranges.
 ```
 
-7 original columns + 4 temporal + 4 rolling = 15. The script asserts every column exists, temporal values stay in range, the rolling tail is fully populated, and the warm-up rows are NaN exactly where they should be.
+7 original columns + 4 temporal features = 11. The script asserts that every column exists and that values stay in their valid ranges (`hour` 0–23, `day_of_week` 0–6, `month` 1–12, `is_weekend` in {0, 1}).
 
 ---
 
@@ -114,8 +84,8 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 
 ## What's Next
 
-- **Week 4** — feed the assembled 15-column feature matrix into Isolation Forest and DBSCAN, evaluated against the 250-row `Abnormal` benchmark (see [Phase 2 Strategy](phase2-strategy.md)).
-- Decide how to handle the NaN warm-up rows (drop vs impute) before training.
+- **Rolling statistics** — local mean and standard deviation on `Electricity_Consumed` so each interval is judged against its recent neighborhood, not the global series.
+- **Week 4** — feed the assembled feature matrix into Isolation Forest and DBSCAN, evaluated against the 250-row `Abnormal` benchmark (see [Phase 2 Strategy](phase2-strategy.md)).
 
 ---
 

@@ -18,7 +18,7 @@ All work uses publicly available data only. No proprietary systems or datasets a
 |-------|-------|--------|
 | Phase 1 Week 1 | Environment setup, data ingestion, schema validation | **Complete** |
 | Phase 1 Week 2 | Exploratory data analysis and load profiling | **Complete** |
-| Phase 2 Week 3 | Feature engineering (temporal + rolling features) | **Complete** |
+| Phase 2 Week 3 | Feature engineering (temporal features) | **In progress** |
 | Phase 2 Week 4 | Unsupervised anomaly detection (Isolation Forest, DBSCAN) | Planned |
 | Phase 3 | Time-series forecasting (XGBoost, LSTM) | Planned |
 
@@ -43,7 +43,7 @@ Full analysis: [EDA Insights](eda-insights.md)
 | [Architecture](architecture.md) | Repository layout, data flow, and design decisions |
 | [EDA Insights](eda-insights.md) | Phase 1 Week 2 exploratory analysis findings with figures |
 | [Phase 2 Strategy](phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
-| [Feature Engineering](feature-engineering.md) | Phase 2 Week 3 temporal features, rolling metrics, and verification |
+| [Feature Engineering](feature-engineering.md) | Phase 2 Week 3 temporal feature extraction and verification |
 
 ## Quick Command
 
