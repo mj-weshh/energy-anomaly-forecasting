@@ -3,11 +3,10 @@
 Public API is defined in submodules. Import directly::
 
     from src.models.evaluate_models import evaluate_anomaly_model
-
-Training functions will be added in :mod:`src.models.train_anomaly_models`
-during Phase 2, Week 4.
+    from src.models.train_anomaly_models import train_isolation_forest
 """
 
 __all__ = [
     "evaluate_anomaly_model",
+    "train_isolation_forest",
 ]
