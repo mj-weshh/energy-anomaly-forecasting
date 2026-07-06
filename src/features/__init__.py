@@ -11,4 +11,5 @@ rolling statistics) and re-exported here once stable.
 __all__ = [
     "add_rolling_metrics",
     "add_temporal_features",
+    "build_all_features",
 ]
