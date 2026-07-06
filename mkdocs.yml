@@ -30,6 +30,7 @@ nav:
   - Verification Report: verification-report.md
   - Architecture: architecture.md
   - Feature Engineering: feature-engineering.md
+  - Anomaly Detection: anomaly-detection.md
   - Research & Insights:
       - EDA Insights: eda-insights.md
       - Phase 2 Strategy: phase2-strategy.md

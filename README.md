@@ -17,7 +17,7 @@ This repository implements a phased ML pipeline:
 | **Phase 1 Week 1** | Environment setup, data ingestion, schema validation | **Complete** |
 | **Phase 1 Week 2** | Exploratory data analysis and load profiling | **Complete** |
 | **Phase 2 Week 3** | Feature engineering (temporal + rolling metrics) | **Complete** |
-| **Phase 2 Week 4** | Unsupervised anomaly detection (Isolation Forest, DBSCAN) | Planned |
+| **Phase 2 Week 4** | Isolation Forest baseline (DBSCAN planned) | **In progress** |
 | **Phase 3** | Time-series forecasting (XGBoost, LSTM) | Planned |
 
 All work uses publicly available data. No proprietary datasets or systems are referenced.
@@ -93,12 +93,16 @@ energy-anomaly-forecasting/
 │   └── 02_exploratory_data_analysis.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py        # Regenerate EDA doc figures
-│   └── verify_features.py          # Sanity-check engineered features
+│   ├── verify_features.py          # Sanity-check engineered features
+│   └── test_isolation_forest.py    # Isolation Forest baseline + evaluation
 ├── src/
 │   ├── data/
 │   │   └── ingest_data.py          # Canonical ingestion module
 │   ├── features/
 │   │   └── build_features.py       # Temporal + rolling feature engineering
+│   ├── models/
+│   │   ├── evaluate_models.py      # Imbalance-aware evaluation metrics
+│   │   └── train_anomaly_models.py # Unsupervised anomaly training
 │   └── visualization/
 │       └── visualize.py            # EDA plotting functions
 ├── Smart Meter Electricity Consumption Dataset/
@@ -138,6 +142,7 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Architecture](docs/architecture.md) | Repository layout and data flow |
 | [Phase 2 Strategy](docs/phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
 | [Feature Engineering](docs/feature-engineering.md) | Phase 2 Week 3 temporal features and rolling metrics |
+| [Anomaly Detection](docs/anomaly-detection.md) | Phase 2 Week 4 Isolation Forest baseline and evaluation |
 
 ### Build docs site locally
 
@@ -157,6 +162,7 @@ mkdocs build    # output to site/
 python -m src.data.ingest_data
 python scripts/export_eda_assets.py
 python scripts/verify_features.py
+python scripts/test_isolation_forest.py
 ```
 
 ### Python API
@@ -172,11 +178,20 @@ print(df.shape)  # (5000, 7)
 ### Feature Engineering (Phase 2)
 
 ```python
-from src.features.build_features import add_temporal_features, add_rolling_metrics
+from src.features.build_features import add_temporal_features, add_rolling_metrics, build_all_features
 
-df = add_rolling_metrics(add_temporal_features(df))
+df = build_all_features(df)  # or: add_rolling_metrics(add_temporal_features(df))
 print(df.shape)  # (5000, 15) — adds hour, day_of_week, month, is_weekend,
                  # and 3h/24h rolling mean + std over Electricity_Consumed
+```
+
+### Anomaly Detection (Phase 2)
+
+```python
+from src.features.build_features import build_all_features
+from src.models.train_anomaly_models import train_isolation_forest
+
+model, predictions = train_isolation_forest(build_all_features(df))
 ```
 
 ### Notebooks
