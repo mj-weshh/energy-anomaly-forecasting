@@ -14,7 +14,7 @@ from sklearn.ensemble import IsolationForest
 EXCLUDE_COLUMNS = frozenset({"Timestamp", "Anomaly_Label"})
 
 
-def _prepare_feature_matrix(df: pd.DataFrame) -> pd.DataFrame:
+def prepare_feature_matrix(df: pd.DataFrame) -> pd.DataFrame:
     """Build the numeric feature matrix for unsupervised training.
 
     Drops ``Timestamp`` and ``Anomaly_Label``, then removes rows with NaN
@@ -60,7 +60,7 @@ def train_isolation_forest(
     Raises:
         ValueError: If no rows remain after feature preparation.
     """
-    feature_matrix = _prepare_feature_matrix(df.copy())
+    feature_matrix = prepare_feature_matrix(df.copy())
 
     model = IsolationForest(
         contamination=contamination,
