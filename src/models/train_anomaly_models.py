@@ -105,3 +105,39 @@ def train_dbscan(
     raw_labels = model.fit_predict(feature_matrix)
     predictions = (raw_labels == -1).astype(int)
     return model, predictions
+
+
+def detect_anomalies(
+    df: pd.DataFrame,
+    model_type: str = "isolation_forest",
+    **kwargs: object,
+) -> tuple[IsolationForest | DBSCAN, np.ndarray]:
+    """Route feature-engineered data to an unsupervised anomaly detector.
+
+    Unified entry point for Isolation Forest and DBSCAN. ``Anomaly_Label`` is
+    never used for training (handled inside each trainer). Predictions use the
+    evaluation encoding: ``0`` = Normal, ``1`` = Abnormal.
+
+    Args:
+        df: Feature-engineered DataFrame (temporal + rolling columns applied).
+        model_type: ``"isolation_forest"`` (default) or ``"dbscan"``.
+        **kwargs: Hyperparameters forwarded to the selected trainer
+            (e.g. ``contamination``, ``random_state`` for Isolation Forest;
+            ``eps``, ``min_samples`` for DBSCAN).
+
+    Returns:
+        Tuple of the fitted model and binary predictions. Prediction length
+        equals the number of rows after NaN warm-up rows are dropped.
+
+    Raises:
+        ValueError: If ``model_type`` is not supported.
+    """
+    model_key = model_type.strip().lower()
+    if model_key == "isolation_forest":
+        return train_isolation_forest(df, **kwargs)
+    if model_key == "dbscan":
+        return train_dbscan(df, **kwargs)
+    raise ValueError(
+        f"Unsupported model_type {model_type!r}. "
+        "Use 'isolation_forest' or 'dbscan'."
+    )
