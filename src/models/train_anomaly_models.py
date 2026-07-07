@@ -1,14 +1,15 @@
 """Unsupervised anomaly detection model training for Phase 2.
 
-Models train on engineered features only. ``Anomaly_Label`` is excluded
-before fitting and is used strictly as an evaluation benchmark — see
-docs/phase2-strategy.md.
+Isolation Forest and DBSCAN train on engineered features only.
+``Anomaly_Label`` is excluded before fitting and is used strictly as an
+evaluation benchmark — see docs/phase2-strategy.md.
 """
 
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
 
 EXCLUDE_COLUMNS = frozenset({"Timestamp", "Anomaly_Label"})
@@ -24,7 +25,7 @@ def prepare_feature_matrix(df: pd.DataFrame) -> pd.DataFrame:
         df: Feature-engineered DataFrame from ``src.features.build_features``.
 
     Returns:
-        Numeric feature matrix ready for ``IsolationForest.fit``.
+        Numeric feature matrix ready for unsupervised model fitting.
 
     Raises:
         ValueError: If no rows remain after dropping NaN values.
@@ -70,4 +71,37 @@ def train_isolation_forest(
 
     raw_predictions = model.predict(feature_matrix)
     predictions = (raw_predictions == -1).astype(int)
+    return model, predictions
+
+
+def train_dbscan(
+    df: pd.DataFrame,
+    eps: float = 0.5,
+    min_samples: int = 5,
+) -> tuple[DBSCAN, np.ndarray]:
+    """Train DBSCAN on engineered smart meter features.
+
+    ``Anomaly_Label`` is never passed to the model. DBSCAN assigns noise
+    points (label ``-1``) to sparse regions; cluster members (label ``>= 0``)
+    are treated as normal baseline density. Predictions use the evaluation
+    encoding: ``0`` = Normal, ``1`` = Abnormal.
+
+    Args:
+        df: Feature-engineered DataFrame (temporal + rolling columns applied).
+        eps: Maximum distance between two samples for neighborhood membership.
+        min_samples: Minimum points required to form a dense region.
+
+    Returns:
+        Tuple of the fitted ``DBSCAN`` and binary predictions
+        (``0`` = Normal, ``1`` = Abnormal). Prediction length equals the
+        number of rows after NaN warm-up rows are dropped.
+
+    Raises:
+        ValueError: If no rows remain after feature preparation.
+    """
+    feature_matrix = prepare_feature_matrix(df.copy())
+
+    model = DBSCAN(eps=eps, min_samples=min_samples)
+    raw_labels = model.fit_predict(feature_matrix)
+    predictions = (raw_labels == -1).astype(int)
     return model, predictions
