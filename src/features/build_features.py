@@ -15,6 +15,7 @@ Public API (Phase 2, Week 3):
 - ``add_temporal_features(df)`` — hour, day-of-week, month, weekend flag
 - ``add_rolling_metrics(df)`` — 3-hour and 24-hour rolling mean / standard
   deviation over consumption
+- ``build_all_features(df)`` — apply temporal then rolling features in one call
 
 Usage:
     Import in downstream scripts and notebooks::
@@ -94,3 +95,17 @@ def add_rolling_metrics(df: pd.DataFrame) -> pd.DataFrame:
     df["rolling_mean_24h"] = rolling_24h.mean()
     df["rolling_std_24h"] = rolling_24h.std()
     return df
+
+
+def build_all_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply temporal features then rolling metrics.
+
+    Convenience wrapper for the full Phase 2 Week 3 feature pipeline.
+
+    Args:
+        df: Validated DataFrame from ``src.data.ingest_data``.
+
+    Returns:
+        Copy of ``df`` with temporal and rolling feature columns added.
+    """
+    return add_rolling_metrics(add_temporal_features(df))
