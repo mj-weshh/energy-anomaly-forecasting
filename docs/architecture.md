@@ -25,12 +25,22 @@ energy-anomaly-forecasting/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
 │   └── 02_exploratory_data_analysis.ipynb
 ├── scripts/
-│   └── export_eda_assets.py          # Regenerate EDA doc figures
+│   ├── export_eda_assets.py          # Regenerate EDA doc figures
+│   ├── verify_features.py            # Sanity-check engineered features
+│   ├── test_isolation_forest.py      # Isolation Forest baseline + evaluation
+│   └── tune_dbscan.py                # DBSCAN hyperparameter grid search
 ├── src/
 │   ├── __init__.py
 │   ├── data/
 │   │   ├── __init__.py
 │   │   └── ingest_data.py            # Canonical ingestion module
+│   ├── features/
+│   │   ├── __init__.py
+│   │   └── build_features.py         # Phase 2 feature engineering
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── evaluate_models.py        # Imbalance-aware evaluation metrics
+│   │   └── train_anomaly_models.py   # Unsupervised anomaly training
 │   └── visualization/
 │       ├── __init__.py
 │       └── visualize.py              # EDA plotting functions
@@ -52,7 +62,9 @@ energy-anomaly-forecasting/
 | `data/raw/` | Future canonical storage for raw files |
 | `docs/` | Human-readable documentation source |
 | `docs/assets/eda/` | Exported EDA plots for MkDocs |
-| `scripts/` | CLI utilities (e.g. EDA asset export) |
+| `src/features/` | Model-ready feature engineering (Phase 2) |
+| `src/models/` | Unsupervised anomaly detection and evaluation (Phase 2) |
+| `scripts/` | CLI utilities (EDA export, feature verification, model testing) |
 | `Smart Meter Electricity Consumption Dataset/` | Legacy download location; supported by dynamic discovery |
 
 ---
@@ -104,6 +116,53 @@ Writes PNGs to `docs/assets/eda/` for embedding in [EDA Insights](eda-insights.m
 
 ---
 
+## Feature Engineering Module
+
+### Module: `src/features/build_features.py`
+
+| Function | Responsibility |
+|----------|----------------|
+| `add_temporal_features(df)` | Derive `hour`, `day_of_week`, `month`, and `is_weekend` integer columns from `Timestamp` |
+| `add_rolling_metrics(df)` | Derive 3-hour and 24-hour rolling mean / standard deviation over `Electricity_Consumed` (chronologically sorted) |
+| `build_all_features(df)` | Apply temporal then rolling features in one call |
+
+See [Feature Engineering](feature-engineering.md) for design notes and verification output.
+
+**Verification:**
+
+```bash
+python scripts/verify_features.py
+```
+
+Loads the dataset via `src.data.ingest_data`, applies both feature functions, and asserts column presence, value ranges, and NaN warm-up behavior.
+
+---
+
+## Models Module
+
+### Module: `src/models/`
+
+| Function | Module | Responsibility |
+|----------|--------|----------------|
+| `evaluate_anomaly_model(y_true, y_pred)` | `evaluate_models.py` | Precision, recall, F1, confusion matrix (Abnormal = positive class) |
+| `prepare_feature_matrix(df)` | `train_anomaly_models.py` | Numeric training matrix; drops label, timestamp, and NaN warm-up rows |
+| `train_isolation_forest(df)` | `train_anomaly_models.py` | Unsupervised Isolation Forest fit; returns model and 0/1 predictions |
+| `train_dbscan(df)` | `train_anomaly_models.py` | Unsupervised DBSCAN fit; noise points mapped to Abnormal |
+| `detect_anomalies(df, model_type)` | `train_anomaly_models.py` | Unified router to Isolation Forest or DBSCAN |
+
+See [Anomaly Detection](anomaly-detection.md) for baseline results and design notes.
+
+**Baseline verification:**
+
+```bash
+python scripts/test_isolation_forest.py
+python scripts/tune_dbscan.py
+```
+
+Loads data, applies features, trains unsupervised detectors (labels excluded), and prints imbalance-aware metrics against the benchmark.
+
+---
+
 ## Design Decisions
 
 ### Canonical source vs. notebook duplication
@@ -152,12 +211,12 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Phase | Deliverables | Key modules |
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
-| **2 — Anomaly Detection** | Isolation Forest, DBSCAN, evaluation | `src/models/` (planned) |
+| **2 — Anomaly Detection** | Feature engineering, Isolation Forest, DBSCAN, evaluation | `src/features/build_features.py`, `src/models/train_anomaly_models.py` |
 | **3 — Forecasting** | XGBoost, LSTM, evaluation | `src/models/` (planned) |
 
 ---
 
-## Technology Stack (Phase 1)
+## Technology Stack
 
 | Component | Library | Version constraint |
 |-----------|---------|-------------------|
@@ -167,6 +226,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Notebooks | jupyter, ipykernel | >= 1.0.0, >= 6.0.0 |
 | Visualization | matplotlib, seaborn | >= 3.7.0, >= 0.13.0 |
 | Statistics | scipy, statsmodels | >= 1.11.0, >= 0.14.0 |
+| Anomaly detection | scikit-learn | >= 1.3.0 |
 | Documentation | mkdocs, mkdocs-material | >= 1.6.0, >= 9.5.0 |
 
-ML libraries (scikit-learn, xgboost, tensorflow/pytorch) will be added in Phase 2 and Phase 3.
+Forecasting libraries (xgboost, tensorflow/pytorch) will be added in Phase 3.

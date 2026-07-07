@@ -2,8 +2,8 @@
 
 Planning notes for the anomaly detection engine. Phase 1 is done — ingestion, schema checks, and EDA are all green. This page is what I'm using to align technical work with what we actually learned from the data.
 
-**Status:** Planning (no Phase 2 code yet)  
-**Builds on:** [EDA Insights](eda-insights.md), [Verification Report](verification-report.md)
+**Status:** Week 4 Day 2 complete — both detectors benchmarked; IF leads on F1  
+**Builds on:** [EDA Insights](eda-insights.md), [Verification Report](verification-report.md), [Feature Engineering](feature-engineering.md), [Anomaly Detection](anomaly-detection.md)
 
 ---
 
@@ -96,10 +96,11 @@ Both models are context-friendly when fed the engineered features above. Static 
 
 ### What Phase 2 will deliver (planned)
 
-- Canonical module under `src/models/` (structure TBD when coding starts)
+- ~~Canonical module under `src/models/`~~ — **done** (`evaluate_models.py`, `train_anomaly_models.py`)
+- ~~Isolation Forest baseline~~ — **done** (F1 = 0.331 on benchmark; see [Anomaly Detection](anomaly-detection.md))
+- ~~DBSCAN detector and comparison~~ — **done** (best F1 = 0.125; IF wins on current grid)
+- ~~Updated docs with results~~ — **done** (see [Anomaly Detection](anomaly-detection.md))
 - Notebook for experiment traceability
-- Evaluation report against the 250-row `Abnormal` benchmark
-- Updated docs with results — same tone as this page
 
 ### Explicitly not in Phase 2
 
@@ -113,9 +114,11 @@ Both models are context-friendly when fed the engineered features above. Static 
 
 I'll resolve these when implementation starts:
 
-1. **Rolling window length** — 24-hour (48 periods) matched EDA; may tune for detection sensitivity.
-2. **DBSCAN hyperparameters** — `eps` and `min_samples` need grid search; normalized features help but density still matters.
-3. **Ensemble vs pick-one** — run both IF and DBSCAN independently first, then decide if a combined score adds value.
+1. **Rolling window length** — *resolved in Week 3:* both 3-hour and 24-hour windows implemented. See [Feature Engineering](feature-engineering.md).
+2. **NaN warm-up rows** — *resolved in Week 4:* drop rows with incomplete rolling windows before training (4953 eval rows).
+3. **DBSCAN hyperparameters** — *resolved in Week 4 Day 2:* coarse grid search done; best F1 = 0.125 at `eps=0.5`, `min_samples=5`. Finer search optional.
+4. **Ensemble vs pick-one** — *in progress:* both models run independently; IF ahead on F1 (0.331 vs 0.125). Combined scoring TBD.
+5. **Isolation Forest tuning** — baseline F1 = 0.331 at `contamination=0.05`; tune `n_estimators` and contamination next.
 
 ---
 
