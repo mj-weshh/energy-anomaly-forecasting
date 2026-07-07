@@ -17,7 +17,7 @@ This repository implements a phased ML pipeline:
 | **Phase 1 Week 1** | Environment setup, data ingestion, schema validation | **Complete** |
 | **Phase 1 Week 2** | Exploratory data analysis and load profiling | **Complete** |
 | **Phase 2 Week 3** | Feature engineering (temporal + rolling metrics) | **Complete** |
-| **Phase 2 Week 4** | Isolation Forest baseline (DBSCAN planned) | **In progress** |
+| **Phase 2 Week 4** | Anomaly detection (IF + DBSCAN baselines) | **Complete** |
 | **Phase 3** | Time-series forecasting (XGBoost, LSTM) | Planned |
 
 All work uses publicly available data. No proprietary datasets or systems are referenced.
@@ -94,7 +94,8 @@ energy-anomaly-forecasting/
 ├── scripts/
 │   ├── export_eda_assets.py        # Regenerate EDA doc figures
 │   ├── verify_features.py          # Sanity-check engineered features
-│   └── test_isolation_forest.py    # Isolation Forest baseline + evaluation
+│   ├── test_isolation_forest.py    # Isolation Forest baseline + evaluation
+│   └── tune_dbscan.py              # DBSCAN hyperparameter grid search
 ├── src/
 │   ├── data/
 │   │   └── ingest_data.py          # Canonical ingestion module
@@ -142,7 +143,7 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Architecture](docs/architecture.md) | Repository layout and data flow |
 | [Phase 2 Strategy](docs/phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
 | [Feature Engineering](docs/feature-engineering.md) | Phase 2 Week 3 temporal features and rolling metrics |
-| [Anomaly Detection](docs/anomaly-detection.md) | Phase 2 Week 4 Isolation Forest baseline and evaluation |
+| [Anomaly Detection](docs/anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, and model comparison |
 
 ### Build docs site locally
 
@@ -163,6 +164,7 @@ python -m src.data.ingest_data
 python scripts/export_eda_assets.py
 python scripts/verify_features.py
 python scripts/test_isolation_forest.py
+python scripts/tune_dbscan.py
 ```
 
 ### Python API
@@ -189,9 +191,13 @@ print(df.shape)  # (5000, 15) — adds hour, day_of_week, month, is_weekend,
 
 ```python
 from src.features.build_features import build_all_features
-from src.models.train_anomaly_models import train_isolation_forest
+from src.models.train_anomaly_models import detect_anomalies, train_dbscan, train_isolation_forest
 
-model, predictions = train_isolation_forest(build_all_features(df))
+df_feat = build_all_features(df)
+
+# Unified router
+model, predictions = detect_anomalies(df_feat, model_type="isolation_forest")
+model, predictions = detect_anomalies(df_feat, model_type="dbscan", eps=0.5, min_samples=5)
 ```
 
 ### Notebooks

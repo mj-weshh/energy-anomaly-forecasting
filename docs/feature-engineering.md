@@ -2,7 +2,7 @@
 
 Working notes on the feature engineering module. This is the first coding step of Phase 2 — turning raw timestamps into the temporal context our anomaly detectors need, plus rolling statistics that give the models short-term and daily memory.
 
-**Status:** Temporal and rolling features complete; Isolation Forest baseline in Week 4 — see [Anomaly Detection](anomaly-detection.md)  
+**Status:** Temporal and rolling features complete; Week 4 anomaly detection done — see [Anomaly Detection](anomaly-detection.md)  
 **Module:** `src/features/build_features.py`  
 **Strategy background:** [Phase 2 Strategy](phase2-strategy.md)
 
@@ -126,7 +126,8 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 
 ## What's Next
 
-- **Week 4 (in progress)** — Isolation Forest baseline done (F1 = 0.331); DBSCAN and tuning next. See [Anomaly Detection](anomaly-detection.md).
+- **Week 4 complete** — IF + DBSCAN baselines benchmarked; IF leads on F1. See [Anomaly Detection](anomaly-detection.md).
+- **Next** — IF hyperparameter tuning, experiment notebook
 
 ---
 
@@ -134,5 +135,5 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 
 - [Phase 2 Strategy](phase2-strategy.md) — why context-aware features matter
 - [EDA Insights](eda-insights.md) — the 02:00 peak and weekday/weekend findings
-- [Anomaly Detection](anomaly-detection.md) — Week 4 Isolation Forest baseline
+- [Anomaly Detection](anomaly-detection.md) — Week 4 IF + DBSCAN baselines and model comparison
 - [Architecture](architecture.md) — where `src/features/` sits in the repo

@@ -19,7 +19,7 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | Phase 1 Week 1 | Environment setup, data ingestion, schema validation | **Complete** |
 | Phase 1 Week 2 | Exploratory data analysis and load profiling | **Complete** |
 | Phase 2 Week 3 | Feature engineering (temporal + rolling features) | **Complete** |
-| Phase 2 Week 4 | Isolation Forest baseline (DBSCAN planned) | **In progress** |
+| Phase 2 Week 4 | Anomaly detection (IF + DBSCAN baselines) | **Complete** |
 | Phase 3 | Time-series forecasting (XGBoost, LSTM) | Planned |
 
 ### Phase 1 Week 2 highlights
@@ -35,9 +35,10 @@ Full analysis: [EDA Insights](eda-insights.md)
 
 ### Phase 2 Week 4 highlights
 
-- Isolation Forest baseline trained unsupervised on **12 engineered features** (labels excluded from training)
-- Benchmark evaluation on **4,953 rows** (47 rolling warm-up rows dropped)
-- Baseline **F1 = 0.331** on the Abnormal class (precision and recall both 0.331)
+- Isolation Forest baseline: **F1 = 0.331** on 4,953 eval rows (labels excluded from training)
+- DBSCAN baseline + 12-combo grid search via `scripts/tune_dbscan.py` — best F1 = **0.125** at `eps=0.5`, `min_samples=5`
+- Unified `detect_anomalies()` router for both Isolation Forest and DBSCAN
+- **IF leads on F1** on this coarse grid; DBSCAN over-flags at most settings
 - `Anomaly_Label` used for evaluation only — never for model fitting
 
 Full report: [Anomaly Detection](anomaly-detection.md)
@@ -53,7 +54,7 @@ Full report: [Anomaly Detection](anomaly-detection.md)
 | [EDA Insights](eda-insights.md) | Phase 1 Week 2 exploratory analysis findings with figures |
 | [Phase 2 Strategy](phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
 | [Feature Engineering](feature-engineering.md) | Phase 2 Week 3 temporal features, rolling metrics, and verification |
-| [Anomaly Detection](anomaly-detection.md) | Phase 2 Week 4 Isolation Forest baseline and evaluation metrics |
+| [Anomaly Detection](anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, and model comparison |
 
 ## Quick Command
 

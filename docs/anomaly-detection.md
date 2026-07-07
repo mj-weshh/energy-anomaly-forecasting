@@ -1,8 +1,8 @@
 # Anomaly Detection — Phase 2, Week 4
 
-Working notes on the unsupervised anomaly detection engine. Week 3 gave us a 15-column feature matrix; Week 4 Day 1 wires that into an Isolation Forest baseline with proper imbalance-aware evaluation.
+Working notes on the unsupervised anomaly detection engine. Week 3 gave us a 15-column feature matrix; Week 4 wires that into two detectors with proper imbalance-aware evaluation and a unified routing API.
 
-**Status:** Week 4 Day 1 complete — Isolation Forest baseline trained and benchmarked; DBSCAN next  
+**Status:** Week 4 Day 2 complete — Isolation Forest + DBSCAN baselines, grid search, and `detect_anomalies` router  
 **Modules:** `src/models/evaluate_models.py`, `src/models/train_anomaly_models.py`  
 **Builds on:** [Phase 2 Strategy](phase2-strategy.md), [Feature Engineering](feature-engineering.md)
 
@@ -12,7 +12,7 @@ Working notes on the unsupervised anomaly detection engine. Week 3 gave us a 15-
 
 The strategy doc describes what we need: a detector that flags readings that don't fit the local pattern, not a dumb threshold on raw consumption. Isolation Forest fits that story — it scores **multivariate weirdness** across all 12 engineered features (consumption, weather, temporal context, rolling memory) without needing balanced labels.
 
-I'm starting here before DBSCAN because IF is fast, interpretable at the pipeline level, and gives us a baseline F1 to beat. DBSCAN comes next as a second opinion with different geometry assumptions.
+I started here before DBSCAN because IF is fast, interpretable at the pipeline level, and gives us a baseline F1 to beat. DBSCAN is the second opinion with different geometry assumptions.
 
 ---
 
@@ -36,17 +36,44 @@ Unsupervised fit on the engineered feature matrix. Critical design choices:
 | **`contamination=0.05`** | Matches the ~5% Abnormal rate in the dataset; unsupervised prior, not supervised tuning |
 | **Predictions mapped to 0/1** | sklearn returns `-1` (outlier) / `1` (inlier); we map to **1 = Abnormal, 0 = Normal** for evaluation |
 
+### Training — `train_dbscan(df, eps=0.5, min_samples=5)`
+
+Density-based second detector on the same feature matrix. Same label-exclusion rules as IF:
+
+| Rule | Why |
+|------|-----|
+| **`Anomaly_Label` never used for training** | Benchmark only — same unsupervised contract as IF |
+| **Same 4953 × 12 matrix** | Reuses `prepare_feature_matrix`; no duplicate prep logic |
+| **Noise = anomaly** | DBSCAN returns `-1` for sparse points; cluster members (`>= 0`) are normal baseline density |
+| **Predictions mapped to 0/1** | `-1` → **1 = Abnormal**, `>= 0` → **0 = Normal** |
+
+DBSCAN is sensitive to `eps` and `min_samples` on multivariate 0–1 features — Day 2 includes a coarse grid search to find the best F1 on our benchmark.
+
+### Unified router — `detect_anomalies(df, model_type='isolation_forest', **kwargs)`
+
+Single entry point for notebooks and downstream evaluation:
+
+- `model_type="isolation_forest"` → `train_isolation_forest(df, **kwargs)`
+- `model_type="dbscan"` → `train_dbscan(df, **kwargs)`
+
+Returns `(fitted_model, predictions)` with the same 0/1 encoding as the individual trainers.
+
 ### Pipeline helper — `build_all_features(df)`
 
 One-call wrapper in `src/features/build_features.py`: temporal features, then rolling metrics.
 
-### Verification — `scripts/test_isolation_forest.py`
+### Verification scripts
 
-End-to-end script: load → features → extract benchmark labels (aligned to the same `dropna` rows) → train → evaluate → print metrics.
+| Script | Purpose |
+|--------|---------|
+| `scripts/test_isolation_forest.py` | End-to-end IF baseline + benchmark evaluation |
+| `scripts/tune_dbscan.py` | 12-combo grid search over `eps` × `min_samples`; prints best F1 |
+
+Both scripts: load → features → extract benchmark labels (aligned to `dropna` rows) → train unsupervised → evaluate.
 
 ---
 
-## Baseline Results (Day 1)
+## Baseline Results — Isolation Forest (Day 1)
 
 Output from `python scripts/test_isolation_forest.py` on the real dataset:
 
@@ -69,8 +96,51 @@ Confusion matrix [[TN, FP], [FN, TP]]:
 | Precision | 0.331 | Of predicted anomalies, ~33% match the benchmark |
 | Recall | 0.331 | Of 248 benchmark Abnormal rows in eval set, ~82 caught |
 | F1 | 0.331 | Harmonic mean; baseline, not tuned |
+| Predicted anomalies | 248 | Close to the ~5% benchmark rate |
 
-Honest read: the model catches roughly **one third** of benchmark anomalies at this default contamination. That's a starting point — not production-ready. Hyperparameter tuning and DBSCAN comparison are the next levers.
+Honest read: IF catches roughly **one third** of benchmark anomalies at default contamination. That's our bar for DBSCAN and future tuning.
+
+---
+
+## Baseline Results — DBSCAN (Day 2)
+
+Output from `python scripts/tune_dbscan.py` — grid over `eps` ∈ {0.1, 0.3, 0.5, 0.7} and `min_samples` ∈ {5, 10, 20}:
+
+```
+DBSCAN grid search — best F1 (Abnormal = positive):
+  eps=0.5  min_samples=5
+  Precision: 0.084
+  Recall:    0.246
+  F1:        0.125
+  Predicted anomalies: 726 / 4953
+
+Confusion matrix [[TN, FP], [FN, TP]]:
+  TN=4040  FP= 665
+  FN= 187  TP=  61
+```
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Best config | `eps=0.5`, `min_samples=5` | Winner on this coarse 12-combo grid |
+| F1 | 0.125 | Below IF baseline (0.331) |
+| Precision | 0.084 | Many false positives — flags ~15% of rows as anomalous |
+| Recall | 0.246 | Catches ~61 of 248 benchmark Abnormal rows |
+| Predicted anomalies | 726 | Over-predicts relative to the 5% benchmark |
+
+Honest read: on this grid, DBSCAN **underperforms** Isolation Forest. Most combinations either flag nearly everything (F1 ≈ 0.095) or miss too many true anomalies. The best combo still over-flags. Finer `eps` search or feature scaling may help, but IF is the stronger baseline on this dataset today.
+
+---
+
+## Model Comparison
+
+Same 4,953 evaluation rows, labels excluded from all training:
+
+| Model | Config | F1 | Precision | Recall | Pred. anomalies |
+|-------|--------|-----|-----------|--------|-----------------|
+| **Isolation Forest** | `contamination=0.05` | **0.331** | **0.331** | **0.331** | 248 |
+| **DBSCAN (grid best)** | `eps=0.5`, `min_samples=5` | 0.125 | 0.084 | 0.246 | 726 |
+
+**Current pick:** Isolation Forest on F1. Both models ran independently as planned in the strategy doc; an ensemble is optional and not implemented yet.
 
 ---
 
@@ -79,27 +149,39 @@ Honest read: the model catches roughly **one third** of benchmark anomalies at t
 ```bash
 pip install -r requirements.txt
 python scripts/test_isolation_forest.py
+python scripts/tune_dbscan.py
 ```
 
-Python API (same pipeline):
+Python API:
 
 ```python
 from src.data.ingest_data import find_dataset_csv, get_project_root, load_smart_meter_data
 from src.features.build_features import build_all_features
-from src.models.train_anomaly_models import train_isolation_forest
+from src.models.train_anomaly_models import (
+    detect_anomalies,
+    train_dbscan,
+    train_isolation_forest,
+)
 
 df = build_all_features(load_smart_meter_data(find_dataset_csv(get_project_root())))
-model, predictions = train_isolation_forest(df)
+
+# Individual trainers
+if_model, if_preds = train_isolation_forest(df)
+db_model, db_preds = train_dbscan(df, eps=0.5, min_samples=5)
+
+# Unified router
+_, preds = detect_anomalies(df, model_type="isolation_forest")
+_, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 ```
 
 ---
 
 ## What's Next
 
-- **DBSCAN** — density-based second opinion; tune `eps` and `min_samples`
-- **Hyperparameter tuning** — contamination, `n_estimators`, feature subsets
+- **Isolation Forest tuning** — `contamination`, `n_estimators`, feature subsets
+- **Finer DBSCAN search** — optional; current coarse grid peaked at F1 = 0.125
+- **Ensemble decision** — IF leads on F1; combined scoring TBD
 - **Experiment notebook** — traceability for CMU-Africa deliverables
-- **Updated evaluation report** in docs once DBSCAN baseline exists
 
 ---
 

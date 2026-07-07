@@ -27,7 +27,8 @@ energy-anomaly-forecasting/
 ├── scripts/
 │   ├── export_eda_assets.py          # Regenerate EDA doc figures
 │   ├── verify_features.py            # Sanity-check engineered features
-│   └── test_isolation_forest.py      # Isolation Forest baseline + evaluation
+│   ├── test_isolation_forest.py      # Isolation Forest baseline + evaluation
+│   └── tune_dbscan.py                # DBSCAN hyperparameter grid search
 ├── src/
 │   ├── __init__.py
 │   ├── data/
@@ -146,6 +147,8 @@ Loads the dataset via `src.data.ingest_data`, applies both feature functions, an
 | `evaluate_anomaly_model(y_true, y_pred)` | `evaluate_models.py` | Precision, recall, F1, confusion matrix (Abnormal = positive class) |
 | `prepare_feature_matrix(df)` | `train_anomaly_models.py` | Numeric training matrix; drops label, timestamp, and NaN warm-up rows |
 | `train_isolation_forest(df)` | `train_anomaly_models.py` | Unsupervised Isolation Forest fit; returns model and 0/1 predictions |
+| `train_dbscan(df)` | `train_anomaly_models.py` | Unsupervised DBSCAN fit; noise points mapped to Abnormal |
+| `detect_anomalies(df, model_type)` | `train_anomaly_models.py` | Unified router to Isolation Forest or DBSCAN |
 
 See [Anomaly Detection](anomaly-detection.md) for baseline results and design notes.
 
@@ -153,9 +156,10 @@ See [Anomaly Detection](anomaly-detection.md) for baseline results and design no
 
 ```bash
 python scripts/test_isolation_forest.py
+python scripts/tune_dbscan.py
 ```
 
-Loads data, applies features, trains Isolation Forest (labels excluded), and prints imbalance-aware metrics against the benchmark.
+Loads data, applies features, trains unsupervised detectors (labels excluded), and prints imbalance-aware metrics against the benchmark.
 
 ---
 
