@@ -2,7 +2,7 @@
 
 Working notes on the unsupervised anomaly detection engine. Week 3 gave us a 15-column feature matrix; Week 4 wires that into two detectors with proper imbalance-aware evaluation and a unified routing API.
 
-**Status:** Week 4 Day 2 complete — Isolation Forest + DBSCAN baselines, grid search, and `detect_anomalies` router  
+**Status:** Week 4 complete (Days 1–3) — detectors, comparison, and clean dataset pipeline  
 **Modules:** `src/models/evaluate_models.py`, `src/models/train_anomaly_models.py`  
 **Builds on:** [Phase 2 Strategy](phase2-strategy.md), [Feature Engineering](feature-engineering.md)
 
@@ -178,9 +178,9 @@ _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 
 ## What's Next
 
-- **Isolation Forest tuning** — `contamination`, `n_estimators`, feature subsets
-- **Finer DBSCAN search** — optional; current coarse grid peaked at F1 = 0.125
-- **Ensemble decision** — IF leads on F1; combined scoring TBD
+- **Phase 3 forecasting** — train on the clean artifact; see [Clean Dataset](clean-data.md)
+- **Isolation Forest tuning** — optional `contamination`, `n_estimators` refinement
+- **Finer DBSCAN search** — optional; IF chosen for cleaning pipeline
 - **Experiment notebook** — traceability for CMU-Africa deliverables
 
 ---
@@ -189,4 +189,5 @@ _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 
 - [Phase 2 Strategy](phase2-strategy.md) — why context-aware detection and imbalance-aware metrics matter
 - [Feature Engineering](feature-engineering.md) — the 12 features fed into the model
+- [Clean Dataset](clean-data.md) — Day 3 imputation pipeline for Phase 3
 - [Architecture](architecture.md) — where `src/models/` sits in the repo

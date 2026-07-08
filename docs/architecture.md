@@ -17,7 +17,8 @@ The ingestion layer is the **single gate** between raw CSV files and all downstr
 ```
 energy-anomaly-forecasting/
 ├── data/
-│   └── raw/                          # Canonical location for raw CSV (optional)
+│   ├── raw/                          # Canonical location for raw CSV (optional)
+│   └── processed/                    # Generated clean CSV (gitignored)
 ├── docs/                             # Project documentation (MkDocs source)
 │   └── assets/                       # Screenshots and static assets
 │       └── eda/                      # Phase 1 Week 2 EDA figures (PNG)
@@ -28,12 +29,14 @@ energy-anomaly-forecasting/
 │   ├── export_eda_assets.py          # Regenerate EDA doc figures
 │   ├── verify_features.py            # Sanity-check engineered features
 │   ├── test_isolation_forest.py      # Isolation Forest baseline + evaluation
-│   └── tune_dbscan.py                # DBSCAN hyperparameter grid search
+│   ├── tune_dbscan.py                # DBSCAN hyperparameter grid search
+│   └── generate_clean_data.py        # Generate Phase 3 clean dataset artifact
 ├── src/
 │   ├── __init__.py
 │   ├── data/
 │   │   ├── __init__.py
-│   │   └── ingest_data.py            # Canonical ingestion module
+│   │   ├── ingest_data.py            # Canonical ingestion module
+│   │   └── clean_data.py             # Anomaly masking and interpolation
 │   ├── features/
 │   │   ├── __init__.py
 │   │   └── build_features.py         # Phase 2 feature engineering
@@ -163,6 +166,27 @@ Loads data, applies features, trains unsupervised detectors (labels excluded), a
 
 ---
 
+## Clean Data Module
+
+### Module: `src/data/clean_data.py`
+
+| Function | Responsibility |
+|----------|----------------|
+| `interpolate_anomalies(df, predictions)` | Mask anomalous `Electricity_Consumed` values; time-interpolate gaps |
+| `generate_clean_dataset(input_path, output_path)` | End-to-end IF clean pipeline; writes CSV artifact |
+
+See [Clean Dataset](clean-data.md) for pipeline design and artifact details.
+
+**Artifact generation:**
+
+```bash
+python scripts/generate_clean_data.py
+```
+
+Writes `data/processed/clean_smart_meter_data.csv` (5000 rows, imputed consumption, gitignored locally).
+
+---
+
 ## Design Decisions
 
 ### Canonical source vs. notebook duplication
@@ -211,7 +235,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Phase | Deliverables | Key modules |
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
-| **2 — Anomaly Detection** | Feature engineering, Isolation Forest, DBSCAN, evaluation | `src/features/build_features.py`, `src/models/train_anomaly_models.py` |
+| **2 — Anomaly Detection** | Feature engineering, IF/DBSCAN, clean dataset for Phase 3 | `src/features/build_features.py`, `src/models/train_anomaly_models.py`, `src/data/clean_data.py` |
 | **3 — Forecasting** | XGBoost, LSTM, evaluation | `src/models/` (planned) |
 
 ---

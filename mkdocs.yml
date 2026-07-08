@@ -21,6 +21,7 @@ theme:
   features:
     - navigation.tabs
     - navigation.sections
+    - navigation.footer
     - toc.integrate
 
 nav:
@@ -31,6 +32,7 @@ nav:
   - Architecture: architecture.md
   - Feature Engineering: feature-engineering.md
   - Anomaly Detection: anomaly-detection.md
+  - Clean Dataset: clean-data.md
   - Research & Insights:
       - EDA Insights: eda-insights.md
       - Phase 2 Strategy: phase2-strategy.md
