@@ -39,9 +39,10 @@ Full analysis: [EDA Insights](eda-insights.md)
 - DBSCAN baseline + 12-combo grid search via `scripts/tune_dbscan.py` — best F1 = **0.125** at `eps=0.5`, `min_samples=5`
 - Unified `detect_anomalies()` router for both Isolation Forest and DBSCAN
 - **IF leads on F1** on this coarse grid; DBSCAN over-flags at most settings
+- Clean dataset pipeline (Day 3): IF + time interpolation → `data/processed/clean_smart_meter_data.csv` (**5000 rows preserved**)
 - `Anomaly_Label` used for evaluation only — never for model fitting
 
-Full report: [Anomaly Detection](anomaly-detection.md)
+Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean-data.md)
 
 ## Documentation
 
@@ -55,6 +56,7 @@ Full report: [Anomaly Detection](anomaly-detection.md)
 | [Phase 2 Strategy](phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
 | [Feature Engineering](feature-engineering.md) | Phase 2 Week 3 temporal features, rolling metrics, and verification |
 | [Anomaly Detection](anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, and model comparison |
+| [Clean Dataset](clean-data.md) | Phase 2 Week 4 Day 3 anomaly masking, interpolation, and Phase 3 artifact |
 
 ## Quick Command
 

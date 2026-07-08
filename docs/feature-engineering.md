@@ -126,8 +126,7 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 
 ## What's Next
 
-- **Week 4 complete** — IF + DBSCAN baselines benchmarked; IF leads on F1. See [Anomaly Detection](anomaly-detection.md).
-- **Next** — IF hyperparameter tuning, experiment notebook
+- **Week 4 complete** — IF + DBSCAN baselines; clean dataset for Phase 3. See [Anomaly Detection](anomaly-detection.md) and [Clean Dataset](clean-data.md).
 
 ---
 
@@ -136,4 +135,5 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 - [Phase 2 Strategy](phase2-strategy.md) — why context-aware features matter
 - [EDA Insights](eda-insights.md) — the 02:00 peak and weekday/weekend findings
 - [Anomaly Detection](anomaly-detection.md) — Week 4 IF + DBSCAN baselines and model comparison
+- [Clean Dataset](clean-data.md) — Week 4 Day 3 imputation pipeline for Phase 3
 - [Architecture](architecture.md) — where `src/features/` sits in the repo

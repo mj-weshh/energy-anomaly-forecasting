@@ -84,7 +84,9 @@ Regenerate doc figures: `python scripts/export_eda_assets.py`
 
 ```
 energy-anomaly-forecasting/
-├── data/raw/                       # Canonical raw data location (optional)
+├── data/
+│   ├── raw/                        # Canonical raw data location (optional)
+│   └── processed/                  # Generated clean CSV (gitignored)
 ├── docs/                           # Documentation (MkDocs source)
 │   └── assets/                     # Verification screenshots and EDA figures
 │       └── eda/                    # Exported Phase 1 Week 2 plots (PNG)
@@ -95,10 +97,12 @@ energy-anomaly-forecasting/
 │   ├── export_eda_assets.py        # Regenerate EDA doc figures
 │   ├── verify_features.py          # Sanity-check engineered features
 │   ├── test_isolation_forest.py    # Isolation Forest baseline + evaluation
-│   └── tune_dbscan.py              # DBSCAN hyperparameter grid search
+│   ├── tune_dbscan.py              # DBSCAN hyperparameter grid search
+│   └── generate_clean_data.py      # Generate Phase 3 clean dataset artifact
 ├── src/
 │   ├── data/
-│   │   └── ingest_data.py          # Canonical ingestion module
+│   │   ├── ingest_data.py          # Canonical ingestion module
+│   │   └── clean_data.py           # Anomaly masking and interpolation
 │   ├── features/
 │   │   └── build_features.py       # Temporal + rolling feature engineering
 │   ├── models/
@@ -144,6 +148,7 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Phase 2 Strategy](docs/phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
 | [Feature Engineering](docs/feature-engineering.md) | Phase 2 Week 3 temporal features and rolling metrics |
 | [Anomaly Detection](docs/anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, and model comparison |
+| [Clean Dataset](docs/clean-data.md) | Phase 2 Week 4 Day 3 anomaly masking, interpolation, and Phase 3 artifact |
 
 ### Build docs site locally
 
@@ -165,6 +170,7 @@ python scripts/export_eda_assets.py
 python scripts/verify_features.py
 python scripts/test_isolation_forest.py
 python scripts/tune_dbscan.py
+python scripts/generate_clean_data.py
 ```
 
 ### Python API
@@ -198,6 +204,18 @@ df_feat = build_all_features(df)
 # Unified router
 model, predictions = detect_anomalies(df_feat, model_type="isolation_forest")
 model, predictions = detect_anomalies(df_feat, model_type="dbscan", eps=0.5, min_samples=5)
+```
+
+### Clean Dataset (Phase 2 → Phase 3)
+
+```python
+from src.data.clean_data import generate_clean_dataset
+from src.data.ingest_data import find_dataset_csv, get_project_root
+
+generate_clean_dataset(
+    str(find_dataset_csv(get_project_root())),
+    "data/processed/clean_smart_meter_data.csv",
+)
 ```
 
 ### Notebooks
