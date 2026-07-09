@@ -101,7 +101,7 @@ Both models are context-friendly when fed the engineered features above. Static 
 - ~~DBSCAN detector and comparison~~ — **done** (best F1 = 0.125; IF wins on current grid)
 - ~~Updated docs with results~~ — **done** (see [Anomaly Detection](anomaly-detection.md), [Clean Dataset](clean-data.md))
 - ~~Clean interpolated dataset for Phase 3 forecasting~~ — **done** (IF default; see [Clean Dataset](clean-data.md))
-- Notebook for experiment traceability
+- ~~Notebook for experiment traceability~~ — **done** — [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb)
 
 ### Explicitly not in Phase 2
 
