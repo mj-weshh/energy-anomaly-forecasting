@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Phase 1](https://img.shields.io/badge/Phase%201-Complete-green.svg)](#verified-results)
+[![Phase 2](https://img.shields.io/badge/Phase%202-Complete-green.svg)](#verified-results)
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built entirely on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
@@ -92,7 +92,8 @@ energy-anomaly-forecasting/
 │       └── eda/                    # Exported Phase 1 Week 2 plots (PNG)
 ├── notebooks/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
-│   └── 02_exploratory_data_analysis.ipynb
+│   ├── 02_exploratory_data_analysis.ipynb
+│   └── 03_anomaly_detection.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py        # Regenerate EDA doc figures
 │   ├── verify_features.py          # Sanity-check engineered features
@@ -147,7 +148,7 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Architecture](docs/architecture.md) | Repository layout and data flow |
 | [Phase 2 Strategy](docs/phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
 | [Feature Engineering](docs/feature-engineering.md) | Phase 2 Week 3 temporal features and rolling metrics |
-| [Anomaly Detection](docs/anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, and model comparison |
+| [Anomaly Detection](docs/anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, model comparison, and educational notebook |
 | [Clean Dataset](docs/clean-data.md) | Phase 2 Week 4 Day 3 anomaly masking, interpolation, and Phase 3 artifact |
 
 ### Build docs site locally
@@ -222,6 +223,7 @@ generate_clean_dataset(
 
 - [`notebooks/01_data_ingestion_and_schema_check.ipynb`](notebooks/01_data_ingestion_and_schema_check.ipynb) — ingestion and schema validation
 - [`notebooks/02_exploratory_data_analysis.ipynb`](notebooks/02_exploratory_data_analysis.ipynb) — Phase 1 Week 2 EDA
+- [`notebooks/03_anomaly_detection.ipynb`](notebooks/03_anomaly_detection.ipynb) — Phase 2 Week 4 CMU tutorial: unsupervised detection, benchmark evaluation, and consumption interpolation
 
 ---
 

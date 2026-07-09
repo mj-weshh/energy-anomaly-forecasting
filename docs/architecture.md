@@ -1,6 +1,6 @@
 # Architecture
 
-Repository layout, data flow, and design decisions for Phase 1.
+Repository layout, data flow, and design decisions for Phases 1–2 (ingestion, EDA, feature engineering, anomaly detection, and clean-data pipeline).
 
 ---
 
@@ -24,7 +24,8 @@ energy-anomaly-forecasting/
 │       └── eda/                      # Phase 1 Week 2 EDA figures (PNG)
 ├── notebooks/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
-│   └── 02_exploratory_data_analysis.ipynb
+│   ├── 02_exploratory_data_analysis.ipynb
+│   └── 03_anomaly_detection.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py          # Regenerate EDA doc figures
 │   ├── verify_features.py            # Sanity-check engineered features
@@ -195,6 +196,7 @@ Writes `data/processed/clean_smart_meter_data.csv` (5000 rows, imputed consumpti
 |----------|------|
 | `src/data/ingest_data.py` | **Canonical source** — import in scripts, tests, and future modules |
 | `notebooks/01_data_ingestion_and_schema_check.ipynb` | **Portable copy** — inline functions for Colab/Kaggle where `src/` may not be on `PYTHONPATH` |
+| `notebooks/03_anomaly_detection.ipynb` | **Phase 2 tutorial** — imports `detect_anomalies`, `evaluate_anomaly_model`, and `interpolate_anomalies` from `src/`; educational mirror of the verification scripts |
 | `src/visualization/visualize.py` | **Canonical EDA plots** — shared by notebook and export script |
 
 When ingestion or visualization logic changes, update the Python module first, then sync the notebook.
@@ -235,7 +237,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Phase | Deliverables | Key modules |
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
-| **2 — Anomaly Detection** | Feature engineering, IF/DBSCAN, clean dataset for Phase 3 | `src/features/build_features.py`, `src/models/train_anomaly_models.py`, `src/data/clean_data.py` |
+| **2 — Anomaly Detection** | Feature engineering, IF/DBSCAN, clean dataset, educational notebook | `src/features/build_features.py`, `src/models/train_anomaly_models.py`, `src/data/clean_data.py`, `notebooks/03_anomaly_detection.ipynb` |
 | **3 — Forecasting** | XGBoost, LSTM, evaluation | `src/models/` (planned) |
 
 ---

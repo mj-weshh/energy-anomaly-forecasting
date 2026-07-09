@@ -2,7 +2,7 @@
 
 Working notes on the clean-data pipeline. Week 4 Days 1–2 gave us anomaly detectors; Day 3 turns those predictions into a **continuity-safe** dataset for Phase 3 forecasting.
 
-**Status:** Week 4 Day 3 complete — clean dataset pipeline and artifact generation  
+**Status:** Week 4 Day 3–4 complete — clean dataset pipeline, artifact generation, and notebook Section 5 walkthrough  
 **Modules:** `src/data/clean_data.py`, `scripts/generate_clean_data.py`  
 **Builds on:** [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md)
 
@@ -109,7 +109,7 @@ generate_clean_dataset(
 ## What's Next
 
 - **Phase 3** — train forecasting models on `clean_smart_meter_data.csv`
-- Optional: experiment notebook documenting the clean-data run for CMU-Africa deliverables
+- **Notebook walkthrough** — Section 5 of [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb) demonstrates masking, interpolation, and a before/after consumption plot; see [Educational Notebook (Day 4)](anomaly-detection.md#educational-notebook-day-4)
 
 ---
 

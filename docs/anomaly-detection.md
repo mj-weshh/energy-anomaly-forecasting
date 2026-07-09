@@ -2,7 +2,7 @@
 
 Working notes on the unsupervised anomaly detection engine. Week 3 gave us a 15-column feature matrix; Week 4 wires that into two detectors with proper imbalance-aware evaluation and a unified routing API.
 
-**Status:** Week 4 complete (Days 1–3) — detectors, comparison, and clean dataset pipeline  
+**Status:** Week 4 complete (Days 1–4) — detectors, comparison, clean dataset pipeline, and educational notebook  
 **Modules:** `src/models/evaluate_models.py`, `src/models/train_anomaly_models.py`  
 **Builds on:** [Phase 2 Strategy](phase2-strategy.md), [Feature Engineering](feature-engineering.md)
 
@@ -144,6 +144,44 @@ Same 4,953 evaluation rows, labels excluded from all training:
 
 ---
 
+## Educational Notebook (Day 4)
+
+CMU-Africa deliverable: an interactive tutorial that walks through the full Phase 2 workflow — unsupervised detection, benchmark evaluation, and consumption interpolation for Phase 3 forecasting.
+
+**Notebook:** [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb)
+
+| Section | Topic |
+|---------|-------|
+| 1 | Setup and data loading via `load_smart_meter_data` |
+| 2 | Feature engineering via `build_all_features` |
+| 3 | Isolation Forest and DBSCAN explained |
+| 4 | Train both models with `detect_anomalies`; benchmark with `evaluate_anomaly_model` |
+| 5 | Clean series with `interpolate_anomalies` (IF predictions); before/after plot |
+
+The notebook imports canonical `src/` modules — same APIs as the verification scripts, not inline reimplementation.
+
+**Run locally:**
+
+```bash
+jupyter notebook notebooks/03_anomaly_detection.ipynb
+# or headless:
+jupyter nbconvert --execute notebooks/03_anomaly_detection.ipynb
+```
+
+**Verified outputs on the canonical dataset:**
+
+| Check | Value |
+|-------|-------|
+| Evaluation rows | 4,953 (47 rolling warm-up rows excluded) |
+| Isolation Forest F1 | 0.331 |
+| DBSCAN best F1 | 0.125 (`eps=0.5`, `min_samples=5`) |
+| Imputed consumption values | ~248 (IF at `contamination=0.05`) |
+| Shape after cleaning | `(5000, 15)` — row count preserved |
+
+Interpolation details: [Clean Dataset](clean-data.md).
+
+---
+
 ## How to Reproduce
 
 ```bash
@@ -181,7 +219,6 @@ _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 - **Phase 3 forecasting** — train on the clean artifact; see [Clean Dataset](clean-data.md)
 - **Isolation Forest tuning** — optional `contamination`, `n_estimators` refinement
 - **Finer DBSCAN search** — optional; IF chosen for cleaning pipeline
-- **Experiment notebook** — traceability for CMU-Africa deliverables
 
 ---
 

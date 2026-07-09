@@ -149,7 +149,43 @@ Output directory: `docs/assets/eda/`
 
 ---
 
-## 7. Build Documentation Site (Optional)
+## 7. Phase 2 Anomaly Detection Scripts
+
+After feature engineering is in place, run the Phase 2 verification and clean-data scripts:
+
+```bash
+python scripts/verify_features.py
+python scripts/test_isolation_forest.py
+python scripts/tune_dbscan.py
+python scripts/generate_clean_data.py
+```
+
+Expected outcomes:
+
+- `verify_features.py` — engineered columns present; rolling warm-up NaNs as designed
+- `test_isolation_forest.py` — IF baseline F1 ≈ 0.331 on 4,953 eval rows
+- `tune_dbscan.py` — DBSCAN grid search; best F1 ≈ 0.125 at `eps=0.5`, `min_samples=5`
+- `generate_clean_data.py` — writes `data/processed/clean_smart_meter_data.csv` (5000 × 15, 0 NaNs)
+
+Full results: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean-data.md)
+
+---
+
+## 8. Run the Anomaly Detection Notebook
+
+Open and execute all cells in:
+
+```
+notebooks/03_anomaly_detection.ipynb
+```
+
+This CMU-Africa educational tutorial walks through load → features → IF/DBSCAN benchmark → interpolation, importing canonical modules from `src/` rather than reimplementing logic inline.
+
+Documented workflow: [Anomaly Detection — Educational Notebook (Day 4)](anomaly-detection.md#educational-notebook-day-4) · [Clean Dataset](clean-data.md)
+
+---
+
+## 9. Build Documentation Site (Optional)
 
 ```bash
 pip install mkdocs mkdocs-material
@@ -203,9 +239,11 @@ pip install -r requirements.txt
 
 ## Next Steps
 
-After ingestion passes:
+After ingestion and Phase 2 pass:
 
 1. Review the [Data Schema](data-schema.md) reference
-2. Confirm results in the [Verification Report](verification-report.md)
+2. Confirm Week 1 results in the [Verification Report](verification-report.md)
 3. Run `notebooks/02_exploratory_data_analysis.ipynb` and review [EDA Insights](eda-insights.md)
-4. Proceed to Phase 2 — unsupervised anomaly detection (planned)
+4. Run Phase 2 scripts (§7) and `notebooks/03_anomaly_detection.ipynb` (§8)
+5. Generate the Phase 3 artifact: `python scripts/generate_clean_data.py`
+6. Proceed to **Phase 3** — time-series forecasting on the clean dataset
