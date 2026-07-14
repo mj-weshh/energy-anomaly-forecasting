@@ -117,9 +117,9 @@ I'll resolve these when implementation starts:
 
 1. **Rolling window length** — *resolved in Week 3:* both 3-hour and 24-hour windows implemented. See [Feature Engineering](feature-engineering.md).
 2. **NaN warm-up rows** — *resolved in Week 4:* drop rows with incomplete rolling windows before training (4953 eval rows).
-3. **DBSCAN hyperparameters** — *resolved in Week 4 Day 2:* coarse grid search done; best F1 = 0.125 at `eps=0.5`, `min_samples=5`. Finer search optional.
-4. **Ensemble vs pick-one** — *resolved for cleaning:* IF chosen as default cleaner (F1 0.331 vs DBSCAN 0.125). Ensemble scoring still optional for detection.
-5. **Isolation Forest tuning** — baseline F1 = 0.331 at `contamination=0.05`; tune `n_estimators` and contamination next (optional).
+3. **DBSCAN hyperparameters** — *resolved:* legacy coarse grid F1 = 0.125; enhanced scaled grid test F1 = **0.297** at `eps=10`, `min_samples=10`, manhattan. See [Anomaly Tuning Results](anomaly-tuning-results.md).
+4. **Ensemble vs pick-one** — *resolved for cleaning:* IF chosen as default cleaner (F1 0.331 vs DBSCAN 0.125). Ensemble union test F1 = 0.400 — below enhanced IF alone (0.460).
+5. **Isolation Forest tuning** — *resolved:* enhanced IF test F1 = **0.460** vs legacy fair test F1 = **0.340** (production params) / **0.389** (val threshold). Production pipeline still uses legacy defaults. See [Anomaly Tuning Results](anomaly-tuning-results.md).
 
 ---
 

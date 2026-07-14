@@ -155,6 +155,7 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Phase 2 Strategy](docs/phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
 | [Feature Engineering](docs/feature-engineering.md) | Phase 2 Week 3 temporal features and rolling metrics |
 | [Anomaly Detection](docs/anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, model comparison, and educational notebook |
+| [Anomaly Tuning Results](docs/anomaly-tuning-results.md) | Phase 2 research tuning report — enhanced features, temporal splits, fair comparison |
 | [Clean Dataset](docs/clean-data.md) | Phase 2 Week 4 Day 3 anomaly masking, interpolation, and Phase 3 artifact |
 
 ### Build docs site locally

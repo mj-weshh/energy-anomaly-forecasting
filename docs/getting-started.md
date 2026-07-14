@@ -176,9 +176,9 @@ python scripts/tune_ensemble.py
 python scripts/compare_anomaly_models.py
 ```
 
-Expected: enhanced IF test F1 ≈ **0.46**; ensemble union test F1 ≈ **0.40** (see `anomaly_config.py`).
+Expected: enhanced IF test F1 ≈ **0.46**; legacy IF fair test F1 ≈ **0.34**; ensemble union test F1 ≈ **0.40** (see `anomaly_config.py`).
 
-Full results: [Anomaly Detection — Research Tuning](anomaly-detection.md#research-tuning-enhanced-features--temporal-splits) · [Clean Dataset](clean-data.md)
+Full results: [Anomaly Tuning Results](anomaly-tuning-results.md) · [Anomaly Detection — Research Tuning](anomaly-detection.md#research-tuning-enhanced-features--temporal-splits) · [Clean Dataset](clean-data.md)
 
 ---
 
