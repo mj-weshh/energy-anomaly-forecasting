@@ -60,3 +60,18 @@ def evaluate_anomaly_model(
         "f1": f1_score(y_true_arr, y_pred_arr, pos_label=1, zero_division=0),
         "confusion_matrix": confusion_matrix(y_true_arr, y_pred_arr, labels=[0, 1]),
     }
+
+
+def evaluate_on_splits(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    train_idx: np.ndarray,
+    val_idx: np.ndarray,
+    test_idx: np.ndarray,
+) -> dict[str, dict[str, Any]]:
+    """Return train/val/test metric dicts for temporal evaluation."""
+    return {
+        "train": evaluate_anomaly_model(y_true[train_idx], y_pred[train_idx]),
+        "val": evaluate_anomaly_model(y_true[val_idx], y_pred[val_idx]),
+        "test": evaluate_anomaly_model(y_true[test_idx], y_pred[test_idx]),
+    }

@@ -98,7 +98,10 @@ energy-anomaly-forecasting/
 │   ├── export_eda_assets.py        # Regenerate EDA doc figures
 │   ├── verify_features.py          # Sanity-check engineered features
 │   ├── test_isolation_forest.py    # Isolation Forest baseline + evaluation
+│   ├── tune_isolation_forest.py    # Enhanced IF hyperparameter + threshold tuning
 │   ├── tune_dbscan.py              # DBSCAN hyperparameter grid search
+│   ├── tune_ensemble.py            # IF + DBSCAN ensemble comparison
+│   ├── compare_anomaly_models.py   # Legacy vs enhanced research dashboard
 │   └── generate_clean_data.py      # Generate Phase 3 clean dataset artifact
 ├── src/
 │   ├── data/
@@ -108,7 +111,10 @@ energy-anomaly-forecasting/
 │   │   └── build_features.py       # Temporal + rolling feature engineering
 │   ├── models/
 │   │   ├── evaluate_models.py      # Imbalance-aware evaluation metrics
-│   │   └── train_anomaly_models.py # Unsupervised anomaly training
+│   │   ├── train_anomaly_models.py # Unsupervised anomaly training
+│   │   ├── anomaly_preprocessing.py # Train-fitted scaling for tuning
+│   │   ├── tuning_utils.py         # Temporal splits and threshold search
+│   │   └── anomaly_config.py       # Research-tuned hyperparameters
 │   └── visualization/
 │       └── visualize.py            # EDA plotting functions
 ├── Smart Meter Electricity Consumption Dataset/
@@ -171,6 +177,9 @@ python scripts/export_eda_assets.py
 python scripts/verify_features.py
 python scripts/test_isolation_forest.py
 python scripts/tune_dbscan.py
+python scripts/tune_isolation_forest.py
+python scripts/tune_ensemble.py
+python scripts/compare_anomaly_models.py
 python scripts/generate_clean_data.py
 ```
 

@@ -7,6 +7,10 @@ fills gaps with time-aware interpolation while preserving row count.
 
 Typical upstream flow: feature engineering → ``detect_anomalies`` →
 :func:`interpolate_anomalies`. See docs/anomaly-detection.md.
+
+Production ``generate_clean_dataset`` uses legacy 15-column features and
+default Isolation Forest params. Research-optimized configs live in
+``src/models/anomaly_config.py`` and ``scripts/tune_*.py``.
 """
 
 from __future__ import annotations

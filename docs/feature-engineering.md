@@ -79,6 +79,31 @@ Same copy and sort semantics as the individual functions; no extra logic beyond 
 
 ---
 
+## Enhanced Anomaly Features (Research)
+
+`build_enhanced_anomaly_features(df)` adds cyclical time encoding and consumption derivatives on top of the legacy pipeline:
+
+| Function | Columns added |
+|----------|---------------|
+| `add_cyclical_features(df)` | `hour_sin`, `hour_cos`, `dow_sin`, `dow_cos` |
+| `add_consumption_derivatives(df)` | `consumption_diff`, `consumption_residual_24h` |
+
+```python
+from src.features.build_features import build_enhanced_anomaly_features
+
+df = build_enhanced_anomaly_features(df)  # (5000, 21)
+```
+
+Used by `scripts/tune_*.py` — **not** by the production clean-data pipeline (still 15 columns).
+
+Verify with:
+
+```bash
+python scripts/verify_features.py --enhanced
+```
+
+---
+
 `scripts/verify_features.py` (which replaced the earlier `verify_temporal.py`) loads the real dataset, applies both functions, and sanity-checks everything:
 
 ```bash

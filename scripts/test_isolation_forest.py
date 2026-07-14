@@ -7,10 +7,12 @@ against the benchmark ``Anomaly_Label`` using imbalance-aware metrics.
 Run from repository root::
 
     python scripts/test_isolation_forest.py
+    python scripts/test_isolation_forest.py --enhanced
 """
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -23,7 +25,11 @@ from src.data.ingest_data import (  # noqa: E402
     get_project_root,
     load_smart_meter_data,
 )
-from src.features.build_features import build_all_features  # noqa: E402
+from src.features.build_features import (  # noqa: E402
+    build_all_features,
+    build_enhanced_anomaly_features,
+)
+from src.models.anomaly_config import BEST_IF_CONFIG  # noqa: E402
 from src.models.evaluate_models import evaluate_anomaly_model  # noqa: E402
 from src.models.train_anomaly_models import (  # noqa: E402
     prepare_feature_matrix,
@@ -32,8 +38,31 @@ from src.models.train_anomaly_models import (  # noqa: E402
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Isolation Forest baseline check.")
+    parser.add_argument(
+        "--enhanced",
+        action="store_true",
+        help="Use enhanced features + scaled research config (full-dataset eval).",
+    )
+    args = parser.parse_args()
+
     csv_path = find_dataset_csv(get_project_root())
-    df = build_all_features(load_smart_meter_data(csv_path))
+    raw = load_smart_meter_data(csv_path)
+
+    if args.enhanced:
+        df = build_enhanced_anomaly_features(raw)
+        kwargs = {
+            "scale": BEST_IF_CONFIG.get("scale", True),
+            "n_estimators": BEST_IF_CONFIG.get("n_estimators", 200),
+            "max_features": BEST_IF_CONFIG.get("max_features", 1.0),
+            "contamination": BEST_IF_CONFIG.get("contamination", 0.05),
+            "drop_weather": BEST_IF_CONFIG.get("drop_weather", False),
+        }
+        label = "Enhanced Isolation Forest (full dataset)"
+    else:
+        df = build_all_features(raw)
+        kwargs = {}
+        label = "Legacy Isolation Forest baseline"
 
     clean_index = prepare_feature_matrix(df).index
     y_true = (
@@ -42,7 +71,7 @@ def main() -> None:
         .to_numpy(dtype=int)
     )
 
-    _, y_pred = train_isolation_forest(df)
+    _, y_pred = train_isolation_forest(df, **kwargs)
     assert len(y_true) == len(y_pred), "y_true and y_pred length mismatch"
 
     metrics = evaluate_anomaly_model(y_true, y_pred)
@@ -50,7 +79,7 @@ def main() -> None:
 
     print(f"Loaded: {csv_path}")
     print(f"Evaluation rows: {len(y_true)}\n")
-    print("Isolation Forest baseline metrics (Abnormal = positive class):")
+    print(f"{label} metrics (Abnormal = positive class):")
     print(f"  Precision: {metrics['precision']:.3f}")
     print(f"  Recall:    {metrics['recall']:.3f}")
     print(f"  F1:        {metrics['f1']:.3f}")

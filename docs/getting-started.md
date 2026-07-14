@@ -164,10 +164,21 @@ Expected outcomes:
 
 - `verify_features.py` — engineered columns present; rolling warm-up NaNs as designed
 - `test_isolation_forest.py` — IF baseline F1 ≈ 0.331 on 4,953 eval rows
-- `tune_dbscan.py` — DBSCAN grid search; best F1 ≈ 0.125 at `eps=0.5`, `min_samples=5`
+- `tune_dbscan.py --legacy` — legacy coarse grid; enhanced mode uses scaled features
 - `generate_clean_data.py` — writes `data/processed/clean_smart_meter_data.csv` (5000 × 15, 0 NaNs)
 
-Full results: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean-data.md)
+Research tuning (enhanced features, temporal 60/20/20 splits):
+
+```bash
+python scripts/tune_isolation_forest.py
+python scripts/tune_dbscan.py
+python scripts/tune_ensemble.py
+python scripts/compare_anomaly_models.py
+```
+
+Expected: enhanced IF test F1 ≈ **0.46**; ensemble union test F1 ≈ **0.40** (see `anomaly_config.py`).
+
+Full results: [Anomaly Detection — Research Tuning](anomaly-detection.md#research-tuning-enhanced-features--temporal-splits) · [Clean Dataset](clean-data.md)
 
 ---
 

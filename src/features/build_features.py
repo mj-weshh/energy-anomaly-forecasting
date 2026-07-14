@@ -29,6 +29,7 @@ Usage:
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 
@@ -109,3 +110,69 @@ def build_all_features(df: pd.DataFrame) -> pd.DataFrame:
         Copy of ``df`` with temporal and rolling feature columns added.
     """
     return add_rolling_metrics(add_temporal_features(df))
+
+
+def add_cyclical_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Encode hour and day-of-week as sin/cos pairs for distance-based models.
+
+    Args:
+        df: DataFrame with ``hour`` and ``day_of_week`` columns (from
+            ``add_temporal_features``).
+
+    Returns:
+        Copy of ``df`` with ``hour_sin``, ``hour_cos``, ``dow_sin``, ``dow_cos``.
+
+    Raises:
+        KeyError: If required temporal columns are missing.
+    """
+    for column in ("hour", "day_of_week"):
+        if column not in df.columns:
+            raise KeyError(f"Required column '{column}' not found in DataFrame.")
+
+    df = df.copy()
+    df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
+    df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
+    df["dow_sin"] = np.sin(2 * np.pi * df["day_of_week"] / 7)
+    df["dow_cos"] = np.cos(2 * np.pi * df["day_of_week"] / 7)
+    return df
+
+
+def add_consumption_derivatives(df: pd.DataFrame) -> pd.DataFrame:
+    """Add step change and local-baseline residual features for consumption.
+
+    Args:
+        df: Chronologically sorted DataFrame with ``Electricity_Consumed`` and
+            ``rolling_mean_24h`` (from ``add_rolling_metrics``).
+
+    Returns:
+        Copy of ``df`` with ``consumption_diff`` and ``consumption_residual_24h``.
+
+    Raises:
+        KeyError: If required columns are missing.
+    """
+    for column in ("Electricity_Consumed", "rolling_mean_24h"):
+        if column not in df.columns:
+            raise KeyError(f"Required column '{column}' not found in DataFrame.")
+
+    df = df.sort_values("Timestamp").copy() if "Timestamp" in df.columns else df.copy()
+    df["consumption_diff"] = df["Electricity_Consumed"].diff()
+    df["consumption_residual_24h"] = (
+        df["Electricity_Consumed"] - df["rolling_mean_24h"]
+    )
+    return df
+
+
+def build_enhanced_anomaly_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply legacy features plus cyclical encoding and consumption derivatives.
+
+    Research/tuning pipeline entry point. Production clean-data still uses
+    ``build_all_features`` (15 columns).
+
+    Args:
+        df: Validated DataFrame from ``src.data.ingest_data``.
+
+    Returns:
+        Copy of ``df`` with 21 feature-engineered columns (7 original + 14 new).
+    """
+    featured = build_all_features(df)
+    return add_consumption_derivatives(add_cyclical_features(featured))

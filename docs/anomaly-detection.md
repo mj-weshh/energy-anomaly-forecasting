@@ -182,12 +182,45 @@ Interpolation details: [Clean Dataset](clean-data.md).
 
 ---
 
+## Research Tuning (Enhanced Features + Temporal Splits)
+
+Production cleaning still uses **legacy** 15-column features and default IF (`contamination=0.05`). Research scripts opt into enhanced features (`build_enhanced_anomaly_features`, 21 columns), train-only scaling, chronological 60/20/20 splits, and hyperparameter grids.
+
+**Modules:** `src/models/anomaly_preprocessing.py`, `src/models/tuning_utils.py`, `src/models/anomaly_config.py`
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/tune_isolation_forest.py` | IF grid + score-threshold tuning on validation |
+| `scripts/tune_dbscan.py` | DBSCAN grid (enhanced scaled or `--legacy`) |
+| `scripts/tune_ensemble.py` | IF ∩ DBSCAN union/intersection/weighted strategies |
+| `scripts/compare_anomaly_models.py` | Legacy vs enhanced dashboard |
+
+### Tuned results (temporal test split)
+
+| Model | Config highlights | Test F1 | vs legacy IF |
+|-------|-------------------|---------|--------------|
+| **Legacy IF** | 15 features, full dataset | **0.331** | baseline |
+| **Enhanced IF** | scaled, threshold=0.0168, `max_features=0.6` | **0.460** | +39% relative |
+| **Enhanced DBSCAN** | scaled, `eps=10`, `min_samples=10`, manhattan | **0.297** | below IF |
+| **Ensemble (union)** | IF ∪ DBSCAN | **0.400** | best ensemble test |
+| **Ensemble (intersection)** | IF ∩ DBSCAN | **0.329** | higher precision, lower recall |
+
+Honest read: enhanced IF with score thresholds beats the original baseline on held-out test data (0.331 → 0.460). DBSCAN improves with scaling and wider `eps` but still trails IF alone. Union ensemble reaches test F1 **0.400** on this run — a modest gain over IF alone, not a dramatic jump to 0.8+.
+
+Configs are stored in `src/models/anomaly_config.py` (research only — not wired to `generate_clean_dataset`).
+
+---
+
 ## How to Reproduce
 
 ```bash
 pip install -r requirements.txt
 python scripts/test_isolation_forest.py
+python scripts/tune_dbscan.py --legacy
+python scripts/tune_isolation_forest.py
 python scripts/tune_dbscan.py
+python scripts/tune_ensemble.py
+python scripts/compare_anomaly_models.py
 ```
 
 Python API:
@@ -217,8 +250,7 @@ _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 ## What's Next
 
 - **Phase 3 forecasting** — train on the clean artifact; see [Clean Dataset](clean-data.md)
-- **Isolation Forest tuning** — optional `contamination`, `n_estimators` refinement
-- **Finer DBSCAN search** — optional; IF chosen for cleaning pipeline
+- Optional: adopt tuned IF config for production cleaning (currently legacy by design)
 
 ---
 
