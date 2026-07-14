@@ -186,26 +186,28 @@ Interpolation details: [Clean Dataset](clean-data.md).
 
 Production cleaning still uses **legacy** 15-column features and default IF (`contamination=0.05`). Research scripts opt into enhanced features (`build_enhanced_anomaly_features`, 21 columns), train-only scaling, chronological 60/20/20 splits, and hyperparameter grids.
 
+**Status:** Tuning complete — full report: [Anomaly Tuning Results](anomaly-tuning-results.md)
+
 **Modules:** `src/models/anomaly_preprocessing.py`, `src/models/tuning_utils.py`, `src/models/anomaly_config.py`
 
 | Script | Purpose |
 |--------|---------|
 | `scripts/tune_isolation_forest.py` | IF grid + score-threshold tuning on validation |
 | `scripts/tune_dbscan.py` | DBSCAN grid (enhanced scaled or `--legacy`) |
-| `scripts/tune_ensemble.py` | IF ∩ DBSCAN union/intersection/weighted strategies |
-| `scripts/compare_anomaly_models.py` | Legacy vs enhanced dashboard |
+| `scripts/tune_ensemble.py` | IF ∪ DBSCAN union/intersection/weighted strategies |
+| `scripts/compare_anomaly_models.py` | Legacy vs enhanced dashboard + fair test-split comparison |
 
-### Tuned results (temporal test split)
+### Tuned results (summary)
 
-| Model | Config highlights | Test F1 | vs legacy IF |
-|-------|-------------------|---------|--------------|
-| **Legacy IF** | 15 features, full dataset | **0.331** | baseline |
-| **Enhanced IF** | scaled, threshold=0.0168, `max_features=0.6` | **0.460** | +39% relative |
-| **Enhanced DBSCAN** | scaled, `eps=10`, `min_samples=10`, manhattan | **0.297** | below IF |
-| **Ensemble (union)** | IF ∪ DBSCAN | **0.400** | best ensemble test |
-| **Ensemble (intersection)** | IF ∩ DBSCAN | **0.329** | higher precision, lower recall |
+| Model | Test F1 | vs legacy IF (full 0.331) |
+|-------|---------|----------------------------|
+| **Legacy IF** (full dataset) | **0.331** | production baseline |
+| **Legacy IF** (fair test split) | **0.340** | same window as enhanced |
+| **Enhanced IF** | **0.460** | +35% vs fair legacy (val threshold 0.389) |
+| **Enhanced DBSCAN** | **0.297** | below IF |
+| **Ensemble (union)** | **0.400** | below enhanced IF alone |
 
-Honest read: enhanced IF with score thresholds beats the original baseline on held-out test data (0.331 → 0.460). DBSCAN improves with scaling and wider `eps` but still trails IF alone. Union ensemble reaches test F1 **0.400** on this run — a modest gain over IF alone, not a dramatic jump to 0.8+.
+See [Anomaly Tuning Results](anomaly-tuning-results.md) for methodology, confusion matrices, search spaces, and fair head-to-head tables.
 
 Configs are stored in `src/models/anomaly_config.py` (research only — not wired to `generate_clean_dataset`).
 

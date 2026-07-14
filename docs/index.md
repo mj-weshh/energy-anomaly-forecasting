@@ -41,7 +41,7 @@ Full analysis: [EDA Insights](eda-insights.md)
 - **IF leads on F1** on this coarse grid; DBSCAN over-flags at most settings
 - Clean dataset pipeline (Day 3): IF + time interpolation → `data/processed/clean_smart_meter_data.csv` (**5000 rows preserved**)
 - CMU educational notebook (Day 4): [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb) — full detect → benchmark → interpolate workflow
-- Research tuning: enhanced features + temporal splits → enhanced IF test F1 ≈ **0.46**, ensemble union test F1 ≈ **0.40** (`scripts/tune_*.py`)
+- Research tuning: enhanced features + temporal splits → enhanced IF test F1 ≈ **0.46** (fair legacy test F1 ≈ **0.34**); full report: [Anomaly Tuning Results](anomaly-tuning-results.md)
 - `Anomaly_Label` used for evaluation only — never for model fitting
 
 Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean-data.md)
@@ -58,6 +58,7 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 | [Phase 2 Strategy](phase2-strategy.md) | Anomaly detection planning grounded in Phase 1 EDA |
 | [Feature Engineering](feature-engineering.md) | Phase 2 Week 3 temporal features, rolling metrics, and verification |
 | [Anomaly Detection](anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, model comparison, and educational notebook |
+| [Anomaly Tuning Results](anomaly-tuning-results.md) | Phase 2 research tuning — enhanced features, temporal splits, fair comparison |
 | [Clean Dataset](clean-data.md) | Phase 2 Week 4 Day 3 anomaly masking, interpolation, and Phase 3 artifact |
 
 ## Quick Command
