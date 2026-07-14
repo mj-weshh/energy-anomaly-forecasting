@@ -9,7 +9,10 @@ rolling statistics) and re-exported here once stable.
 """
 
 __all__ = [
+    "add_consumption_derivatives",
+    "add_cyclical_features",
     "add_rolling_metrics",
     "add_temporal_features",
     "build_all_features",
+    "build_enhanced_anomaly_features",
 ]

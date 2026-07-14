@@ -30,7 +30,10 @@ energy-anomaly-forecasting/
 │   ├── export_eda_assets.py          # Regenerate EDA doc figures
 │   ├── verify_features.py            # Sanity-check engineered features
 │   ├── test_isolation_forest.py      # Isolation Forest baseline + evaluation
+│   ├── tune_isolation_forest.py      # Enhanced IF hyperparameter + threshold tuning
 │   ├── tune_dbscan.py                # DBSCAN hyperparameter grid search
+│   ├── tune_ensemble.py              # IF + DBSCAN ensemble comparison
+│   ├── compare_anomaly_models.py     # Legacy vs enhanced research dashboard
 │   └── generate_clean_data.py        # Generate Phase 3 clean dataset artifact
 ├── src/
 │   ├── __init__.py
@@ -44,7 +47,10 @@ energy-anomaly-forecasting/
 │   ├── models/
 │   │   ├── __init__.py
 │   │   ├── evaluate_models.py        # Imbalance-aware evaluation metrics
-│   │   └── train_anomaly_models.py   # Unsupervised anomaly training
+│   │   ├── train_anomaly_models.py   # Unsupervised anomaly training
+│   │   ├── anomaly_preprocessing.py  # Train-fitted scaling for tuning
+│   │   ├── tuning_utils.py           # Temporal splits and threshold search
+│   │   └── anomaly_config.py         # Research-tuned hyperparameters
 │   └── visualization/
 │       ├── __init__.py
 │       └── visualize.py              # EDA plotting functions
@@ -152,7 +158,9 @@ Loads the dataset via `src.data.ingest_data`, applies both feature functions, an
 | `prepare_feature_matrix(df)` | `train_anomaly_models.py` | Numeric training matrix; drops label, timestamp, and NaN warm-up rows |
 | `train_isolation_forest(df)` | `train_anomaly_models.py` | Unsupervised Isolation Forest fit; returns model and 0/1 predictions |
 | `train_dbscan(df)` | `train_anomaly_models.py` | Unsupervised DBSCAN fit; noise points mapped to Abnormal |
-| `detect_anomalies(df, model_type)` | `train_anomaly_models.py` | Unified router to Isolation Forest or DBSCAN |
+| `detect_anomalies(df, model_type)` | `train_anomaly_models.py` | Unified router to Isolation Forest, DBSCAN, or ensemble |
+| `train_ensemble(df, ...)` | `train_anomaly_models.py` | IF + DBSCAN intersection/union/weighted |
+| `AnomalyPreprocessor` | `anomaly_preprocessing.py` | Train-only StandardScaler + hourly z-score |
 
 See [Anomaly Detection](anomaly-detection.md) for baseline results and design notes.
 
@@ -160,7 +168,10 @@ See [Anomaly Detection](anomaly-detection.md) for baseline results and design no
 
 ```bash
 python scripts/test_isolation_forest.py
-python scripts/tune_dbscan.py
+python scripts/tune_dbscan.py --legacy
+python scripts/tune_isolation_forest.py
+python scripts/tune_ensemble.py
+python scripts/compare_anomaly_models.py
 ```
 
 Loads data, applies features, trains unsupervised detectors (labels excluded), and prints imbalance-aware metrics against the benchmark.
