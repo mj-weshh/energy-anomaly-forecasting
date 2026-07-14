@@ -39,7 +39,7 @@ DAY_ORDER: list[str] = [
 ]
 
 
-def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
+def add_plot_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     """Derive hour-of-day and day-of-week columns from ``Timestamp``.
 
     Args:
@@ -132,7 +132,7 @@ def plot_hourly_load_profile(
     """Plot consumption distribution by hour of day (daily load profile).
 
     Args:
-        df: DataFrame with ``hour`` column (use :func:`add_temporal_features` first).
+        df: DataFrame with ``hour`` column (use :func:`add_plot_temporal_features` first).
         target: Numeric column to aggregate by hour.
         figsize: Figure size when creating a new figure.
         ax: Optional axes to draw on.
@@ -144,7 +144,7 @@ def plot_hourly_load_profile(
         KeyError: If ``hour`` or ``target`` is missing from ``df``.
     """
     if "hour" not in df.columns:
-        raise KeyError("Column 'hour' not found. Call add_temporal_features() first.")
+        raise KeyError("Column 'hour' not found. Call add_plot_temporal_features() first.")
     if target not in df.columns:
         raise KeyError(f"Target column '{target}' not found in DataFrame.")
 
@@ -179,7 +179,7 @@ def plot_weekly_load_profile(
     """Plot consumption distribution by day of week (weekly seasonality).
 
     Args:
-        df: DataFrame with ``day_name`` column (use :func:`add_temporal_features` first).
+        df: DataFrame with ``day_name`` column (use :func:`add_plot_temporal_features` first).
         target: Numeric column to aggregate by day.
         figsize: Figure size when creating a new figure.
         ax: Optional axes to draw on.
@@ -192,7 +192,7 @@ def plot_weekly_load_profile(
     """
     if "day_name" not in df.columns:
         raise KeyError(
-            "Column 'day_name' not found. Call add_temporal_features() first."
+            "Column 'day_name' not found. Call add_plot_temporal_features() first."
         )
     if target not in df.columns:
         raise KeyError(f"Target column '{target}' not found in DataFrame.")

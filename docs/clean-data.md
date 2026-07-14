@@ -3,7 +3,7 @@
 Working notes on the clean-data pipeline. Week 4 Days 1–2 gave us anomaly detectors; Day 3 turns those predictions into a **continuity-safe** dataset for Phase 3 forecasting.
 
 **Status:** Week 4 Day 3–4 complete — clean dataset pipeline, artifact generation, and notebook Section 5 walkthrough  
-**Modules:** `src/data/clean_data.py`, `scripts/generate_clean_data.py`  
+**Modules:** `src/data/clean_data.py`, `src/pipelines/clean_dataset.py`, `scripts/generate_clean_data.py`  
 **Builds on:** [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md)
 
 ---
@@ -31,7 +31,7 @@ Only consumption gaps created by masking are filled — other columns are not in
 
 ### End-to-end pipeline — `generate_clean_dataset(input_path, output_path)`
 
-Chains the full clean-data flow:
+Defined in `src/pipelines/clean_dataset.py` (re-exported from `src.data.clean_data` for compatibility). Chains:
 
 1. `load_smart_meter_data` — raw CSV
 2. `build_all_features` — temporal + rolling columns
@@ -66,6 +66,8 @@ From `python scripts/generate_clean_data.py` on the canonical dataset:
 ### Why Isolation Forest for cleaning
 
 IF leads on benchmark F1 (0.331 vs DBSCAN best 0.125) and predicts closer to the ~5% anomaly rate (~248 flagged vs ~726 for DBSCAN defaults). Better fit for a conservative clean pass before forecasting.
+
+Research tuning reached enhanced IF test F1 **0.460** on a held-out window; that config is **not** used for this artifact. See [Anomaly Tuning Results](anomaly-tuning-results.md).
 
 ---
 
@@ -118,3 +120,4 @@ generate_clean_dataset(
 - [Anomaly Detection](anomaly-detection.md) — Isolation Forest baseline used for cleaning
 - [Feature Engineering](feature-engineering.md) — features included in the output CSV
 - [Architecture](architecture.md) — where `src/data/clean_data.py` sits in the repo
+- [Anomaly Tuning Results](anomaly-tuning-results.md) — research IF configs (not adopted for cleaning)

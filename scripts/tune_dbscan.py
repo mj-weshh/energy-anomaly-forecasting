@@ -31,16 +31,9 @@ from src.features.build_features import (  # noqa: E402
     build_all_features,
     build_enhanced_anomaly_features,
 )
-from src.models.anomaly_preprocessing import AnomalyPreprocessor  # noqa: E402
-from src.models.evaluate_models import (  # noqa: E402
-    evaluate_anomaly_model,
-    evaluate_on_splits,
-)
-from src.models.train_anomaly_models import prepare_feature_matrix  # noqa: E402
-from src.models.tuning_utils import (  # noqa: E402
-    align_labels,
-    temporal_train_val_test_split,
-)
+from src.models.evaluate_models import evaluate_anomaly_model, evaluate_on_splits  # noqa: E402
+from src.models.feature_matrix import prepare_feature_matrix  # noqa: E402
+from src.models.tuning_utils import align_labels, prepare_temporal_tuning_data  # noqa: E402
 
 LEGACY_EPS_VALUES = [0.1, 0.3, 0.5, 0.7]
 LEGACY_MIN_SAMPLES_VALUES = [5, 10, 20]
@@ -48,17 +41,6 @@ LEGACY_MIN_SAMPLES_VALUES = [5, 10, 20]
 ENHANCED_EPS_VALUES = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0]
 ENHANCED_MIN_SAMPLES_VALUES = [3, 5, 10, 15, 20]
 METRIC_VALUES = ["euclidean", "manhattan"]
-
-
-def _scaled_matrix(df, train_idx):
-    feature_matrix = prepare_feature_matrix(df)
-    hours = df.loc[feature_matrix.index, "hour"]
-    consumption = df.loc[feature_matrix.index, "Electricity_Consumed"]
-    preprocessor = AnomalyPreprocessor()
-    train_mask = np.zeros(len(feature_matrix), dtype=bool)
-    train_mask[train_idx] = True
-    preprocessor.fit(feature_matrix, hours, consumption, train_mask)
-    return feature_matrix, preprocessor.transform(feature_matrix, hours, consumption)
 
 
 def run_legacy(csv_path: str) -> None:
@@ -103,17 +85,16 @@ def run_legacy(csv_path: str) -> None:
 
 def run_enhanced(csv_path: str) -> None:
     df = build_enhanced_anomaly_features(load_smart_meter_data(csv_path))
-    feature_matrix = prepare_feature_matrix(df)
-    y_true = align_labels(df, feature_matrix.index)
-    train_idx, val_idx, test_idx = temporal_train_val_test_split(len(feature_matrix))
-    _, X = _scaled_matrix(df, train_idx)
+    data = prepare_temporal_tuning_data(df, scale=True)
 
     best_val_f1 = -1.0
     best_config: dict = {}
 
     print(f"Loaded: {csv_path}")
-    print(f"Evaluation rows: {len(y_true)}")
-    print(f"Train/val/test: {len(train_idx)}/{len(val_idx)}/{len(test_idx)}\n")
+    print(f"Evaluation rows: {len(data.y_true)}")
+    print(
+        f"Train/val/test: {len(data.train_idx)}/{len(data.val_idx)}/{len(data.test_idx)}\n"
+    )
     print("DBSCAN enhanced grid (scaled, validation F1):")
     print(
         f"{'eps':>5}  {'min_s':>5}  {'metric':>10}  "
@@ -125,9 +106,13 @@ def run_enhanced(csv_path: str) -> None:
         for min_samples in ENHANCED_MIN_SAMPLES_VALUES:
             for metric in METRIC_VALUES:
                 model = DBSCAN(eps=eps, min_samples=min_samples, metric=metric)
-                preds = (model.fit_predict(X) == -1).astype(int)
-                val_metrics = evaluate_anomaly_model(y_true[val_idx], preds[val_idx])
-                test_metrics = evaluate_anomaly_model(y_true[test_idx], preds[test_idx])
+                preds = (model.fit_predict(data.X) == -1).astype(int)
+                val_metrics = evaluate_anomaly_model(
+                    data.y_true[data.val_idx], preds[data.val_idx]
+                )
+                test_metrics = evaluate_anomaly_model(
+                    data.y_true[data.test_idx], preds[data.test_idx]
+                )
                 print(
                     f"{eps:5.2f}  {min_samples:5d}  {metric:>10}  "
                     f"{val_metrics['f1']:7.3f}  {test_metrics['f1']:7.3f}  "
@@ -144,7 +129,7 @@ def run_enhanced(csv_path: str) -> None:
 
     assert best_config
     split_metrics = evaluate_on_splits(
-        y_true, best_config["preds"], train_idx, val_idx, test_idx
+        data.y_true, best_config["preds"], data.train_idx, data.val_idx, data.test_idx
     )
 
     print("\nBest validation config:")

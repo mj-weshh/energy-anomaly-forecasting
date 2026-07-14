@@ -1,8 +1,5 @@
 """Grid search Isolation Forest with temporal train/val/test splits.
 
-Uses enhanced features, optional weather ablation, and score-threshold tuning
-on the validation split. Labels are benchmark-only.
-
 Run from repository root::
 
     python scripts/tune_isolation_forest.py
@@ -22,44 +19,19 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.data.ingest_data import (  # noqa: E402
-    find_dataset_csv,
-    get_project_root,
-    load_smart_meter_data,
-)
+from src.data.ingest_data import find_dataset_csv, get_project_root, load_smart_meter_data  # noqa: E402
 from src.features.build_features import build_enhanced_anomaly_features  # noqa: E402
-from src.models.anomaly_preprocessing import AnomalyPreprocessor  # noqa: E402
-from src.models.evaluate_models import evaluate_on_splits  # noqa: E402
-from src.models.train_anomaly_models import prepare_feature_matrix  # noqa: E402
+from src.models.evaluate_models import evaluate_anomaly_model, evaluate_on_splits  # noqa: E402
 from src.models.tuning_utils import (  # noqa: E402
-    align_labels,
-    apply_feature_ablation,
     find_best_threshold,
     isolation_forest_scores,
     predict_from_scores,
-    temporal_train_val_test_split,
+    prepare_temporal_tuning_data,
 )
 
 CONTAMINATION_VALUES = [0.03, 0.04, 0.05, 0.06, 0.07, 0.08]
 N_ESTIMATORS_VALUES = [100, 200, 300]
 MAX_FEATURES_VALUES = [1.0, 0.8, 0.6]
-
-
-def _prepare_split_data(df, drop_weather: bool):
-    feature_matrix = apply_feature_ablation(prepare_feature_matrix(df), drop_weather)
-    y_true = align_labels(df, feature_matrix.index)
-    train_idx, val_idx, test_idx = temporal_train_val_test_split(len(feature_matrix))
-
-    hours = df.loc[feature_matrix.index, "hour"]
-    consumption = df.loc[feature_matrix.index, "Electricity_Consumed"]
-
-    preprocessor = AnomalyPreprocessor()
-    train_mask = np.zeros(len(feature_matrix), dtype=bool)
-    train_mask[train_idx] = True
-    preprocessor.fit(feature_matrix, hours, consumption, train_mask)
-    X = preprocessor.transform(feature_matrix, hours, consumption)
-
-    return feature_matrix, X, y_true, train_idx, val_idx, test_idx, preprocessor
 
 
 def main() -> None:
@@ -73,10 +45,7 @@ def main() -> None:
 
     csv_path = find_dataset_csv(get_project_root())
     df = build_enhanced_anomaly_features(load_smart_meter_data(csv_path))
-
-    X_df, X, y_true, train_idx, val_idx, test_idx, _ = _prepare_split_data(
-        df, drop_weather=args.drop_weather
-    )
+    data = prepare_temporal_tuning_data(df, scale=True, drop_weather=args.drop_weather)
 
     best_val_f1 = -1.0
     best_config: dict = {}
@@ -84,8 +53,10 @@ def main() -> None:
     best_mode = "threshold"
 
     print(f"Loaded: {csv_path}")
-    print(f"Evaluation rows: {len(y_true)}")
-    print(f"Train/val/test: {len(train_idx)}/{len(val_idx)}/{len(test_idx)}\n")
+    print(f"Evaluation rows: {len(data.y_true)}")
+    print(
+        f"Train/val/test: {len(data.train_idx)}/{len(data.val_idx)}/{len(data.test_idx)}\n"
+    )
     print("Grid search on validation F1 (enhanced features, scaled):\n")
 
     for contamination in CONTAMINATION_VALUES:
@@ -97,17 +68,19 @@ def main() -> None:
                     max_features=max_features,
                     random_state=42,
                 )
-                model.fit(X[train_idx])
+                model.fit(data.X[data.train_idx])
 
-                val_scores = isolation_forest_scores(model, X[val_idx])
-                threshold, val_metrics = find_best_threshold(val_scores, y_true[val_idx])
+                val_scores = isolation_forest_scores(model, data.X[data.val_idx])
+                threshold, val_metrics = find_best_threshold(
+                    val_scores, data.y_true[data.val_idx]
+                )
                 val_f1_threshold = val_metrics["f1"]
 
-                raw_val = model.predict(X[val_idx])
+                raw_val = model.predict(data.X[data.val_idx])
                 val_preds_contam = (raw_val == -1).astype(int)
-                from src.models.evaluate_models import evaluate_anomaly_model
-
-                contam_metrics = evaluate_anomaly_model(y_true[val_idx], val_preds_contam)
+                contam_metrics = evaluate_anomaly_model(
+                    data.y_true[data.val_idx], val_preds_contam
+                )
                 val_f1_contam = contam_metrics["f1"]
 
                 if val_f1_threshold >= val_f1_contam and val_f1_threshold > best_val_f1:
@@ -139,16 +112,17 @@ def main() -> None:
         max_features=best_config["max_features"],
         random_state=42,
     )
-    final_model.fit(X[train_idx])
+    final_model.fit(data.X[data.train_idx])
 
     if best_mode == "threshold" and best_threshold is not None:
-        all_scores = isolation_forest_scores(final_model, X)
-        all_preds = predict_from_scores(all_scores, best_threshold)
+        all_preds = predict_from_scores(
+            isolation_forest_scores(final_model, data.X), best_threshold
+        )
     else:
-        all_preds = (final_model.predict(X) == -1).astype(int)
+        all_preds = (final_model.predict(data.X) == -1).astype(int)
 
     split_metrics = evaluate_on_splits(
-        y_true, all_preds, train_idx, val_idx, test_idx
+        data.y_true, all_preds, data.train_idx, data.val_idx, data.test_idx
     )
 
     print("Best validation config:")

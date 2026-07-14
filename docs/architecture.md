@@ -41,6 +41,8 @@ energy-anomaly-forecasting/
 │   │   ├── __init__.py
 │   │   ├── ingest_data.py            # Canonical ingestion module
 │   │   └── clean_data.py             # Anomaly masking and interpolation
+│   ├── pipelines/
+│   │   └── clean_dataset.py          # End-to-end clean artifact orchestration
 │   ├── features/
 │   │   ├── __init__.py
 │   │   └── build_features.py         # Phase 2 feature engineering
@@ -48,6 +50,7 @@ energy-anomaly-forecasting/
 │   │   ├── __init__.py
 │   │   ├── evaluate_models.py        # Imbalance-aware evaluation metrics
 │   │   ├── train_anomaly_models.py   # Unsupervised anomaly training
+│   │   ├── feature_matrix.py         # Feature matrix prep and scaling
 │   │   ├── anomaly_preprocessing.py  # Train-fitted scaling for tuning
 │   │   ├── tuning_utils.py           # Temporal splits and threshold search
 │   │   └── anomaly_config.py         # Research-tuned hyperparameters
@@ -180,12 +183,12 @@ Loads data, applies features, trains unsupervised detectors (labels excluded), a
 
 ## Clean Data Module
 
-### Module: `src/data/clean_data.py`
+### Module: `src/data/clean_data.py` and `src/pipelines/clean_dataset.py`
 
-| Function | Responsibility |
-|----------|----------------|
-| `interpolate_anomalies(df, predictions)` | Mask anomalous `Electricity_Consumed` values; time-interpolate gaps |
-| `generate_clean_dataset(input_path, output_path)` | End-to-end IF clean pipeline; writes CSV artifact |
+| Function | Module | Responsibility |
+|----------|--------|----------------|
+| `interpolate_anomalies(df, predictions)` | `clean_data.py` | Mask anomalous `Electricity_Consumed` values; time-interpolate gaps |
+| `generate_clean_dataset(input_path, output_path)` | `pipelines/clean_dataset.py` | End-to-end IF clean pipeline; writes CSV artifact (re-exported from `clean_data`) |
 
 See [Clean Dataset](clean-data.md) for pipeline design and artifact details.
 

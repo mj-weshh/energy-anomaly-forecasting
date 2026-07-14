@@ -13,6 +13,9 @@ statsmodels>=0.14.0
 # Machine learning (Phase 2 Week 4 anomaly detection)
 scikit-learn>=1.3.0
 
+# Testing (optional — for pytest)
+pytest>=7.0.0
+
 # Documentation (optional — for mkdocs serve / mkdocs build)
 mkdocs>=1.6.0
 mkdocs-material>=9.5.0

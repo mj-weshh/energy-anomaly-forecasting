@@ -27,18 +27,15 @@ from src.features.build_features import (  # noqa: E402
     build_all_features,
     build_enhanced_anomaly_features,
 )
-from src.models.anomaly_preprocessing import AnomalyPreprocessor  # noqa: E402
 from src.models.evaluate_models import evaluate_anomaly_model, evaluate_on_splits  # noqa: E402
-from src.models.train_anomaly_models import (  # noqa: E402
-    prepare_feature_matrix,
-    train_dbscan,
-    train_isolation_forest,
-)
+from src.models.train_anomaly_models import train_dbscan, train_isolation_forest  # noqa: E402
+from src.models.feature_matrix import prepare_feature_matrix  # noqa: E402
 from src.models.tuning_utils import (  # noqa: E402
     align_labels,
     find_best_threshold,
     isolation_forest_scores,
     predict_from_scores,
+    prepare_temporal_tuning_data,
     temporal_train_val_test_split,
 )
 
@@ -47,17 +44,6 @@ from src.models.anomaly_config import (  # noqa: E402
     BEST_IF_CONFIG,
     TUNING_METRICS,
 )
-
-
-def _scaled_X(df, train_idx):
-    feature_matrix = prepare_feature_matrix(df)
-    hours = df.loc[feature_matrix.index, "hour"]
-    consumption = df.loc[feature_matrix.index, "Electricity_Consumed"]
-    preprocessor = AnomalyPreprocessor()
-    train_mask = np.zeros(len(feature_matrix), dtype=bool)
-    train_mask[train_idx] = True
-    preprocessor.fit(feature_matrix, hours, consumption, train_mask)
-    return feature_matrix, preprocessor.transform(feature_matrix, hours, consumption)
 
 
 def _print_row(label: str, metrics: dict) -> None:
@@ -120,9 +106,9 @@ def main() -> None:
 
     # Enhanced pipelines with temporal test split
     df_enh = build_enhanced_anomaly_features(raw)
-    idx = prepare_feature_matrix(df_enh).index
-    y_true = align_labels(df_enh, idx)
-    _, X = _scaled_X(df_enh, train_idx)
+    enh = prepare_temporal_tuning_data(df_enh, scale=True)
+    train_idx, val_idx, test_idx = enh.train_idx, enh.val_idx, enh.test_idx
+    y_true, X = enh.y_true, enh.X
 
     # Enhanced IF — train on train, threshold on val, report test
     if_model = IsolationForest(
@@ -152,10 +138,14 @@ def main() -> None:
     db_test = evaluate_anomaly_model(y_true[test_idx], db_preds[test_idx])
     _print_row("Enhanced DBSCAN (test)", db_test)
 
-    # Enhanced ensemble — intersection
-    ens_preds = np.minimum(if_preds, db_preds)
-    ens_test = evaluate_anomaly_model(y_true[test_idx], ens_preds[test_idx])
-    _print_row("Enhanced ensemble intersect (test)", ens_test)
+    # Enhanced ensemble — union and intersection
+    ens_union_preds = np.maximum(if_preds, db_preds)
+    ens_union_test = evaluate_anomaly_model(y_true[test_idx], ens_union_preds[test_idx])
+    _print_row("Enhanced ensemble union (test)", ens_union_test)
+
+    ens_intersect_preds = np.minimum(if_preds, db_preds)
+    ens_intersect_test = evaluate_anomaly_model(y_true[test_idx], ens_intersect_preds[test_idx])
+    _print_row("Enhanced ensemble intersect (test)", ens_intersect_test)
 
     # Legacy DBSCAN for reference
     _, legacy_db = train_dbscan(df_legacy, eps=0.5, min_samples=5, scale=False)

@@ -140,7 +140,7 @@ PASS — temporal and rolling feature columns present with valid values.
 
 ## Why Not Reuse the EDA Helper?
 
-`src/visualization/visualize.py` already has an `add_temporal_features` for plotting — it adds a `day_name` ordered categorical so charts get readable axis labels. I deliberately did **not** reuse it for modeling:
+`src/visualization/visualize.py` defines `add_plot_temporal_features` for plotting — it adds a `day_name` ordered categorical so charts get readable axis labels. I deliberately did **not** reuse it for modeling:
 
 - The plotting version returns categoricals and booleans, which are convenient for seaborn but noise for a model feature matrix.
 - Keeping model features in `src/features/` means the visualization module can evolve for charts without silently changing model inputs.

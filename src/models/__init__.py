@@ -1,16 +1,8 @@
 """Unsupervised anomaly detection models and evaluation utilities.
 
-Public API is defined in submodules. Import directly::
+Import from submodules, e.g.::
 
     from src.models.evaluate_models import evaluate_anomaly_model
-    from src.models.train_anomaly_models import (
-        prepare_feature_matrix,
-        train_isolation_forest,
-    )
+    from src.models.feature_matrix import prepare_feature_matrix
+    from src.models.train_anomaly_models import detect_anomalies, train_isolation_forest
 """
-
-__all__ = [
-    "evaluate_anomaly_model",
-    "prepare_feature_matrix",
-    "train_isolation_forest",
-]

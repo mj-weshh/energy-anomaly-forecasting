@@ -41,7 +41,7 @@ Full analysis: [EDA Insights](eda-insights.md)
 - **IF leads on F1** on this coarse grid; DBSCAN over-flags at most settings
 - Clean dataset pipeline (Day 3): IF + time interpolation → `data/processed/clean_smart_meter_data.csv` (**5000 rows preserved**)
 - CMU educational notebook (Day 4): [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb) — full detect → benchmark → interpolate workflow
-- Research tuning: enhanced features + temporal splits → enhanced IF test F1 ≈ **0.46** (fair legacy test F1 ≈ **0.34**); full report: [Anomaly Tuning Results](anomaly-tuning-results.md)
+- Research tuning (held-out test): legacy IF **0.331** (full) / **0.340** (test) / **0.389** (test + val threshold) → enhanced IF **0.460**; full report: [Anomaly Tuning Results](anomaly-tuning-results.md)
 - `Anomaly_Label` used for evaluation only — never for model fitting
 
 Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean-data.md)

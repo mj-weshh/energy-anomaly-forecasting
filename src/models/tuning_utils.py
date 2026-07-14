@@ -2,32 +2,60 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 
+from src.models.anomaly_config import TEMPORAL_SPLIT_RATIOS
+from src.models.anomaly_preprocessing import AnomalyPreprocessor
 from src.models.evaluate_models import evaluate_anomaly_model
+from src.models.feature_matrix import apply_feature_ablation, prepare_feature_matrix
 
-WEATHER_COLUMNS = ("Temperature", "Humidity", "Wind_Speed")
+
+@dataclass(frozen=True)
+class TemporalTuningData:
+    """Prepared arrays and indices for temporal anomaly tuning."""
+
+    feature_matrix: pd.DataFrame
+    X: np.ndarray
+    y_true: np.ndarray
+    train_idx: np.ndarray
+    val_idx: np.ndarray
+    test_idx: np.ndarray
+    preprocessor: AnomalyPreprocessor | None
+
+
+LABEL_MAP = {"Normal": 0, "Abnormal": 1}
 
 
 def align_labels(df: pd.DataFrame, index: pd.Index) -> np.ndarray:
     """Map benchmark ``Anomaly_Label`` values to 0/1 for aligned rows."""
-    return (
-        df.loc[index, "Anomaly_Label"]
-        .map({"Normal": 0, "Abnormal": 1})
-        .to_numpy(dtype=int)
-    )
+    if "Anomaly_Label" not in df.columns:
+        raise KeyError("Anomaly_Label column not found in DataFrame.")
+
+    labels = df.loc[index, "Anomaly_Label"]
+    mapped = labels.map(LABEL_MAP)
+    if mapped.isna().any():
+        unknown = sorted(labels[mapped.isna()].astype(str).unique())
+        raise ValueError(f"Unmapped Anomaly_Label values: {unknown}")
+
+    return mapped.to_numpy(dtype=int)
 
 
 def temporal_train_val_test_split(
     n: int,
-    train_ratio: float = 0.6,
-    val_ratio: float = 0.2,
+    train_ratio: float | None = None,
+    val_ratio: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Chronological index arrays for train, validation, and test."""
+    if train_ratio is None:
+        train_ratio = float(TEMPORAL_SPLIT_RATIOS["train"])
+    if val_ratio is None:
+        val_ratio = float(TEMPORAL_SPLIT_RATIOS["val"])
+
     if n <= 0:
         raise ValueError("n must be positive.")
     if train_ratio + val_ratio >= 1.0:
@@ -40,15 +68,38 @@ def temporal_train_val_test_split(
     return all_idx[:train_end], all_idx[train_end:val_end], all_idx[val_end:]
 
 
-def apply_feature_ablation(
-    feature_matrix: pd.DataFrame,
-    drop_weather: bool = True,
-) -> pd.DataFrame:
-    """Drop weather columns for ablation experiments."""
-    if not drop_weather:
-        return feature_matrix
-    drop_cols = [c for c in WEATHER_COLUMNS if c in feature_matrix.columns]
-    return feature_matrix.drop(columns=drop_cols)
+def prepare_temporal_tuning_data(
+    df: pd.DataFrame,
+    *,
+    scale: bool = True,
+    drop_weather: bool = False,
+) -> TemporalTuningData:
+    """Build scaled matrix, labels, and chronological splits for tuning scripts."""
+    feature_matrix = apply_feature_ablation(prepare_feature_matrix(df), drop_weather)
+    y_true = align_labels(df, feature_matrix.index)
+    train_idx, val_idx, test_idx = temporal_train_val_test_split(len(feature_matrix))
+
+    preprocessor: AnomalyPreprocessor | None = None
+    if scale:
+        hours = df.loc[feature_matrix.index, "hour"]
+        consumption = df.loc[feature_matrix.index, "Electricity_Consumed"]
+        preprocessor = AnomalyPreprocessor()
+        train_mask = np.zeros(len(feature_matrix), dtype=bool)
+        train_mask[train_idx] = True
+        preprocessor.fit(feature_matrix, hours, consumption, train_mask)
+        X = preprocessor.transform(feature_matrix, hours, consumption)
+    else:
+        X = feature_matrix.to_numpy(dtype=float)
+
+    return TemporalTuningData(
+        feature_matrix=feature_matrix,
+        X=X,
+        y_true=y_true,
+        train_idx=train_idx,
+        val_idx=val_idx,
+        test_idx=test_idx,
+        preprocessor=preprocessor,
+    )
 
 
 def isolation_forest_scores(model: IsolationForest, X: np.ndarray) -> np.ndarray:

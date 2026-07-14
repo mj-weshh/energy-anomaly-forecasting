@@ -5,24 +5,20 @@ intervals. Anomalous consumption readings must be imputed, not dropped.
 This module masks model-flagged intervals on ``Electricity_Consumed`` and
 fills gaps with time-aware interpolation while preserving row count.
 
-Typical upstream flow: feature engineering → ``detect_anomalies`` →
-:func:`interpolate_anomalies`. See docs/anomaly-detection.md.
-
-Production ``generate_clean_dataset`` uses legacy 15-column features and
-default Isolation Forest params. Research-optimized configs live in
-``src/models/anomaly_config.py`` and ``scripts/tune_*.py``.
+Typical upstream flow: feature engineering → anomaly predictions →
+:func:`interpolate_anomalies`. Orchestration lives in
+``src.pipelines.clean_dataset``. See docs/anomaly-detection.md.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 
-from src.data.ingest_data import load_smart_meter_data
-from src.features.build_features import build_all_features
-from src.models.train_anomaly_models import detect_anomalies, prepare_feature_matrix
+from src.models.feature_matrix import prepare_feature_matrix
+
+# Backward-compatible re-export; prefer ``src.pipelines.clean_dataset``.
+from src.pipelines.clean_dataset import generate_clean_dataset  # noqa: F401
 
 
 def interpolate_anomalies(
@@ -94,39 +90,3 @@ def interpolate_anomalies(
     result["Electricity_Consumed"] = consumption
 
     return result
-
-
-def generate_clean_dataset(input_path: str, output_path: str) -> Path:
-    """Build a continuity-safe clean dataset for Phase 3 forecasting.
-
-    End-to-end pipeline: load raw CSV → engineer features → detect anomalies
-    with Isolation Forest (default) → mask and time-interpolate anomalous
-    ``Electricity_Consumed`` values → save to ``output_path``.
-
-    Row count is preserved (5000 rows on the canonical dataset). Output
-    includes feature-engineered columns with imputed consumption.
-
-    Args:
-        input_path: Path to raw ``smart_meter_data.csv``.
-        output_path: Destination path for the cleaned CSV.
-
-    Returns:
-        Resolved absolute path to the written CSV file.
-
-    Raises:
-        FileNotFoundError: If ``input_path`` does not exist.
-        KeyError: If required columns are missing during processing.
-        ValueError: If anomaly predictions cannot be aligned or validated.
-    """
-    input_csv = Path(input_path)
-    output_csv = Path(output_path)
-
-    df = load_smart_meter_data(input_csv)
-    df_feat = build_all_features(df)
-    _, predictions = detect_anomalies(df_feat, model_type="isolation_forest")
-    clean_df = interpolate_anomalies(df_feat, predictions)
-
-    output_csv.parent.mkdir(parents=True, exist_ok=True)
-    clean_df.to_csv(output_csv, index=False)
-
-    return output_csv.resolve()

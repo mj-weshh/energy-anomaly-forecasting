@@ -94,7 +94,7 @@ Because context matters more than raw level, I will:
 
 Both models are context-friendly when fed the engineered features above. Static z-score thresholds on raw consumption alone are explicitly **out of scope** for Phase 2.
 
-### What Phase 2 will deliver (planned)
+### What Phase 2 delivered
 
 - ~~Canonical module under `src/models/`~~ — **done** (`evaluate_models.py`, `train_anomaly_models.py`)
 - ~~Isolation Forest baseline~~ — **done** (F1 = 0.331 on benchmark; see [Anomaly Detection](anomaly-detection.md))
@@ -111,9 +111,9 @@ Both models are context-friendly when fed the engineered features above. Static 
 
 ---
 
-## Open Questions (Before Coding)
+## Resolved decisions
 
-I'll resolve these when implementation starts:
+These were open during planning; all are now closed:
 
 1. **Rolling window length** — *resolved in Week 3:* both 3-hour and 24-hour windows implemented. See [Feature Engineering](feature-engineering.md).
 2. **NaN warm-up rows** — *resolved in Week 4:* drop rows with incomplete rolling windows before training (4953 eval rows).
@@ -128,3 +128,4 @@ I'll resolve these when implementation starts:
 - [EDA Insights](eda-insights.md) — load profiles, correlation heatmap, anomaly rate
 - [Architecture](architecture.md) — ingestion gate and Phase 2 slot in the pipeline
 - [Data Schema](data-schema.md) — column definitions
+- [Anomaly Tuning Results](anomaly-tuning-results.md) — enhanced IF tuning, fair comparison, ensemble results

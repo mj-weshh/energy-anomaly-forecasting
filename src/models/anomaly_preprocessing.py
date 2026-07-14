@@ -12,8 +12,6 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-WEATHER_COLUMNS = ("Temperature", "Humidity", "Wind_Speed")
-
 
 @dataclass
 class AnomalyPreprocessor:

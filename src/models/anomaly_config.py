@@ -9,8 +9,54 @@ Re-run tuning scripts after feature or split changes to refresh values.
 
 from __future__ import annotations
 
+from typing import TypedDict
+
 # Best validation configs from scripts/tune_isolation_forest.py (2026-07-14 run).
-BEST_IF_CONFIG: dict = {
+
+
+class IFConfig(TypedDict):
+    contamination: float
+    n_estimators: int
+    max_features: float
+    scale: bool
+    drop_weather: bool
+    use_score_threshold: bool
+    score_threshold: float
+
+
+class DBSCANConfig(TypedDict):
+    eps: float
+    min_samples: int
+    metric: str
+    scale: bool
+    drop_weather: bool
+
+
+class EnsembleConfig(TypedDict):
+    strategy: str
+    alpha: float
+
+
+class TuningMetrics(TypedDict):
+    legacy_if_full_dataset_f1: float
+    legacy_if_test_f1: float
+    legacy_if_test_precision: float
+    legacy_if_test_recall: float
+    legacy_if_test_val_threshold_f1: float
+    legacy_if_test_val_threshold_precision: float
+    legacy_if_test_val_threshold_recall: float
+    enhanced_if_test_f1: float
+    enhanced_if_test_precision: float
+    enhanced_if_test_recall: float
+    enhanced_if_val_f1: float
+    enhanced_dbscan_test_f1: float
+    enhanced_dbscan_val_f1: float
+    enhanced_ensemble_union_test_f1: float
+    enhanced_ensemble_union_val_f1: float
+    enhanced_ensemble_intersection_test_f1: float
+
+
+BEST_IF_CONFIG: IFConfig = {
     "contamination": 0.03,
     "n_estimators": 200,
     "max_features": 0.6,
@@ -21,7 +67,7 @@ BEST_IF_CONFIG: dict = {
 }
 
 # Best validation config from scripts/tune_dbscan.py (enhanced, scaled).
-BEST_DBSCAN_CONFIG: dict = {
+BEST_DBSCAN_CONFIG: DBSCANConfig = {
     "eps": 10.0,
     "min_samples": 10,
     "metric": "manhattan",
@@ -30,13 +76,13 @@ BEST_DBSCAN_CONFIG: dict = {
 }
 
 # Best validation config from scripts/tune_ensemble.py (aligned with anomaly_config IF/DBSCAN).
-BEST_ENSEMBLE_CONFIG: dict = {
+BEST_ENSEMBLE_CONFIG: EnsembleConfig = {
     "strategy": "union",
     "alpha": 0.7,
 }
 
 # Measured F1 on temporal test split (60/20/20 chronological).
-TUNING_METRICS: dict = {
+TUNING_METRICS: TuningMetrics = {
     "legacy_if_full_dataset_f1": 0.331,
     "legacy_if_test_f1": 0.340,
     "legacy_if_test_precision": 0.214,

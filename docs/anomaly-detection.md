@@ -140,7 +140,7 @@ Same 4,953 evaluation rows, labels excluded from all training:
 | **Isolation Forest** | `contamination=0.05` | **0.331** | **0.331** | **0.331** | 248 |
 | **DBSCAN (grid best)** | `eps=0.5`, `min_samples=5` | 0.125 | 0.084 | 0.246 | 726 |
 
-**Current pick:** Isolation Forest on F1. Both models ran independently as planned in the strategy doc; an ensemble is optional and not implemented yet.
+**Current pick:** Isolation Forest on F1 for production cleaning. Ensemble is implemented for research (`train_ensemble`, `scripts/tune_ensemble.py`); union test F1 = **0.400** — below enhanced IF alone (0.460). See [Anomaly Tuning Results](anomaly-tuning-results.md).
 
 ---
 
@@ -199,11 +199,12 @@ Production cleaning still uses **legacy** 15-column features and default IF (`co
 
 ### Tuned results (summary)
 
-| Model | Test F1 | vs legacy IF (full 0.331) |
-|-------|---------|----------------------------|
+| Model | Test F1 | Notes |
+|-------|---------|-------|
 | **Legacy IF** (full dataset) | **0.331** | production baseline |
-| **Legacy IF** (fair test split) | **0.340** | same window as enhanced |
-| **Enhanced IF** | **0.460** | +35% vs fair legacy (val threshold 0.389) |
+| **Legacy IF** (fair test, production params) | **0.340** | same window as enhanced |
+| **Legacy IF** (fair test, val threshold) | **0.389** | same protocol as enhanced, no hyperparam grid |
+| **Enhanced IF** | **0.460** | +0.071 F1 (~18% relative) vs val-threshold legacy (0.389) |
 | **Enhanced DBSCAN** | **0.297** | below IF |
 | **Ensemble (union)** | **0.400** | below enhanced IF alone |
 
@@ -262,3 +263,4 @@ _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 - [Feature Engineering](feature-engineering.md) — the 12 features fed into the model
 - [Clean Dataset](clean-data.md) — Day 3 imputation pipeline for Phase 3
 - [Architecture](architecture.md) — where `src/models/` sits in the repo
+- [Anomaly Tuning Results](anomaly-tuning-results.md) — enhanced features, temporal splits, fair head-to-head comparison

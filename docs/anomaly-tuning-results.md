@@ -15,12 +15,21 @@ Full report from the enhanced-feature and temporal-split tuning experiments. Pro
 | **Legacy IF** (full dataset, production) | **0.331** | Production baseline — unchanged |
 | **Legacy IF** (temporal test, production params) | **0.340** | Fair baseline on held-out window |
 | **Legacy IF** (temporal test, val threshold only) | **0.389** | Same split protocol as enhanced, no hyperparam grid |
-| **Enhanced IF** (temporal test, tuned) | **0.460** | **Best single model** (+35% vs fair legacy threshold) |
+| **Enhanced IF** (temporal test, tuned) | **0.460** | **Best single model** (+0.071 F1, ~18% relative vs val-threshold legacy 0.389) |
 | **Enhanced DBSCAN** (temporal test) | **0.297** | Improved vs legacy DBSCAN (0.125), still below IF |
 | **Ensemble union** (temporal test) | **0.400** | Modest gain; below enhanced IF alone |
 | **Ensemble intersection** (temporal test) | **0.329** | Flat vs legacy full-dataset F1 |
 
 **Bottom line:** Enhanced Isolation Forest with 21 features, train-only scaling, and validation-tuned score threshold **meaningfully improves** anomaly detection on unseen time periods. DBSCAN and ensemble strategies did not beat the best IF config. The production clean-data pipeline still uses legacy 15-column features and default IF.
+
+### How to compare uplift
+
+Use **percentage points** or **+0.071 F1** for absolute deltas; reserve **% relative** for ratio uplift. Source: `src/models/anomaly_config.py` (`TUNING_METRICS`).
+
+| Comparison | Absolute gain | Relative gain |
+|------------|---------------|---------------|
+| Enhanced (0.460) vs legacy test production (0.340) | +0.120 F1 | +35% |
+| Enhanced (0.460) vs legacy test val-threshold (0.389) | +0.071 F1 | ~18% |
 
 ---
 
@@ -228,7 +237,7 @@ Threshold tuning alone lifts F1 from 0.340 → 0.389 without changing features o
   FN=  35  TP=  20
 ```
 
-Enhanced IF still wins on F1 (+18% absolute vs protocol-matched legacy, +35% relative). Trade-off: higher precision (0.625 vs 0.379) at lower recall (0.364 vs 0.400) than threshold-only legacy.
+Enhanced IF still wins on F1 (+0.071 F1, ~18% relative vs protocol-matched legacy 0.389; +0.120 F1, +35% relative vs production-params legacy on test 0.340). Trade-off: higher precision (0.625 vs 0.379) at lower recall (0.364 vs 0.400) than threshold-only legacy.
 
 ---
 

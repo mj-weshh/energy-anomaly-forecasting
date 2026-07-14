@@ -229,6 +229,18 @@ generate_clean_dataset(
 )
 ```
 
+### Phase 2 research results (held-out test)
+
+Production cleaning still uses legacy IF (full-dataset F1 **0.331**). Research tuning on the same 991-row test window (`scripts/compare_anomaly_models.py`):
+
+| Model | Test F1 |
+|-------|---------|
+| Legacy IF (production params) | 0.340 |
+| Legacy IF (val threshold) | 0.389 |
+| Enhanced IF (tuned) | **0.460** |
+
+Full methodology: [Anomaly Tuning Results](docs/anomaly-tuning-results.md) · metrics in `src/models/anomaly_config.py`.
+
 ### Notebooks
 
 - [`notebooks/01_data_ingestion_and_schema_check.ipynb`](notebooks/01_data_ingestion_and_schema_check.ipynb) — ingestion and schema validation
