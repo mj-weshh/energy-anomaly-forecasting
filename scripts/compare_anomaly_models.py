@@ -67,6 +67,13 @@ def _print_row(label: str, metrics: dict) -> None:
     )
 
 
+def _print_confusion_matrix(label: str, metrics: dict) -> None:
+    cm = metrics["confusion_matrix"]
+    print(f"\n{label} [[TN, FP], [FN, TP]]:")
+    print(f"  TN={cm[0, 0]:4d}  FP={cm[0, 1]:4d}")
+    print(f"  FN={cm[1, 0]:4d}  TP={cm[1, 1]:4d}")
+
+
 def main() -> None:
     csv_path = find_dataset_csv(get_project_root())
     raw = load_smart_meter_data(csv_path)
@@ -83,11 +90,38 @@ def main() -> None:
     legacy_metrics = evaluate_anomaly_model(y_legacy, legacy_preds)
     _print_row("Legacy IF (full data)", legacy_metrics)
 
+    # Shared temporal split (4953 eval rows, chronological 60/20/20)
+    legacy_matrix = prepare_feature_matrix(df_legacy)
+    legacy_X = legacy_matrix.to_numpy(dtype=float)
+    train_idx, val_idx, test_idx = temporal_train_val_test_split(len(legacy_matrix))
+
+    legacy_if_model = IsolationForest(
+        contamination=0.05,
+        n_estimators=100,
+        max_features=1.0,
+        random_state=42,
+    )
+    legacy_if_model.fit(legacy_X[train_idx])
+    legacy_test_preds = (legacy_if_model.predict(legacy_X) == -1).astype(int)
+    legacy_test_metrics = evaluate_anomaly_model(
+        y_legacy[test_idx], legacy_test_preds[test_idx]
+    )
+    _print_row("Legacy IF (test)", legacy_test_metrics)
+
+    legacy_val_scores = isolation_forest_scores(legacy_if_model, legacy_X[val_idx])
+    legacy_threshold, _ = find_best_threshold(legacy_val_scores, y_legacy[val_idx])
+    legacy_thresh_preds = predict_from_scores(
+        isolation_forest_scores(legacy_if_model, legacy_X), legacy_threshold
+    )
+    legacy_thresh_test_metrics = evaluate_anomaly_model(
+        y_legacy[test_idx], legacy_thresh_preds[test_idx]
+    )
+    _print_row("Legacy IF (test, val threshold)", legacy_thresh_test_metrics)
+
     # Enhanced pipelines with temporal test split
     df_enh = build_enhanced_anomaly_features(raw)
     idx = prepare_feature_matrix(df_enh).index
     y_true = align_labels(df_enh, idx)
-    train_idx, val_idx, test_idx = temporal_train_val_test_split(len(idx))
     _, X = _scaled_X(df_enh, train_idx)
 
     # Enhanced IF — train on train, threshold on val, report test
@@ -132,6 +166,13 @@ def main() -> None:
     split_metrics = evaluate_on_splits(y_true, if_preds, train_idx, val_idx, test_idx)
     for split_name, metrics in split_metrics.items():
         print(f"  {split_name}: F1={metrics['f1']:.3f}")
+
+    print("\nFair head-to-head — test split confusion matrices:")
+    _print_confusion_matrix("Legacy IF (test, production params)", legacy_test_metrics)
+    _print_confusion_matrix(
+        "Legacy IF (test, val threshold)", legacy_thresh_test_metrics
+    )
+    _print_confusion_matrix("Enhanced IF (test)", if_test)
 
     print("\nReference tuning metrics (test split, from anomaly_config):")
     print(f"  Enhanced IF:        F1={TUNING_METRICS['enhanced_if_test_f1']:.3f}")

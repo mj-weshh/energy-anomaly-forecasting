@@ -38,7 +38,15 @@ BEST_ENSEMBLE_CONFIG: dict = {
 # Measured F1 on temporal test split (60/20/20 chronological).
 TUNING_METRICS: dict = {
     "legacy_if_full_dataset_f1": 0.331,
+    "legacy_if_test_f1": 0.340,
+    "legacy_if_test_precision": 0.214,
+    "legacy_if_test_recall": 0.818,
+    "legacy_if_test_val_threshold_f1": 0.389,
+    "legacy_if_test_val_threshold_precision": 0.379,
+    "legacy_if_test_val_threshold_recall": 0.400,
     "enhanced_if_test_f1": 0.460,
+    "enhanced_if_test_precision": 0.625,
+    "enhanced_if_test_recall": 0.364,
     "enhanced_if_val_f1": 0.611,
     "enhanced_dbscan_test_f1": 0.297,
     "enhanced_dbscan_val_f1": 0.509,
