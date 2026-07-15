@@ -49,6 +49,9 @@ class TuningMetrics(TypedDict):
     enhanced_if_test_precision: float
     enhanced_if_test_recall: float
     enhanced_if_val_f1: float
+    enhanced_if_no_weather_test_f1: float
+    enhanced_if_no_weather_test_precision: float
+    enhanced_if_no_weather_test_recall: float
     enhanced_dbscan_test_f1: float
     enhanced_dbscan_val_f1: float
     enhanced_ensemble_union_test_f1: float
@@ -64,6 +67,17 @@ BEST_IF_CONFIG: IFConfig = {
     "drop_weather": False,
     "use_score_threshold": True,
     "score_threshold": 0.016764,
+}
+
+# Weather ablation from scripts/tune_isolation_forest.py --drop-weather (2026-07-15).
+BEST_IF_CONFIG_NO_WEATHER: IFConfig = {
+    "contamination": 0.03,
+    "n_estimators": 200,
+    "max_features": 1.0,
+    "scale": True,
+    "drop_weather": True,
+    "use_score_threshold": True,
+    "score_threshold": 0.023322,
 }
 
 # Best validation config from scripts/tune_dbscan.py (enhanced, scaled).
@@ -94,6 +108,9 @@ TUNING_METRICS: TuningMetrics = {
     "enhanced_if_test_precision": 0.625,
     "enhanced_if_test_recall": 0.364,
     "enhanced_if_val_f1": 0.611,
+    "enhanced_if_no_weather_test_f1": 0.524,
+    "enhanced_if_no_weather_test_precision": 0.562,
+    "enhanced_if_no_weather_test_recall": 0.491,
     "enhanced_dbscan_test_f1": 0.297,
     "enhanced_dbscan_val_f1": 0.509,
     "enhanced_ensemble_union_test_f1": 0.400,
