@@ -29,25 +29,34 @@ The fix: treat bad consumption readings as missing values, then **time-interpola
 
 Only consumption gaps created by masking are filled — other columns are not interpolated.
 
-### End-to-end pipeline — `generate_clean_dataset(input_path, output_path)`
+### `generate_clean_dataset(input_path, output_path)`
 
 Defined in `src/pipelines/clean_dataset.py` (re-exported from `src.data.clean_data` for compatibility). Chains:
 
 1. `load_smart_meter_data` — raw CSV
-2. `build_all_features` — temporal + rolling columns
-3. `detect_anomalies(..., model_type="isolation_forest")` — IF default (F1 = 0.331)
+2. Feature engineering (profile-dependent)
+3. Anomaly detection (profile-dependent)
 4. `interpolate_anomalies` — mask + impute
 5. Write CSV to `output_path`
 
-### CLI — `scripts/generate_clean_data.py`
+## Research profiles (`--profile`)
 
-Writes the Phase 3 artifact:
+The default pipeline is **unchanged**. Optional profiles write separate research artifacts under `data/processed/`:
 
+| Profile | Features | Detection | Default output |
+|---------|----------|-----------|----------------|
+| **`legacy`** (default) | `build_all_features` (15 cols) | IF defaults (`contamination=0.05`) on all eval rows | `clean_smart_meter_data.csv` |
+| **`legacy_threshold`** | `build_all_features` | Train 60%, val threshold 20%, score all eval rows (fair eval F1 ≈ 0.389) | `clean_smart_meter_data_legacy_threshold.csv` |
+| **`enhanced`** | `build_enhanced_anomaly_features` (21 cols) | `BEST_IF_CONFIG` + score threshold on all eval rows | `clean_smart_meter_data_enhanced.csv` |
+
+```bash
+python scripts/generate_clean_data.py                          # legacy (unchanged)
+python scripts/generate_clean_data.py --profile legacy_threshold
+python scripts/generate_clean_data.py --profile enhanced
+python scripts/compare_clean_artifacts.py
 ```
-data/processed/clean_smart_meter_data.csv
-```
 
-The `data/processed/` directory is **gitignored** — generate locally, do not commit the CSV.
+Research profiles are **not** used for production Phase 3 baseline until artifact diffs are reviewed. See [Anomaly Tuning Results](anomaly-tuning-results.md).
 
 ---
 

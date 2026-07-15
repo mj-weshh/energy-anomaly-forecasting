@@ -171,9 +171,20 @@ Research tuning (enhanced features, temporal 60/20/20 splits):
 
 ```bash
 python scripts/tune_isolation_forest.py
+python scripts/tune_isolation_forest.py --drop-weather
 python scripts/tune_dbscan.py
 python scripts/tune_ensemble.py
 python scripts/compare_anomaly_models.py
+python scripts/analyze_detection_errors.py
+python scripts/tune_isolation_forest_by_segment.py
+```
+
+Research clean-data profiles (optional artifacts):
+
+```bash
+python scripts/generate_clean_data.py --profile legacy_threshold
+python scripts/generate_clean_data.py --profile enhanced
+python scripts/compare_clean_artifacts.py
 ```
 
 Expected (held-out test): legacy IF **0.331** (full) / **0.340** (test) / **0.389** (test + val threshold); enhanced IF **0.460**; ensemble union **0.40** (see `anomaly_config.py`).

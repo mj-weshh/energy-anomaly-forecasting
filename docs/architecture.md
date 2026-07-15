@@ -37,7 +37,11 @@ energy-anomaly-forecasting/
 │   ├── tune_dbscan.py                # DBSCAN hyperparameter grid search
 │   ├── tune_ensemble.py              # IF + DBSCAN ensemble comparison
 │   ├── compare_anomaly_models.py     # Legacy vs enhanced research dashboard
-│   └── generate_clean_data.py        # Generate Phase 3 clean dataset artifact
+│   ├── analyze_detection_errors.py   # Legacy IF hourly FP analysis
+│   ├── compare_clean_artifacts.py    # Diff clean-data profile artifacts
+│   ├── tune_isolation_forest_by_segment.py  # Per-segment enhanced IF test F1
+│   ├── generate_mermaid_assets.py    # Regenerate architecture PNGs via mermaid.ink (network)
+│   └── generate_clean_data.py        # Generate Phase 3 clean dataset artifact (--profile)
 ├── src/
 │   ├── __init__.py
 │   ├── data/
@@ -199,7 +203,7 @@ Loads data, applies features, trains unsupervised detectors (labels excluded), a
 | Function | Module | Responsibility |
 |----------|--------|----------------|
 | `interpolate_anomalies(df, predictions)` | `clean_data.py` | Mask anomalous `Electricity_Consumed` values; time-interpolate gaps |
-| `generate_clean_dataset(input_path, output_path)` | `pipelines/clean_dataset.py` | End-to-end IF clean pipeline; writes CSV artifact (re-exported from `clean_data`) |
+| `generate_clean_dataset(input_path, output_path, profile=...)` | `pipelines/clean_dataset.py` | End-to-end clean pipeline; `profile` = `legacy` (default), `legacy_threshold`, or `enhanced` |
 
 See [Clean Dataset](clean-data.md) for pipeline design and artifact details.
 
@@ -207,9 +211,12 @@ See [Clean Dataset](clean-data.md) for pipeline design and artifact details.
 
 ```bash
 python scripts/generate_clean_data.py
+python scripts/generate_clean_data.py --profile legacy_threshold
+python scripts/generate_clean_data.py --profile enhanced
+python scripts/compare_clean_artifacts.py
 ```
 
-Writes `data/processed/clean_smart_meter_data.csv` (5000 rows, imputed consumption, gitignored locally).
+Writes `data/processed/clean_smart_meter_data.csv` by default (5000 rows, gitignored locally). Research profiles write separate filenames — see [Clean Dataset](clean-data.md#research-profiles).
 
 ---
 
