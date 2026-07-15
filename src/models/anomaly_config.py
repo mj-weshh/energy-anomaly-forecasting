@@ -123,3 +123,15 @@ TEMPORAL_SPLIT_RATIOS: dict = {
     "val": 0.2,
     "test": 0.2,
 }
+
+# From scripts/compare_clean_artifacts.py first run (2026-07-15).
+ARTIFACT_DIFF_METRICS: dict[str, float | int] = {
+    "legacy_imputed_rows": 248,
+    "legacy_threshold_imputed_rows": 178,
+    "enhanced_imputed_rows": 51,
+    "legacy_vs_legacy_threshold_jaccard": 0.257,
+    "legacy_vs_enhanced_jaccard": 0.154,
+    "legacy_threshold_vs_enhanced_jaccard": 0.106,
+    "legacy_vs_enhanced_disagree_rows": 219,
+    "top_disagree_hour": 0,
+}
