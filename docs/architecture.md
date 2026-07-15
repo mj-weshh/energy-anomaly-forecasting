@@ -8,6 +8,8 @@ Repository layout, data flow, and design decisions for Phases 1–2 (ingestion, 
 
 ![System Overview — data flow from Kaggle dataset through ingestion to downstream phases](assets/system-overview.png)
 
+> Regenerate this figure: `python scripts/generate_mermaid_assets.py` (requires network; fetches PNGs from [mermaid.ink](https://mermaid.ink)).
+
 The ingestion layer is the **single gate** between raw CSV files and all downstream work. Every notebook and script in later phases should import from `src.data.ingest_data` rather than reading CSVs directly.
 
 ---
@@ -28,6 +30,7 @@ energy-anomaly-forecasting/
 │   └── 03_anomaly_detection.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py          # Regenerate EDA doc figures
+│   ├── generate_mermaid_assets.py    # Regenerate architecture PNGs via mermaid.ink (network)
 │   ├── verify_features.py            # Sanity-check engineered features
 │   ├── test_isolation_forest.py      # Isolation Forest baseline + evaluation
 │   ├── tune_isolation_forest.py      # Enhanced IF hyperparameter + threshold tuning
@@ -126,6 +129,14 @@ python scripts/export_eda_assets.py
 ```
 
 Writes PNGs to `docs/assets/eda/` for embedding in [EDA Insights](eda-insights.md).
+
+**Architecture diagrams:**
+
+```bash
+python scripts/generate_mermaid_assets.py
+```
+
+Fetches rendered PNGs from [mermaid.ink](https://mermaid.ink) and writes `docs/assets/system-overview.png` and `docs/assets/ingestion-pipeline.png` (used in this page and [Getting Started](getting-started.md)). Requires network access.
 
 ---
 

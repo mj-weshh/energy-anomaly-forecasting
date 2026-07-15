@@ -196,7 +196,19 @@ Documented workflow: [Anomaly Detection — Educational Notebook (Day 4)](anomal
 
 ---
 
-## 9. Build Documentation Site (Optional)
+## 9. Regenerate Architecture PNGs (Optional)
+
+To refresh the system-overview and ingestion-pipeline figures embedded in [Architecture](architecture.md):
+
+```bash
+python scripts/generate_mermaid_assets.py
+```
+
+Output directory: `docs/assets/` (`system-overview.png`, `ingestion-pipeline.png`). Requires network access — the script fetches rendered PNGs from [mermaid.ink](https://mermaid.ink).
+
+---
+
+## 10. Build Documentation Site (Optional)
 
 ```bash
 pip install mkdocs mkdocs-material
