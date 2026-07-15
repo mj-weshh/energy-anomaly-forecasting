@@ -2,6 +2,22 @@
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
+!!! success "Executive summary"
+
+    - **What this project does:** Turns smart-meter readings into trustworthy timelines — flag unusual consumption, clean gaps, and (next) forecast demand.
+    - **Where we are:** Data ingestion and exploration are done; anomaly detection works with documented baselines; production cleaning is stable and unchanged.
+    - **Research headline:** Tuned models score better on held-out future data (**F1 0.460** vs **0.331** production baseline), but the default clean file still uses the conservative legacy recipe until leadership reviews artifact differences.
+    - **Decision gate for Phase 3:** Keep legacy cleaning for forecasting consistency, or adopt a research profile after reviewing imputation overlap (248 vs 51 intervals). See [Anomaly Tuning Results](anomaly-tuning-results.md).
+    - **Terms:** See the [Glossary](glossary.md) for plain-English definitions of F1, imputation, profiles, and related metrics.
+
+## How to read this documentation
+
+| If you are… | Start here |
+|-------------|------------|
+| **Executive or product stakeholder** | Green **Executive summary** boxes at the top of each page — plain language, decisions, and risks. |
+| **ML engineer or reviewer** | Main technical sections plus collapsible **Technical deep dive** blocks (click to expand). |
+| **New contributor** | [Getting Started](getting-started.md) → [Architecture](architecture.md) → [Glossary](glossary.md). |
+
 ## Mission
 
 Develop reproducible pipelines to:
@@ -61,6 +77,7 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 | [Anomaly Detection](anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, model comparison, and educational notebook |
 | [Anomaly Tuning Results](anomaly-tuning-results.md) | Phase 2 research tuning — enhanced features, temporal splits, fair comparison |
 | [Clean Dataset](clean-data.md) | Phase 2 Week 4 Day 3 anomaly masking, interpolation, and Phase 3 artifact |
+| [Glossary](glossary.md) | Plain-English and technical definitions for metrics and pipeline terms |
 
 ## Quick Command
 
@@ -69,6 +86,14 @@ python -m src.data.ingest_data
 ```
 
 Expected outcome: schema summary with shape `(5000, 7)`, zero nulls, and a continuity check **PASS**.
+
+??? info "Technical deep dive"
+
+    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting (planned).
+
+    **Fair-comparison metrics** (991-row temporal test): legacy IF 0.340 (production params) / 0.389 (val threshold) / enhanced IF 0.460. Source: `src/models/anomaly_config.py`.
+
+    **Research extensions:** weather ablation, hourly FP analysis (`analyze_detection_errors.py`), clean `--profile` artifacts, per-segment evaluation — documented in [Anomaly Tuning Results](anomaly-tuning-results.md).
 
 ## License
 

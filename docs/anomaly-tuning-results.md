@@ -2,6 +2,15 @@
 
 Full report from the enhanced-feature and temporal-split tuning experiments. Production cleaning is **unchanged** — this page documents research-only scripts under `scripts/tune_*.py`.
 
+!!! success "Executive summary"
+
+    - **Detection improved on held-out future data:** Best tuned model scores **F1 0.460** vs **0.331** for today's production baseline — roughly **40% more balanced** catch-and-accuracy performance on the test window.
+    - **Production cleaning unchanged:** The default clean file still uses legacy detection (~248 imputed intervals). Leadership should not swap artifacts without review.
+    - **Enhanced cleaning would change the data a lot:** Enhanced profile imputes only **51** intervals vs **248** legacy — **~80% fewer** edits, with low overlap (Jaccard 0.154).
+    - **Weather data optional:** Dropping weather columns slightly **improved** test F1 (0.524 vs 0.460) — weather is not driving the uplift.
+    - **Where problems cluster:** Legacy false alarms peak at hours **00–01**; weekends show lower recall even after tuning.
+    - **Terms:** [Glossary](glossary.md) — F1, temporal split, Jaccard, ablation.
+
 **Run date:** 2026-07-14  
 **Dataset:** 4,953 evaluation rows (5,000 minus 47 rolling warm-up NaNs)  
 **Modules:** `src/models/anomaly_config.py`, `src/models/tuning_utils.py`, `src/models/anomaly_preprocessing.py`
@@ -63,8 +72,9 @@ flowchart LR
 
 | Pipeline | Function | Columns | Used by |
 |----------|----------|---------|---------|
-| **Legacy (production)** | `build_all_features` | 15 | `generate_clean_data.py`, notebook, Day 1–4 baselines |
-| **Enhanced (research)** | `build_enhanced_anomaly_features` | 21 | `scripts/tune_*.py` |
+| **Legacy (production)** | `build_all_features` | 15 | `generate_clean_data.py` (default `legacy` profile), notebook Sections 1–5, Day 1–4 baselines |
+| **Legacy (threshold research)** | `build_all_features` | 15 | `generate_clean_data.py --profile legacy_threshold` |
+| **Enhanced (research)** | `build_enhanced_anomaly_features` | 21 | `generate_clean_data.py --profile enhanced`, `scripts/tune_*.py`, analysis scripts |
 
 Enhanced adds cyclical time encoding (`hour_sin/cos`, `dow_sin/cos`) and consumption derivatives (`consumption_diff`, `consumption_residual_24h`). See [Feature Engineering — Enhanced Anomaly Features](feature-engineering.md#enhanced-anomaly-features-research).
 
@@ -361,7 +371,20 @@ Configs and metrics are also recorded in `src/models/anomaly_config.py`.
 2. **Legacy full-dataset F1 understates held-out performance slightly** — legacy test F1 is 0.340, not 0.331, but still well below enhanced.
 3. **DBSCAN improved with scaling and wider eps** (0.125 → 0.297 test) but remains weaker than IF for this benchmark.
 4. **Ensemble union (0.400)** beats fair legacy IF but not enhanced IF alone; intersection (0.329) adds precision at the cost of recall.
-5. **Production pipeline unchanged** — clean dataset generation still reports F1 ≈ 0.331 for the legacy baseline.
+5. **Production pipeline unchanged** — default `generate_clean_data.py` still uses legacy profile (F1 ≈ 0.331 full-dataset benchmark).
+6. **Weather ablation** — enhanced IF without weather scores test F1 **0.524** vs **0.460** with weather; weather columns are not required for uplift on this benchmark.
+7. **Clean artifact diff** — enhanced profile imputes **51** vs **248** legacy intervals; Jaccard overlap **0.154** — adopt enhanced cleaning only after explicit A/B review.
+8. **Per-segment gaps** — weekend recall **0.348** below global enhanced **0.364**; early-morning hours remain hardest even after tuning.
+
+??? info "Technical deep dive"
+
+    **Config source:** `src/models/anomaly_config.py` — `TUNING_METRICS`, `BEST_IF_CONFIG`, `BEST_IF_CONFIG_NO_WEATHER`, `ARTIFACT_DIFF_METRICS`.
+
+    **Temporal protocol:** 60/20/20 chronological split; labels benchmark-only; enhanced path uses train-fitted `AnomalyPreprocessor`.
+
+    **Analysis scripts:** `analyze_detection_errors.py`, `compare_clean_artifacts.py`, `tune_isolation_forest_by_segment.py`.
+
+    **Reproduce:** See [How to Reproduce](#how-to-reproduce) above.
 
 ---
 

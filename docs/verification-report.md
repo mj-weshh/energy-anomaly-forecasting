@@ -2,6 +2,13 @@
 
 Evidence-based quality assurance for data ingestion and schema validation.
 
+!!! success "Executive summary"
+
+    - **Week 1 acceptance:** Data ingestion is **trustworthy** — all schema and continuity checks passed.
+    - **Evidence:** 5,000 × 7 shape, zero nulls, 30-minute spacing with no gaps or duplicates.
+    - **How to verify:** Run `python -m src.data.ingest_data` and confirm **PASS** on continuity.
+    - **Terms:** [Glossary](glossary.md) — continuity check.
+
 **Objective:** Load the 30-minute interval data and verify schema completeness.
 
 **Test command:**
@@ -125,3 +132,11 @@ The following were intentionally excluded from Phase 1, Week 1:
 - Visualizations (histograms, time-series plots)
 - Correlation analysis
 - Model training or evaluation
+
+??? info "Technical deep dive"
+
+    **Checks:** Shape, dtypes, null counts, monotonic timestamps, 30-minute delta, label vocabulary.
+
+    **Evidence assets:** `docs/assets/schema-summary.png` — screenshot from ingestion run.
+
+    **Notebook parity:** `notebooks/01_data_ingestion_and_schema_check.ipynb` mirrors CLI logic for Colab/Kaggle.

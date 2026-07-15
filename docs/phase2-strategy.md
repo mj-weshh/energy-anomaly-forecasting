@@ -2,6 +2,14 @@
 
 Planning notes for the anomaly detection engine. Phase 1 is done — ingestion, schema checks, and EDA are all green. This page is what I'm using to align technical work with what we actually learned from the data.
 
+!!! success "Executive summary"
+
+    - **Goal:** Find unusual electricity readings without breaking the timeline needed for forecasting.
+    - **Key constraints:** Data is already normalized (0–1 scale); only **~5%** of intervals are labeled abnormal — detection must be fair, not just "flag everything."
+    - **Decision:** Isolation Forest leads for production cleaning; DBSCAN and ensembles documented for research.
+    - **Outcome:** Phase 2 complete — clean dataset ready; enhanced tuning shows better future-window performance but production path unchanged.
+    - **Terms:** [Glossary](glossary.md) — contamination, F1, temporal split.
+
 **Status:** Week 4 complete — detectors benchmarked; clean dataset pipeline ready for Phase 3  
 **Builds on:** [EDA Insights](eda-insights.md), [Verification Report](verification-report.md), [Feature Engineering](feature-engineering.md), [Anomaly Detection](anomaly-detection.md), [Clean Dataset](clean-data.md)
 
@@ -120,6 +128,14 @@ These were open during planning; all are now closed:
 3. **DBSCAN hyperparameters** — *resolved:* legacy coarse grid F1 = 0.125; enhanced scaled grid test F1 = **0.297** at `eps=10`, `min_samples=10`, manhattan. See [Anomaly Tuning Results](anomaly-tuning-results.md).
 4. **Ensemble vs pick-one** — *resolved for cleaning:* IF chosen as default cleaner (F1 0.331 vs DBSCAN 0.125). Ensemble union test F1 = 0.400 — below enhanced IF alone (0.460).
 5. **Isolation Forest tuning** — *resolved:* enhanced IF test F1 = **0.460** vs legacy fair test F1 = **0.340** (production params) / **0.389** (val threshold). Production pipeline still uses legacy defaults. See [Anomaly Tuning Results](anomaly-tuning-results.md).
+
+??? info "Technical deep dive"
+
+    **Detector rationale:** IF handles multivariate normalized features and ~5% contamination; DBSCAN needs scaling and wider `eps` for comparable recall.
+
+    **Evaluation protocol:** Benchmark labels on full dataset for legacy; 60/20/20 temporal split for fair enhanced comparison — see [Anomaly Tuning Results](anomaly-tuning-results.md).
+
+    **Modules:** `src/models/train_anomaly_models.py`, `src/models/anomaly_config.py`, `src/models/tuning_utils.py`.
 
 ---
 
