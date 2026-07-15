@@ -2,6 +2,14 @@
 
 Working notes on the unsupervised anomaly detection engine. Week 3 gave us a 15-column feature matrix; Week 4 wires that into two detectors with proper imbalance-aware evaluation and a unified routing API.
 
+!!! success "Executive summary"
+
+    - **What we built:** Two automatic ways to spot unusual electricity readings — Isolation Forest (primary) and DBSCAN (comparison).
+    - **Production today:** Default cleaning uses Isolation Forest with standard settings; catches about **one third** of benchmark problems (F1 0.331) but keeps the pipeline simple and stable.
+    - **Research path:** Tuned models on future-held-out data score **0.460 F1** — materially better, but not yet wired into the default clean file.
+    - **False alarms:** Early-morning hours (00–01) drive most legacy false positives; see [Anomaly Tuning Results — Error analysis](anomaly-tuning-results.md#legacy-if-error-analysis-hourly-fp).
+    - **Terms:** [Glossary](glossary.md) — F1, contamination, temporal split.
+
 **Status:** Week 4 complete (Days 1–4) — detectors, comparison, clean dataset pipeline, and educational notebook  
 **Modules:** `src/models/evaluate_models.py`, `src/models/train_anomaly_models.py`  
 **Builds on:** [Phase 2 Strategy](phase2-strategy.md), [Feature Engineering](feature-engineering.md)
@@ -193,9 +201,13 @@ Production cleaning still uses **legacy** 15-column features and default IF (`co
 | Script | Purpose |
 |--------|---------|
 | `scripts/tune_isolation_forest.py` | IF grid + score-threshold tuning on validation |
+| `scripts/tune_isolation_forest.py --drop-weather` | Weather ablation — drop Temperature, Humidity, Wind_Speed |
 | `scripts/tune_dbscan.py` | DBSCAN grid (enhanced scaled or `--legacy`) |
 | `scripts/tune_ensemble.py` | IF ∪ DBSCAN union/intersection/weighted strategies |
 | `scripts/compare_anomaly_models.py` | Legacy vs enhanced dashboard + fair test-split comparison |
+| `scripts/analyze_detection_errors.py` | Legacy IF hourly false-positive breakdown on test split |
+| `scripts/tune_isolation_forest_by_segment.py` | Per-hour/weekend enhanced IF test F1 (global model) |
+| `scripts/compare_clean_artifacts.py` | Diff legacy vs research clean CSV profiles |
 
 ### Tuned results (summary)
 
@@ -210,7 +222,7 @@ Production cleaning still uses **legacy** 15-column features and default IF (`co
 
 See [Anomaly Tuning Results](anomaly-tuning-results.md) for methodology, confusion matrices, search spaces, and fair head-to-head tables.
 
-Configs are stored in `src/models/anomaly_config.py` (research only — not wired to `generate_clean_dataset`).
+Configs are stored in `src/models/anomaly_config.py`. Production `generate_clean_dataset` uses the **default `legacy` profile only**; research profiles are opt-in via `--profile` — see [Clean Dataset — Research profiles](clean-data.md#research-profiles).
 
 ---
 
@@ -221,9 +233,12 @@ pip install -r requirements.txt
 python scripts/test_isolation_forest.py
 python scripts/tune_dbscan.py --legacy
 python scripts/tune_isolation_forest.py
+python scripts/tune_isolation_forest.py --drop-weather
 python scripts/tune_dbscan.py
 python scripts/tune_ensemble.py
 python scripts/compare_anomaly_models.py
+python scripts/analyze_detection_errors.py
+python scripts/tune_isolation_forest_by_segment.py
 ```
 
 Python API:
@@ -247,6 +262,16 @@ db_model, db_preds = train_dbscan(df, eps=0.5, min_samples=5)
 _, preds = detect_anomalies(df, model_type="isolation_forest")
 _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 ```
+
+??? info "Technical deep dive"
+
+    **Modules:** `src/models/train_anomaly_models.py`, `evaluate_models.py`, `anomaly_preprocessing.py`, `tuning_utils.py`, `anomaly_config.py`.
+
+    **Eval rows:** 4,953 (5,000 minus 47 rolling warm-up NaNs). Labels aligned via `prepare_feature_matrix` index.
+
+    **Fair test F1 (991 rows):** legacy 0.340 / 0.389 (val threshold) / enhanced 0.460. See [Anomaly Tuning Results](anomaly-tuning-results.md).
+
+    **Clean profiles:** `legacy` (default), `legacy_threshold`, `enhanced` — `scripts/generate_clean_data.py --profile`.
 
 ---
 

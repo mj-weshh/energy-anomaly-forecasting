@@ -2,6 +2,13 @@
 
 Install the project, load the dataset, and verify schema completeness.
 
+!!! success "Executive summary"
+
+    - **Start here:** Clone, install dependencies, run `python -m src.data.ingest_data` — **PASS** means 5,000 rows, zero nulls, perfect 30-minute spacing.
+    - **Phase 2:** Run feature verification, anomaly scripts, and `generate_clean_data.py` to produce the forecasting-ready CSV.
+    - **PASS criteria:** Schema shape `(5000, 7)`, continuity **PASS**, clean output `(5000, 15)` with zero consumption NaNs.
+    - **Terms:** [Glossary](glossary.md) — continuity check, profile.
+
 ---
 
 ## Prerequisites
@@ -281,3 +288,11 @@ After ingestion and Phase 2 pass:
 4. Run Phase 2 scripts (§7) and `notebooks/03_anomaly_detection.ipynb` (§8)
 5. Generate the Phase 3 artifact: `python scripts/generate_clean_data.py`
 6. Proceed to **Phase 3** — time-series forecasting on the clean dataset
+
+??? info "Technical deep dive"
+
+    **Phase 1:** `python -m src.data.ingest_data` · `notebooks/01_*` · `notebooks/02_*`
+
+    **Phase 2:** `scripts/verify_features.py`, `test_isolation_forest.py`, `tune_*.py`, `compare_anomaly_models.py`, research scripts (`analyze_detection_errors.py`, `compare_clean_artifacts.py`, `tune_isolation_forest_by_segment.py`), `generate_clean_data.py [--profile]`, `notebooks/03_*`
+
+    **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`

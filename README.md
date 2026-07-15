@@ -6,6 +6,8 @@
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built entirely on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
+**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phase 2 is complete: we can flag unusual consumption, produce a cleaned dataset for modeling, and document honest benchmarks. **Production cleaning is unchanged** (~248 corrected intervals). Research shows tuned detection performs better on future-held-out data (F1 **0.460** vs **0.331**), but adopting new cleaning recipes requires leadership review because they change different intervals. Full docs: [docs site](docs/index.md) · [Glossary](docs/glossary.md).
+
 ---
 
 ## Overview
@@ -106,7 +108,6 @@ energy-anomaly-forecasting/
 │   ├── analyze_detection_errors.py # Legacy IF hourly FP analysis
 │   ├── compare_clean_artifacts.py  # Diff legacy vs research clean CSVs
 │   ├── tune_isolation_forest_by_segment.py  # Per-hour/weekend test F1
-│   ├── generate_mermaid_assets.py  # Regenerate architecture PNGs (mermaid.ink)
 │   └── generate_clean_data.py      # Generate Phase 3 clean dataset artifact
 ├── src/
 │   ├── data/

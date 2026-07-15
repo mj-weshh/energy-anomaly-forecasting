@@ -2,6 +2,13 @@
 
 Reference documentation for the Smart Meter Electricity Consumption Dataset used in this project.
 
+!!! success "Executive summary"
+
+    - **What you get:** 5,000 half-hour readings from Jan–Apr 2024 — electricity use, weather, past-average context, and an expert anomaly label.
+    - **Business columns:** `Electricity_Consumed` (usage), `Avg_Past_Consumption` (historical baseline), weather for context.
+    - **Quality bar:** No nulls; timestamps every 30 minutes; labels are `Normal` or `Abnormal`.
+    - **Terms:** [Glossary](glossary.md) — anomaly label, continuity.
+
 **Source:** [Kaggle — Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset)  
 **Local filename:** `smart_meter_data.csv`  
 **Verified on:** Phase 1, Week 1 ingestion run
@@ -91,3 +98,11 @@ Any CSV accepted by this project must satisfy:
 - `Anomaly_Label` values limited to `Normal` and `Abnormal`
 
 Violations are reported by `print_schema_summary()` and `check_time_continuity()` in the ingestion module.
+
+??? info "Technical deep dive"
+
+    **dtypes:** `Timestamp` → `datetime64[ns]`; numerics → `float64`; `Anomaly_Label` → `object` (`Normal` / `Abnormal`).
+
+    **Ranges:** Normalized features in ~0–1; `Anomaly_Label` imbalanced (~5% `Abnormal`).
+
+    **Contract enforcement:** `src/data/ingest_data.py` — `load_smart_meter_data`, `print_schema_summary`, `check_time_continuity`.

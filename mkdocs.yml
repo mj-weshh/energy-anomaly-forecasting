@@ -37,10 +37,14 @@ nav:
       - EDA Insights: eda-insights.md
       - Phase 2 Strategy: phase2-strategy.md
       - Anomaly Tuning Results: anomaly-tuning-results.md
+      - Glossary: glossary.md
 
 docs_dir: docs
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
   - tables
   - fenced_code
   - toc:

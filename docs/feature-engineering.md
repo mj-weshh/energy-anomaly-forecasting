@@ -2,6 +2,13 @@
 
 Working notes on the feature engineering module. This is the first coding step of Phase 2 — turning raw timestamps into the temporal context our anomaly detectors need, plus rolling statistics that give the models short-term and daily memory.
 
+!!! success "Executive summary"
+
+    - **Why it matters:** A spike at 2 AM means something different than the same spike at noon — detectors need **time context** to judge fairly.
+    - **What we add:** Hour, day-of-week, rolling averages, and (for research) enhanced 21-column feature sets.
+    - **Trade-off:** Rolling windows create a short warm-up period (~47 rows) dropped before scoring — documented and consistent across scripts.
+    - **Terms:** [Glossary](glossary.md) — feature profile, warm-up NaNs.
+
 **Status:** Temporal and rolling features complete; Week 4 anomaly detection done — see [Anomaly Detection](anomaly-detection.md)  
 **Module:** `src/features/build_features.py`  
 **Strategy background:** [Phase 2 Strategy](phase2-strategy.md)
@@ -152,6 +159,16 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 ## What's Next
 
 - **Week 4 complete** — IF + DBSCAN baselines; clean dataset for Phase 3. See [Anomaly Detection](anomaly-detection.md) and [Clean Dataset](clean-data.md).
+
+??? info "Technical deep dive"
+
+    **Legacy pipeline:** `build_all_features()` → 15 columns (7 original + 8 engineered).
+
+    **Enhanced research:** `build_enhanced_anomaly_features()` → 21 columns including lag/rolling variants — used by `scripts/tune_*.py` and `--profile enhanced`.
+
+    **Warm-up:** First 47 rows may have NaN rolling features; `prepare_feature_matrix` drops them before model fit/score.
+
+    **Verify:** `python scripts/verify_features.py`
 
 ---
 

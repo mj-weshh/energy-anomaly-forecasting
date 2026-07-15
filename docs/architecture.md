@@ -2,6 +2,13 @@
 
 Repository layout, data flow, and design decisions for Phases 1–2 (ingestion, EDA, feature engineering, anomaly detection, and clean-data pipeline).
 
+!!! success "Executive summary"
+
+    - **Story:** Raw smart-meter CSV → validate → explore → engineer features → detect anomalies → impute gaps → clean file for forecasting.
+    - **Single front door:** All scripts load data through `src.data.ingest_data` — one place to enforce schema rules.
+    - **Research vs production:** Default `generate_clean_data.py` unchanged; optional `--profile` and `scripts/tune_*.py` live alongside for experiments.
+    - **Terms:** [Glossary](glossary.md) — profile, imputation, temporal split.
+
 ---
 
 ## System Overview
@@ -40,7 +47,6 @@ energy-anomaly-forecasting/
 │   ├── analyze_detection_errors.py   # Legacy IF hourly FP analysis
 │   ├── compare_clean_artifacts.py    # Diff clean-data profile artifacts
 │   ├── tune_isolation_forest_by_segment.py  # Per-segment enhanced IF test F1
-│   ├── generate_mermaid_assets.py    # Regenerate architecture PNGs via mermaid.ink (network)
 │   └── generate_clean_data.py        # Generate Phase 3 clean dataset artifact (--profile)
 ├── src/
 │   ├── __init__.py
@@ -288,3 +294,11 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Documentation | mkdocs, mkdocs-material | >= 1.6.0, >= 9.5.0 |
 
 Forecasting libraries (xgboost, tensorflow/pytorch) will be added in Phase 3.
+
+??? info "Technical deep dive"
+
+    **Module map:** `ingest_data` → `build_features` → `train_anomaly_models` → `clean_data` / `clean_dataset` pipeline.
+
+    **Script inventory:** See repository tree above — research extensions include `analyze_detection_errors.py`, `compare_clean_artifacts.py`, `tune_isolation_forest_by_segment.py`.
+
+    **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink).

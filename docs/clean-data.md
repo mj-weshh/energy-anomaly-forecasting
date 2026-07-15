@@ -2,6 +2,14 @@
 
 Working notes on the clean-data pipeline. Week 4 Days 1–2 gave us anomaly detectors; Day 3 turns those predictions into a **continuity-safe** dataset for Phase 3 forecasting.
 
+!!! success "Executive summary"
+
+    - **Why we clean:** Forecasting needs an unbroken 30-minute timeline — we **replace** suspicious readings instead of deleting rows.
+    - **Default unchanged:** `python scripts/generate_clean_data.py` still produces the same legacy artifact (~**248** imputed intervals, 5000 rows).
+    - **Research options:** Two optional profiles (`legacy_threshold`, `enhanced`) write separate CSVs for comparison — not used in production until reviewed.
+    - **Risk if switching blindly:** Enhanced cleaning changes **80% fewer** intervals than legacy but agrees on only **~15%** of imputation choices (Jaccard 0.154).
+    - **Terms:** [Glossary](glossary.md) — imputation, profile, Jaccard.
+
 **Status:** Week 4 Day 3–4 complete — clean dataset pipeline, artifact generation, and notebook Section 5 walkthrough  
 **Modules:** `src/data/clean_data.py`, `src/pipelines/clean_dataset.py`, `scripts/generate_clean_data.py`  
 **Builds on:** [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md)
@@ -38,6 +46,8 @@ Defined in `src/pipelines/clean_dataset.py` (re-exported from `src.data.clean_da
 3. Anomaly detection (profile-dependent)
 4. `interpolate_anomalies` — mask + impute
 5. Write CSV to `output_path`
+
+<span id="research-profiles"></span>
 
 ## Research profiles (`--profile`)
 
@@ -121,6 +131,14 @@ generate_clean_dataset(
 
 - **Phase 3** — train forecasting models on `clean_smart_meter_data.csv`
 - **Notebook walkthrough** — Section 5 of [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb) demonstrates masking, interpolation, and a before/after consumption plot; see [Educational Notebook (Day 4)](anomaly-detection.md#educational-notebook-day-4)
+
+??? info "Technical deep dive"
+
+    **Profiles:** `CleanProfile` in `src/pipelines/clean_dataset.py` — `legacy`, `legacy_threshold`, `enhanced`. CLI: `scripts/generate_clean_data.py --profile`.
+
+    **Artifact metrics:** `ARTIFACT_DIFF_METRICS` in `anomaly_config.py` — imputed row counts, Jaccard overlaps, top disagreement hour.
+
+    **Compare:** `python scripts/compare_clean_artifacts.py` after generating all three profiles.
 
 ---
 
