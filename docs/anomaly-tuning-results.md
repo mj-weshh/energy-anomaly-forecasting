@@ -255,6 +255,75 @@ Adopting tuned IF for production cleaning is optional and was explicitly deferre
 
 ---
 
+## Weather Ablation
+
+Run: `python scripts/tune_isolation_forest.py --drop-weather`
+
+Drops `Temperature`, `Humidity`, and `Wind_Speed` from the enhanced feature matrix (consistent with negligible weather correlation in EDA).
+
+| Config | Test F1 | Test precision | Test recall |
+|--------|---------|----------------|-------------|
+| Enhanced IF (full features) | **0.460** | 0.625 | 0.364 |
+| Enhanced IF (no weather) | **0.524** | 0.562 | 0.491 |
+
+Weather columns are not driving the enhanced uplift on this benchmark; the no-weather run slightly **outperforms** the full-feature config on the held-out test window. Best no-weather config is stored as `BEST_IF_CONFIG_NO_WEATHER` in `anomaly_config.py`.
+
+---
+
+## Legacy IF Error Analysis (Hourly FP)
+
+Script: `python scripts/analyze_detection_errors.py`
+
+Reproduces **legacy IF (test, production params)** on the 991-row temporal test window. Total false positives: **165**.
+
+| Hour | FP | FP rate (vs normal rows) |
+|------|-----|--------------------------|
+| 00 | 19 | 0.463 |
+| 01 | 15 | 0.395 |
+| 21 | 10 | 0.238 |
+| 22 | 9 | 0.231 |
+| 23 | 9 | 0.225 |
+
+**Headline:** Early-morning hours **00–01** drive most legacy over-flagging (34 of 165 FPs). Peak load hour 02:00 has fewer FPs (6) despite high consumption. Chart: `docs/assets/anomaly/legacy_if_fp_by_hour.png`.
+
+---
+
+## Clean Artifact Comparison
+
+Generate all profiles, then compare:
+
+```bash
+python scripts/generate_clean_data.py --profile legacy
+python scripts/generate_clean_data.py --profile legacy_threshold
+python scripts/generate_clean_data.py --profile enhanced
+python scripts/compare_clean_artifacts.py
+```
+
+| Pair | Imputed rows | Disagree flags | Jaccard overlap |
+|------|--------------|----------------|-----------------|
+| legacy vs legacy_threshold | 248 / 178 | 252 | 0.257 |
+| legacy vs enhanced | 248 / 51 | 219 | 0.154 |
+| legacy_threshold vs enhanced | 178 / 51 | 185 | 0.106 |
+
+Enhanced profile imputes far fewer intervals (51 vs 248 legacy) with low overlap — review before adopting for Phase 3. Hour **00** has the most imputation disagreements across pairs. Metrics stored in `ARTIFACT_DIFF_METRICS` (`anomaly_config.py`).
+
+---
+
+## Per-Segment Test Breakdown (Enhanced IF)
+
+Script: `python scripts/tune_isolation_forest_by_segment.py`
+
+One global enhanced IF (`BEST_IF_CONFIG`); per-segment F1 on the test split only (no per-hour re-tuning).
+
+| Segment | n (test) | F1 | Recall | Notes |
+|---------|----------|-----|--------|-------|
+| weekday | 720 | 0.500 | 0.375 | Above global recall |
+| weekend | 271 | 0.410 | 0.348 | Below global recall (0.364) |
+
+Hours with recall below global enhanced test (0.364) include **01, 02, 03, 05, 06, 08, 17, 18** — overlapping with legacy FP concentration at hours 00–01. Early-morning segments remain the hardest even after tuning.
+
+---
+
 ## How to Reproduce
 
 ```bash
@@ -266,9 +335,12 @@ python scripts/tune_dbscan.py --legacy
 
 # Research tuning
 python scripts/tune_isolation_forest.py
+python scripts/tune_isolation_forest.py --drop-weather
 python scripts/tune_dbscan.py
 python scripts/tune_ensemble.py
 python scripts/compare_anomaly_models.py
+python scripts/analyze_detection_errors.py
+python scripts/tune_isolation_forest_by_segment.py
 ```
 
 Expected headline numbers (test split where applicable):

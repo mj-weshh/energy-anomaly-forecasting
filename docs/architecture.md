@@ -8,6 +8,8 @@ Repository layout, data flow, and design decisions for Phases 1–2 (ingestion, 
 
 ![System Overview — data flow from Kaggle dataset through ingestion to downstream phases](assets/system-overview.png)
 
+> Regenerate this figure: `python scripts/generate_mermaid_assets.py` (requires network; fetches PNGs from [mermaid.ink](https://mermaid.ink)).
+
 The ingestion layer is the **single gate** between raw CSV files and all downstream work. Every notebook and script in later phases should import from `src.data.ingest_data` rather than reading CSVs directly.
 
 ---
@@ -28,13 +30,18 @@ energy-anomaly-forecasting/
 │   └── 03_anomaly_detection.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py          # Regenerate EDA doc figures
+│   ├── generate_mermaid_assets.py    # Regenerate architecture PNGs via mermaid.ink (network)
 │   ├── verify_features.py            # Sanity-check engineered features
 │   ├── test_isolation_forest.py      # Isolation Forest baseline + evaluation
 │   ├── tune_isolation_forest.py      # Enhanced IF hyperparameter + threshold tuning
 │   ├── tune_dbscan.py                # DBSCAN hyperparameter grid search
 │   ├── tune_ensemble.py              # IF + DBSCAN ensemble comparison
 │   ├── compare_anomaly_models.py     # Legacy vs enhanced research dashboard
-│   └── generate_clean_data.py        # Generate Phase 3 clean dataset artifact
+│   ├── analyze_detection_errors.py   # Legacy IF hourly FP analysis
+│   ├── compare_clean_artifacts.py    # Diff clean-data profile artifacts
+│   ├── tune_isolation_forest_by_segment.py  # Per-segment enhanced IF test F1
+│   ├── generate_mermaid_assets.py    # Regenerate architecture PNGs via mermaid.ink (network)
+│   └── generate_clean_data.py        # Generate Phase 3 clean dataset artifact (--profile)
 ├── src/
 │   ├── __init__.py
 │   ├── data/
@@ -127,6 +134,14 @@ python scripts/export_eda_assets.py
 
 Writes PNGs to `docs/assets/eda/` for embedding in [EDA Insights](eda-insights.md).
 
+**Architecture diagrams:**
+
+```bash
+python scripts/generate_mermaid_assets.py
+```
+
+Fetches rendered PNGs from [mermaid.ink](https://mermaid.ink) and writes `docs/assets/system-overview.png` and `docs/assets/ingestion-pipeline.png` (used in this page and [Getting Started](getting-started.md)). Requires network access.
+
 ---
 
 ## Feature Engineering Module
@@ -188,7 +203,7 @@ Loads data, applies features, trains unsupervised detectors (labels excluded), a
 | Function | Module | Responsibility |
 |----------|--------|----------------|
 | `interpolate_anomalies(df, predictions)` | `clean_data.py` | Mask anomalous `Electricity_Consumed` values; time-interpolate gaps |
-| `generate_clean_dataset(input_path, output_path)` | `pipelines/clean_dataset.py` | End-to-end IF clean pipeline; writes CSV artifact (re-exported from `clean_data`) |
+| `generate_clean_dataset(input_path, output_path, profile=...)` | `pipelines/clean_dataset.py` | End-to-end clean pipeline; `profile` = `legacy` (default), `legacy_threshold`, or `enhanced` |
 
 See [Clean Dataset](clean-data.md) for pipeline design and artifact details.
 
@@ -196,9 +211,12 @@ See [Clean Dataset](clean-data.md) for pipeline design and artifact details.
 
 ```bash
 python scripts/generate_clean_data.py
+python scripts/generate_clean_data.py --profile legacy_threshold
+python scripts/generate_clean_data.py --profile enhanced
+python scripts/compare_clean_artifacts.py
 ```
 
-Writes `data/processed/clean_smart_meter_data.csv` (5000 rows, imputed consumption, gitignored locally).
+Writes `data/processed/clean_smart_meter_data.csv` by default (5000 rows, gitignored locally). Research profiles write separate filenames — see [Clean Dataset](clean-data.md#research-profiles).
 
 ---
 

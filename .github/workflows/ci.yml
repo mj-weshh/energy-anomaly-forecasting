@@ -23,3 +23,5 @@ jobs:
         run: python scripts/test_isolation_forest.py
       - name: Anomaly model comparison
         run: python scripts/compare_anomaly_models.py
+      - name: Detection error analysis
+        run: python scripts/analyze_detection_errors.py

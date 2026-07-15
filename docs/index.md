@@ -42,6 +42,7 @@ Full analysis: [EDA Insights](eda-insights.md)
 - Clean dataset pipeline (Day 3): IF + time interpolation → `data/processed/clean_smart_meter_data.csv` (**5000 rows preserved**)
 - CMU educational notebook (Day 4): [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb) — full detect → benchmark → interpolate workflow
 - Research tuning (held-out test): legacy IF **0.331** (full) / **0.340** (test) / **0.389** (test + val threshold) → enhanced IF **0.460**; full report: [Anomaly Tuning Results](anomaly-tuning-results.md)
+- Phase 2 research extensions: weather ablation, hourly FP analysis, clean-data `--profile` artifacts, per-segment evaluation — see [Anomaly Tuning Results](anomaly-tuning-results.md) and [Clean Dataset](clean-data.md#research-profiles)
 - `Anomaly_Label` used for evaluation only — never for model fitting
 
 Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean-data.md)

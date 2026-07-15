@@ -76,7 +76,7 @@ Key findings from exploratory analysis on the same dataset:
 
 Full report with all figures: [EDA Insights](docs/eda-insights.md)
 
-Regenerate doc figures: `python scripts/export_eda_assets.py`
+Regenerate doc figures: `python scripts/export_eda_assets.py` (EDA) · `python scripts/generate_mermaid_assets.py` (architecture PNGs)
 
 ---
 
@@ -96,12 +96,17 @@ energy-anomaly-forecasting/
 │   └── 03_anomaly_detection.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py        # Regenerate EDA doc figures
+│   ├── generate_mermaid_assets.py  # Regenerate architecture PNGs (mermaid.ink)
 │   ├── verify_features.py          # Sanity-check engineered features
 │   ├── test_isolation_forest.py    # Isolation Forest baseline + evaluation
 │   ├── tune_isolation_forest.py    # Enhanced IF hyperparameter + threshold tuning
 │   ├── tune_dbscan.py              # DBSCAN hyperparameter grid search
 │   ├── tune_ensemble.py            # IF + DBSCAN ensemble comparison
 │   ├── compare_anomaly_models.py   # Legacy vs enhanced research dashboard
+│   ├── analyze_detection_errors.py # Legacy IF hourly FP analysis
+│   ├── compare_clean_artifacts.py  # Diff legacy vs research clean CSVs
+│   ├── tune_isolation_forest_by_segment.py  # Per-hour/weekend test F1
+│   ├── generate_mermaid_assets.py  # Regenerate architecture PNGs (mermaid.ink)
 │   └── generate_clean_data.py      # Generate Phase 3 clean dataset artifact
 ├── src/
 │   ├── data/
@@ -175,13 +180,19 @@ mkdocs build    # output to site/
 ```bash
 python -m src.data.ingest_data
 python scripts/export_eda_assets.py
+python scripts/generate_mermaid_assets.py
 python scripts/verify_features.py
 python scripts/test_isolation_forest.py
 python scripts/tune_dbscan.py
 python scripts/tune_isolation_forest.py
 python scripts/tune_ensemble.py
 python scripts/compare_anomaly_models.py
+python scripts/analyze_detection_errors.py
+python scripts/tune_isolation_forest_by_segment.py
 python scripts/generate_clean_data.py
+python scripts/generate_clean_data.py --profile legacy_threshold
+python scripts/generate_clean_data.py --profile enhanced
+python scripts/compare_clean_artifacts.py
 ```
 
 ### Python API
