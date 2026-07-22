@@ -36,6 +36,7 @@ nav:
   - Research & Insights:
       - EDA Insights: eda-insights.md
       - Phase 2 Strategy: phase2-strategy.md
+      - Phase 3 Strategy: phase3-strategy.md
       - Anomaly Tuning Results: anomaly-tuning-results.md
       - Glossary: glossary.md
 
