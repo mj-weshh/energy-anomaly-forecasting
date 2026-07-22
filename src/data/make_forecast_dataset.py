@@ -9,6 +9,9 @@ Never randomly shuffle rows: that would leak future information into training.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import pandas as pd
 
 
@@ -76,3 +79,85 @@ def time_series_split(
         )
 
     return train_df, val_df, test_df
+
+
+def _print_split_summary(name: str, split_df: pd.DataFrame) -> None:
+    """Print row count and timestamp bounds for one split."""
+    start = split_df["Timestamp"].min()
+    end = split_df["Timestamp"].max()
+    print(f"{name}:")
+    print(f"  rows:  {len(split_df)}")
+    print(f"  start: {start}")
+    print(f"  end:   {end}")
+
+
+def _main() -> None:
+    """Load the Phase 2 clean CSV, split chronologically, verify boundaries."""
+    repo_root = Path(__file__).resolve().parents[2]
+    clean_path = repo_root / "data" / "processed" / "clean_smart_meter_data.csv"
+
+    print("=" * 60)
+    print("CHRONOLOGICAL SPLIT BOUNDARY CHECK")
+    print("=" * 60)
+    print(f"Artifact: {clean_path}")
+
+    if not clean_path.is_file():
+        print(
+            f"FAIL: Clean dataset not found at {clean_path}.\n"
+            "  Generate it with:  python scripts/generate_clean_data.py\n"
+            "  Then re-run:       python -m src.data.make_forecast_dataset",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    df = pd.read_csv(clean_path)
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], format="%Y-%m-%d %H:%M:%S")
+
+    train_df, val_df, test_df = time_series_split(df)
+
+    print()
+    _print_split_summary("train", train_df)
+    _print_split_summary("val", val_df)
+    _print_split_summary("test", test_df)
+
+    train_end = train_df["Timestamp"].max()
+    val_start = val_df["Timestamp"].min()
+    val_end = val_df["Timestamp"].max()
+    test_start = test_df["Timestamp"].min()
+    step = pd.Timedelta("30min")
+
+    print()
+    print("Adjacency checks:")
+    ok = True
+
+    train_val_ok = train_end < val_start and val_start == train_end + step
+    if train_val_ok:
+        print("  train → val: PASS (train end precedes val start by 30 min)")
+    else:
+        ok = False
+        print("  train → val: FAIL")
+    print(f"    train end: {train_end}")
+    print(f"    val start: {val_start}")
+
+    val_test_ok = val_end < test_start and test_start == val_end + step
+    if val_test_ok:
+        print("  val → test: PASS (val end precedes test start by 30 min)")
+    else:
+        ok = False
+        print("  val → test: FAIL")
+    print(f"    val end:    {val_end}")
+    print(f"    test start: {test_start}")
+
+    print("=" * 60)
+    if ok:
+        print("PASS — chronological split boundaries OK")
+        print("=" * 60)
+        sys.exit(0)
+
+    print("FAIL — chronological split boundaries are invalid", file=sys.stderr)
+    print("=" * 60)
+    sys.exit(1)
+
+
+if __name__ == "__main__":
+    _main()
