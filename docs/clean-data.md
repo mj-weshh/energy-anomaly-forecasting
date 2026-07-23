@@ -129,7 +129,7 @@ generate_clean_dataset(
 
 ## What's Next
 
-- **Phase 3** — train forecasting models on `clean_smart_meter_data.csv`
+- **Phase 3 foundation** — verify the clean artifact, chronological split, and naive seasonal floor: [Forecasting Baseline](forecasting-baseline.md)
 - **Notebook walkthrough** — Section 5 of [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb) demonstrates masking, interpolation, and a before/after consumption plot; see [Educational Notebook (Day 4)](anomaly-detection.md#educational-notebook-day-4)
 
 ??? info "Technical deep dive"

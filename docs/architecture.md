@@ -47,13 +47,16 @@ energy-anomaly-forecasting/
 │   ├── analyze_detection_errors.py   # Legacy IF hourly FP analysis
 │   ├── compare_clean_artifacts.py    # Diff clean-data profile artifacts
 │   ├── tune_isolation_forest_by_segment.py  # Per-segment enhanced IF test F1
-│   └── generate_clean_data.py        # Generate Phase 3 clean dataset artifact (--profile)
+│   ├── generate_clean_data.py        # Generate Phase 3 clean dataset artifact (--profile)
+│   ├── verify_phase2_state.py        # Phase 3 gate: clean CSV continuity / NaNs
+│   └── evaluate_naive_baseline.py    # Score naive seasonal forecast on test set
 ├── src/
 │   ├── __init__.py
 │   ├── data/
 │   │   ├── __init__.py
 │   │   ├── ingest_data.py            # Canonical ingestion module
-│   │   └── clean_data.py             # Anomaly masking and interpolation
+│   │   ├── clean_data.py             # Anomaly masking and interpolation
+│   │   └── make_forecast_dataset.py  # Chronological train/val/test split
 │   ├── pipelines/
 │   │   └── clean_dataset.py          # End-to-end clean artifact orchestration
 │   ├── features/
@@ -61,8 +64,10 @@ energy-anomaly-forecasting/
 │   │   └── build_features.py         # Phase 2 feature engineering
 │   ├── models/
 │   │   ├── __init__.py
-│   │   ├── evaluate_models.py        # Imbalance-aware evaluation metrics
+│   │   ├── evaluate_models.py        # Imbalance-aware anomaly evaluation
+│   │   ├── evaluate_forecast.py      # Forecast MAE / RMSE / MAPE
 │   │   ├── train_anomaly_models.py   # Unsupervised anomaly training
+│   │   ├── train_forecast_models.py  # Naive seasonal baseline (+ later models)
 │   │   ├── feature_matrix.py         # Feature matrix prep and scaling
 │   │   ├── anomaly_preprocessing.py  # Train-fitted scaling for tuning
 │   │   ├── tuning_utils.py           # Temporal splits and threshold search
@@ -89,8 +94,8 @@ energy-anomaly-forecasting/
 | `docs/` | Human-readable documentation source |
 | `docs/assets/eda/` | Exported EDA plots for MkDocs |
 | `src/features/` | Model-ready feature engineering (Phase 2) |
-| `src/models/` | Unsupervised anomaly detection and evaluation (Phase 2) |
-| `scripts/` | CLI utilities (EDA export, feature verification, model testing) |
+| `src/models/` | Anomaly detection (Phase 2) and forecast metrics / baselines (Phase 3) |
+| `scripts/` | CLI utilities (EDA export, feature verification, model testing, forecast baseline) |
 | `Smart Meter Electricity Consumption Dataset/` | Legacy download location; supported by dynamic discovery |
 
 ---
@@ -276,7 +281,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
 | **2 — Anomaly Detection** | Feature engineering, IF/DBSCAN, clean dataset, educational notebook | `src/features/build_features.py`, `src/models/train_anomaly_models.py`, `src/data/clean_data.py`, `notebooks/03_anomaly_detection.ipynb` |
-| **3 — Forecasting** | XGBoost, LSTM, evaluation | `src/models/` (planned) |
+| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive baseline; then Prophet/ARIMA → XGBoost → LSTM | `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py` |
 
 ---
 
@@ -293,12 +298,14 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Anomaly detection | scikit-learn | >= 1.3.0 |
 | Documentation | mkdocs, mkdocs-material | >= 1.6.0, >= 9.5.0 |
 
-Forecasting libraries (xgboost, tensorflow/pytorch) will be added in Phase 3.
+Phase 3 Day 1–2 uses the existing scikit-learn stack for metrics and the naive baseline. Forecasting libraries (xgboost, Prophet, tensorflow/pytorch) will be added when those models land.
 
 ??? info "Technical deep dive"
 
-    **Module map:** `ingest_data` → `build_features` → `train_anomaly_models` → `clean_data` / `clean_dataset` pipeline.
+    **Module map:** `ingest_data` → `build_features` → `train_anomaly_models` → `clean_data` / `clean_dataset` → `make_forecast_dataset` / `train_forecast_models` / `evaluate_forecast`.
 
-    **Script inventory:** See repository tree above — research extensions include `analyze_detection_errors.py`, `compare_clean_artifacts.py`, `tune_isolation_forest_by_segment.py`.
+    **Script inventory:** See repository tree above — Phase 3 foundation includes `verify_phase2_state.py` and `evaluate_naive_baseline.py`.
 
     **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink).
+
+    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Phase 3 Strategy](phase3-strategy.md).

@@ -8,10 +8,11 @@ Planning notes for the final technical phase: forecasting. Phase 1 (ingestion / 
     - **Starting point:** Default Phase 2 clean file (`clean_smart_meter_data.csv`) — continuous, ~248 repaired intervals, production recipe unchanged.
     - **Golden rule:** Split data **in time order** (70% train / 15% validation / 15% test). Never shuffle — that would leak the future into the past.
     - **Model ladder:** Beat a simple “same time yesterday” baseline before trusting Prophet/ARIMA, then XGBoost, then LSTM.
-    - **Terms:** [Glossary](glossary.md) — imputation, temporal split; forecasting metrics (MAE / RMSE / MAPE) defined below.
+    - **Day 1–2 shipped:** Clean-state gate, chronological split, metrics module, and naive floor are implemented — see [Forecasting Baseline](forecasting-baseline.md).
+    - **Terms:** [Glossary](glossary.md) — imputation, temporal split; forecasting metrics (MAE / RMSE / MAPE).
 
-**Status:** Planning (initiating 22 July 2026)  
-**Builds on:** [Clean Dataset](clean-data.md), [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md), [Architecture](architecture.md)
+**Status:** Week 6 Day 1–2 foundation **complete**; statistical and ML forecasters planned next  
+**Builds on:** [Clean Dataset](clean-data.md), [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md), [Architecture](architecture.md), [Forecasting Baseline](forecasting-baseline.md)
 
 ---
 
@@ -34,14 +35,14 @@ Research cleaning profiles (`legacy_threshold`, `enhanced`) remain opt-in and ar
 
 ## Step 0: Codebase & State Review Gate
 
-Before writing forecasting code, verify the end-state of Phase 2 mathematically and structurally:
+**Implemented** via `scripts/verify_phase2_state.py` (loads the clean CSV only — does not retrain Isolation Forest). See [Forecasting Baseline — Step 0](forecasting-baseline.md#step-0--verify-phase-2-clean-state).
 
 | Check | Pass criterion |
 |-------|----------------|
-| **Pipeline integrity** | `generate_clean_dataset()` executes without errors |
+| **Pipeline integrity** | Clean artifact present (regenerate with `generate_clean_data.py` if needed) |
 | **Data continuity** | Clean dataset has exactly **5,000** rows |
 | **No NaNs** | Interpolation left **0** nulls in `Electricity_Consumed` |
-| **Modularity** | Phase 3 can load cleaned data (CSV or pipeline output) **without** re-triggering Phase 2 anomaly training loops by default |
+| **Modularity** | Phase 3 can load cleaned data **without** re-triggering Phase 2 anomaly training loops by default |
 
 **Warm-up note:** Rolling / lag feature warm-up may drop the first incomplete rows *when building model feature matrices*. That is separate from the clean artifact, which must stay **5,000** continuous rows with filled consumption.
 
@@ -91,12 +92,13 @@ Primary reporting stack: MAE + RMSE; MAPE as a secondary relative view with the 
 
 Build complexity sequentially. If a complex model cannot beat a simpler one on the same test window, we do not adopt it as the headline result.
 
-### A. Naive baseline
+### A. Naive baseline — **implemented**
 
 | | |
 |--|--|
 | **What** | Predict that consumption equals the value from **24 hours earlier** at the same clock time — a **48-step** lag at 30-minute resolution |
 | **Why** | If advanced models cannot beat this rule of thumb, they are not earning their complexity |
+| **Code** | `naive_seasonal_forecast` + `scripts/evaluate_naive_baseline.py` — [Forecasting Baseline](forecasting-baseline.md) |
 
 ### B. Statistical baseline (Prophet / Auto-ARIMA)
 
@@ -150,11 +152,13 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
 ## Open Implementation Notes
 
-These are deliberate deferrals until Step 0 passes and coding starts:
+**Done (Week 6 Day 1–2):** Step 0 audit script, `time_series_split`, `evaluate_forecast`, naive seasonal baseline — see [Forecasting Baseline](forecasting-baseline.md).
 
-- Exact module layout under `src/models/` for forecast trainers and metrics helpers
+Still deferred for later Phase 3 weeks:
+
 - Choice of deep-learning stack (TensorFlow vs PyTorch) for LSTM
 - Whether weather stays in the exogenous set after Ablation-style checks (Phase 2 already showed weak linear weather signal for *anomaly* detection; forecasting may differ)
+- Prophet / Auto-ARIMA / XGBoost trainers
 
 ---
 
@@ -162,20 +166,21 @@ These are deliberate deferrals until Step 0 passes and coding starts:
 
     **Input API:** Load `data/processed/clean_smart_meter_data.csv`, or regenerate via `scripts/generate_clean_data.py` / `generate_clean_dataset(..., profile="legacy")`.
 
-    **Split:** Indices by time order — first 70% train, next 15% validation, final 15% test. No shuffle; no target leakage from future lags across the cut.
+    **Split:** `time_series_split` — first 70% train, next 15% validation, final 15% test. Verify with `python -m src.data.make_forecast_dataset`.
 
-    **Naive lag:** 48 steps = 24 h × 2 samples/hour.
+    **Naive lag:** 48 steps = 24 h × 2 samples/hour — `naive_seasonal_forecast` in `train_forecast_models.py`.
 
-    **Metrics:** Implement MAE / RMSE / MAPE on the test window only for headline numbers; validation for tuning.
+    **Metrics:** `evaluate_forecast` in `evaluate_forecast.py` (MAE / RMSE / MAPE on test for headline numbers).
 
-    **Dependencies (planned):** `xgboost`, Prophet and/or `statsmodels` / `pmdarima`, plus a DL stack for LSTM — add to `requirements.txt` at implementation time. See [Architecture — Technology Stack](architecture.md).
+    **Dependencies (Day 1–2):** existing stack (pandas, scikit-learn). Later: `xgboost`, Prophet and/or `statsmodels` / `pmdarima`, plus a DL stack for LSTM.
 
-    **Modularity:** Forecasting entry points should accept a cleaned DataFrame/CSV path and must not call `detect_anomalies` / IF training unless an explicit “rebuild clean” CLI is invoked.
+    **Modularity:** Baseline path loads the clean CSV and does not call `detect_anomalies` unless you run `generate_clean_data.py` explicitly.
 
 ---
 
 ## References
 
+- [Forecasting Baseline](forecasting-baseline.md) — Week 6 Day 1–2 implementation notes
 - [Clean Dataset](clean-data.md) — Phase 2 imputation artifact for Phase 3
 - [Anomaly Detection](anomaly-detection.md) — Isolation Forest production path used for cleaning
 - [Feature Engineering](feature-engineering.md) — temporal and rolling features to reuse / extend for lags
