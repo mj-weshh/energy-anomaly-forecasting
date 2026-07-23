@@ -14,6 +14,11 @@ from typing import Any
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
+try:
+    from sklearn.metrics import root_mean_squared_error as _sklearn_rmse
+except ImportError:  # scikit-learn < 1.4
+    _sklearn_rmse = None
+
 
 def _as_1d_float_arrays(
     y_true: Any,
@@ -65,6 +70,10 @@ def root_mean_squared_error_forecast(y_true: Any, y_pred: Any) -> float:
 
     RMSE penalizes large misses more heavily than MAE.
 
+    Uses ``sklearn.metrics.root_mean_squared_error`` when available (scikit-learn
+    >= 1.4). Falls back to ``sqrt(mean_squared_error(...))`` on older versions —
+    ``mean_squared_error(..., squared=False)`` was removed in scikit-learn 1.6.
+
     Args:
         y_true: Ground-truth target values (array-like).
         y_pred: Predicted target values (array-like).
@@ -73,7 +82,9 @@ def root_mean_squared_error_forecast(y_true: Any, y_pred: Any) -> float:
         RMSE as a Python ``float``.
     """
     y_true_arr, y_pred_arr = _as_1d_float_arrays(y_true, y_pred)
-    return float(mean_squared_error(y_true_arr, y_pred_arr, squared=False))
+    if _sklearn_rmse is not None:
+        return float(_sklearn_rmse(y_true_arr, y_pred_arr))
+    return float(np.sqrt(mean_squared_error(y_true_arr, y_pred_arr)))
 
 
 def mean_absolute_percentage_error_forecast(
