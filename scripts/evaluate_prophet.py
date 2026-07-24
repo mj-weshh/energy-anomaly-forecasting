@@ -4,13 +4,19 @@ Loads the Phase 2 clean CSV, splits 70/15/15 in time order, fits Prophet on
 train, forecasts the test window, and prints MAE, RMSE, and MAPE. Compares
 against the documented naive seasonal floor (MAE ≈ 0.171, RMSE ≈ 0.214).
 
-Run from repository root::
+Run from repository root (use the project ``.venv`` — Prophet is not on system Python)::
 
+    .venv\\Scripts\\activate
     python scripts/evaluate_prophet.py
+
+Or without activating::
+
+    .venv\\Scripts\\python.exe scripts/evaluate_prophet.py
 """
 
 from __future__ import annotations
 
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -65,6 +71,23 @@ def load_clean_dataset(path: Path) -> pd.DataFrame:
     return df
 
 
+def _ensure_prophet_available() -> None:
+    """Fail fast with venv guidance when Prophet is missing from this interpreter."""
+    if importlib.util.find_spec("prophet") is not None:
+        return
+
+    venv_python = REPO_ROOT / ".venv" / "Scripts" / "python.exe"
+    _fail(
+        "Prophet is not installed for this Python interpreter:\n"
+        f"  {sys.executable}\n\n"
+        "Prophet was installed in the project virtual environment. Activate it and re-run:\n"
+        "  .venv\\Scripts\\activate\n"
+        "  python scripts/evaluate_prophet.py\n\n"
+        "Or run directly:\n"
+        f"  {venv_python} scripts/evaluate_prophet.py"
+    )
+
+
 def _compare_to_naive(metric_name: str, value: float, floor: float) -> str:
     if value < floor:
         return f"beats naive floor ({floor:.6f})"
@@ -74,6 +97,8 @@ def _compare_to_naive(metric_name: str, value: float, floor: float) -> str:
 
 
 def main() -> None:
+    _ensure_prophet_available()
+
     clean_path = get_project_root() / CLEAN_RELATIVE_PATH
     print("=" * 60)
     print("PROPHET STATISTICAL BASELINE — TEST SET SCORE")
