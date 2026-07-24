@@ -4,11 +4,11 @@ Open-source machine learning project for **energy consumption anomaly detection*
 
 !!! success "Executive summary"
 
-    - **What this project does:** Turns smart-meter readings into trustworthy timelines — flag unusual consumption, clean gaps, and (next) forecast demand.
-    - **Where we are:** Data ingestion and exploration are done; anomaly detection works with documented baselines; production cleaning is stable and unchanged.
-    - **Research headline:** Tuned models score better on held-out future data (**F1 0.460** vs **0.331** production baseline), but the default clean file still uses the conservative legacy recipe until leadership reviews artifact differences.
-    - **Decision gate for Phase 3:** Keep legacy cleaning for forecasting consistency, or adopt a research profile after reviewing imputation overlap (248 vs 51 intervals). See [Anomaly Tuning Results](anomaly-tuning-results.md).
-    - **Terms:** See the [Glossary](glossary.md) for plain-English definitions of F1, imputation, profiles, and related metrics.
+    - **What this project does:** Turns smart-meter readings into trustworthy timelines — flag unusual consumption, clean gaps, and forecast demand.
+    - **Where we are:** Phases 1–2 are complete; Phase 3 Week 6 Day 1–2 foundation is in place (clean-state gate, chronological split, naive seasonal floor).
+    - **Research headline:** Tuned anomaly models score better on held-out future data (**F1 0.460** vs **0.331** production baseline), but the default clean file still uses the conservative legacy recipe until leadership reviews artifact differences.
+    - **Forecasting floor:** Naive “same time yesterday” test MAE ≈ **0.171** / RMSE ≈ **0.214** — advanced models must beat this. See [Forecasting Baseline](forecasting-baseline.md).
+    - **Terms:** See the [Glossary](glossary.md) for F1, MAE/RMSE/MAPE, imputation, and related metrics.
 
 ## How to read this documentation
 
@@ -36,7 +36,8 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | Phase 1 Week 2 | Exploratory data analysis and load profiling | **Complete** |
 | Phase 2 Week 3 | Feature engineering (temporal + rolling features) | **Complete** |
 | Phase 2 Week 4 | Anomaly detection (IF + DBSCAN baselines) | **Complete** |
-| Phase 3 | Time-series forecasting (XGBoost, LSTM) | Planned |
+| Phase 3 Week 6 Day 1–2 | Forecasting foundation (gate, split, metrics, naive baseline) | **Complete** |
+| Phase 3 (next) | Prophet/ARIMA → XGBoost → LSTM | Planned |
 
 ### Phase 1 Week 2 highlights
 
@@ -63,6 +64,14 @@ Full analysis: [EDA Insights](eda-insights.md)
 
 Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean-data.md)
 
+### Phase 3 Week 6 Day 1–2 highlights
+
+- Clean-state audit: `scripts/verify_phase2_state.py` — 5,000 rows, 0 consumption NaNs, 30-minute continuity
+- Chronological **70/15/15** split via `time_series_split` — no random shuffle
+- Forecast metrics: MAE / RMSE / MAPE in `src/models/evaluate_forecast.py`
+- Naive seasonal baseline (48-step / 24h): example test MAE ≈ **0.171**, RMSE ≈ **0.214**
+- Full notes: [Forecasting Baseline](forecasting-baseline.md) · strategy: [Phase 3 Strategy](phase3-strategy.md)
+
 ## Documentation
 
 | Document | Purpose |
@@ -77,6 +86,8 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 | [Anomaly Detection](anomaly-detection.md) | Phase 2 Week 4 IF + DBSCAN baselines, grid search, model comparison, and educational notebook |
 | [Anomaly Tuning Results](anomaly-tuning-results.md) | Phase 2 research tuning — enhanced features, temporal splits, fair comparison |
 | [Clean Dataset](clean-data.md) | Phase 2 Week 4 Day 3 anomaly masking, interpolation, and Phase 3 artifact |
+| [Forecasting Baseline](forecasting-baseline.md) | Phase 3 Week 6 Day 1–2 gate, chronological split, metrics, naive floor |
+| [Phase 3 Strategy](phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](glossary.md) | Plain-English and technical definitions for metrics and pipeline terms |
 
 ## Quick Command
@@ -89,7 +100,7 @@ Expected outcome: schema summary with shape `(5000, 7)`, zero nulls, and a conti
 
 ??? info "Technical deep dive"
 
-    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting (planned).
+    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting (Week 6 Day 1–2 foundation complete; advanced models planned).
 
     **Fair-comparison metrics** (991-row temporal test): legacy IF 0.340 (production params) / 0.389 (val threshold) / enhanced IF 0.460. Source: `src/models/anomaly_config.py`.
 

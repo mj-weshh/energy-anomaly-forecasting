@@ -33,6 +33,7 @@ nav:
   - Feature Engineering: feature-engineering.md
   - Anomaly Detection: anomaly-detection.md
   - Clean Dataset: clean-data.md
+  - Forecasting Baseline: forecasting-baseline.md
   - Research & Insights:
       - EDA Insights: eda-insights.md
       - Phase 2 Strategy: phase2-strategy.md
@@ -46,6 +47,7 @@ markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.superfences
+  - md_in_html
   - tables
   - fenced_code
   - toc:

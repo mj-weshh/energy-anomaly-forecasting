@@ -287,12 +287,28 @@ After ingestion and Phase 2 pass:
 3. Run `notebooks/02_exploratory_data_analysis.ipynb` and review [EDA Insights](eda-insights.md)
 4. Run Phase 2 scripts (§7) and `notebooks/03_anomaly_detection.ipynb` (§8)
 5. Generate the Phase 3 artifact: `python scripts/generate_clean_data.py`
-6. Proceed to **Phase 3** — time-series forecasting on the clean dataset
+6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see § below and [Forecasting Baseline](forecasting-baseline.md))
+
+---
+
+## 9. Phase 3 Foundation (Week 6 Day 1–2)
+
+After the clean CSV exists:
+
+```bash
+python scripts/verify_phase2_state.py
+python -m src.data.make_forecast_dataset
+python scripts/evaluate_naive_baseline.py
+```
+
+Expect: clean-state **PASS**, chronological boundary **PASS**, and printed test MAE / RMSE / MAPE for the naive seasonal floor. Details: [Forecasting Baseline](forecasting-baseline.md) · [Phase 3 Strategy](phase3-strategy.md).
 
 ??? info "Technical deep dive"
 
     **Phase 1:** `python -m src.data.ingest_data` · `notebooks/01_*` · `notebooks/02_*`
 
     **Phase 2:** `scripts/verify_features.py`, `test_isolation_forest.py`, `tune_*.py`, `compare_anomaly_models.py`, research scripts (`analyze_detection_errors.py`, `compare_clean_artifacts.py`, `tune_isolation_forest_by_segment.py`), `generate_clean_data.py [--profile]`, `notebooks/03_*`
+
+    **Phase 3 (Day 1–2):** `verify_phase2_state.py`, `python -m src.data.make_forecast_dataset`, `evaluate_naive_baseline.py` · modules `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`
 
     **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`

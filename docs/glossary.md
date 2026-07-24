@@ -6,7 +6,7 @@ Plain-English definitions for terms used across this project. Each entry include
 
     - **Purpose:** One place to decode jargon used in executive summaries and technical reports.
     - **How to use:** Skim the **Business** line for decisions; read **Technical** for implementation and reproducibility.
-    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, and Jaccard.
+    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, and seasonal naive.
 
 ---
 
@@ -58,6 +58,14 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## Forecast chronological split (70/15/15)
+
+**Business:** Cut the cleaned meter history into past (train), middle (validation), and future (test) — never mix them randomly.
+
+**Technical:** `time_series_split` in `make_forecast_dataset.py` on the full 5,000-row clean CSV. Distinct from Phase 2 anomaly research **60/20/20** on eval rows. See [Forecasting Baseline](forecasting-baseline.md).
+
+---
+
 ## False positive (FP)
 
 **Business:** A false alarm — the model flagged a normal interval as a problem.
@@ -90,6 +98,22 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## MAE (Mean Absolute Error)
+
+**Business:** On average, how far off are the forecasts? Easy to explain to management.
+
+**Technical:** Mean of `|y_true - y_pred|` via `mean_absolute_error_forecast` / sklearn. Primary headline metric for Phase 3 model comparisons.
+
+---
+
+## MAPE (Mean Absolute Percentage Error)
+
+**Business:** Relative forecast error as a percentage of the true value.
+
+**Technical:** Mean of `|y_true - y_pred| / max(|y_true|, epsilon) × 100` with `epsilon=1e-8`. Can explode when true consumption is near zero on this normalized scale — prefer MAE/RMSE for headline comparisons. Implemented in `mean_absolute_percentage_error_forecast`.
+
+---
+
 ## Precision
 
 **Business:** When the model raises an alarm, how often is it right?
@@ -114,11 +138,27 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## RMSE (Root Mean Squared Error)
+
+**Business:** Forecast error that punishes large misses more than MAE.
+
+**Technical:** Square root of mean squared error. Uses `sklearn.metrics.root_mean_squared_error` (sklearn 1.6+); see `root_mean_squared_error_forecast`.
+
+---
+
+## Seasonal naive (48-step)
+
+**Business:** The “same time yesterday” guess — tomorrow at 2:00 AM looks like today at 2:00 AM.
+
+**Technical:** `naive_seasonal_forecast(..., seasonal_periods=48)` — at 30-minute resolution, 48 steps = 24 hours. Prediction at time `t` is the observed value at `t - 48` on `train || test_true` (not recursive). Phase 3 floor that advanced models must beat.
+
+---
+
 ## Temporal split (60/20/20)
 
-**Business:** Testing on future data the model has never seen — like grading on next month’s bills, not the same month used to tune settings.
+**Business:** Testing on future data the model has never seen — like grading on next month’s bills, not the same month used to tune settings. Used for **Phase 2 anomaly research**, not the Phase 3 forecast split.
 
-**Technical:** Chronological split via `temporal_train_val_test_split`: train 2,971 / val 991 / test 991 eval rows. Hyperparameters and thresholds tuned on val; test F1 reported once.
+**Technical:** Chronological split via `temporal_train_val_test_split`: train 2,971 / val 991 / test 991 eval rows. Hyperparameters and thresholds tuned on val; test F1 reported once. For forecasting, see **Forecast chronological split (70/15/15)**.
 
 ---
 

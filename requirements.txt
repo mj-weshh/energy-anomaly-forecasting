@@ -13,6 +13,9 @@ statsmodels>=0.14.0
 # Machine learning (Phase 2 Week 4 anomaly detection)
 scikit-learn>=1.3.0
 
+# Statistical forecasting (Phase 3 Week 6)
+prophet>=1.1.5
+
 # Testing (optional — for pytest)
 pytest>=7.0.0
 
