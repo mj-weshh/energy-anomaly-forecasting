@@ -6,7 +6,7 @@ Plain-English definitions for terms used across this project. Each entry include
 
     - **Purpose:** One place to decode jargon used in executive summaries and technical reports.
     - **How to use:** Skim the **Business** line for decisions; read **Technical** for implementation and reproducibility.
-    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, and seasonal naive.
+    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, and supervised lag features.
 
 ---
 
@@ -151,6 +151,22 @@ Plain-English definitions for terms used across this project. Each entry include
 **Business:** The “same time yesterday” guess — tomorrow at 2:00 AM looks like today at 2:00 AM.
 
 **Technical:** `naive_seasonal_forecast(..., seasonal_periods=48)` — at 30-minute resolution, 48 steps = 24 hours. Prediction at time `t` is the observed value at `t - 48` on `train || test_true` (not recursive). Phase 3 floor that advanced models must beat.
+
+---
+
+## Supervised lag features
+
+**Business:** Past consumption values placed on the same spreadsheet row as the reading we want to predict — so tree models can “see” recent history without reading a clock.
+
+**Technical:** `create_supervised_lags` adds `{target}_lag_1`, `_lag_2`, `_lag_48` via `Series.shift` on chronologically sorted data. Default target: `Electricity_Consumed`. See [XGBoost Prep](xgboost-prep.md).
+
+---
+
+## Tabular forecasting frame
+
+**Business:** A dataset shaped like a normal ML table — each row has predictors and a target — built from a time series for models that do not understand timestamps natively.
+
+**Technical:** Output of `create_supervised_lags`: original columns plus lag predictors; first **48** incomplete rows dropped on continuous clean data (5000 -> 4952 rows). Used for XGBoost prep before training.
 
 ---
 
