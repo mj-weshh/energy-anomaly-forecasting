@@ -17,6 +17,11 @@ Public API (Phase 2, Week 3):
   deviation over consumption
 - ``build_all_features(df)`` — apply temporal then rolling features in one call
 
+Public API (Phase 3, Week 7 — XGBoost prep):
+
+- ``create_supervised_lags(df, target_col)`` — lag columns at t-1, t-2, t-48
+  for supervised forecasting
+
 Usage:
     Import in downstream scripts and notebooks::
 
@@ -110,6 +115,53 @@ def build_all_features(df: pd.DataFrame) -> pd.DataFrame:
         Copy of ``df`` with temporal and rolling feature columns added.
     """
     return add_rolling_metrics(add_temporal_features(df))
+
+
+def create_supervised_lags(
+    df: pd.DataFrame,
+    target_col: str = "Electricity_Consumed",
+) -> pd.DataFrame:
+    """Convert a time series into a supervised tabular frame with lag predictors.
+
+    XGBoost and other tree models do not read time natively. Each row keeps the
+    target at time ``t`` alongside past values at ``t-1`` (30 minutes),
+    ``t-2`` (1 hour), and ``t-48`` (24 hours at 30-minute resolution).
+
+    Rows are sorted by ``Timestamp`` when present. After shifting, rows with
+    missing lag history are dropped so every remaining row has complete
+    predictors. On a continuous 5,000-row clean series this removes the first
+    **48** rows (the longest lag window). XGBoost can tolerate NaNs, but we
+    drop them so all forecast models evaluate on the same timeline.
+
+    Args:
+        df: Chronological smart-meter DataFrame containing ``target_col``.
+        target_col: Column to lag. Defaults to ``Electricity_Consumed``.
+
+    Returns:
+        Copy of ``df`` with added columns ``{target_col}_lag_1``,
+        ``{target_col}_lag_2``, and ``{target_col}_lag_48``. Rows with NaN
+        lag values are removed and the index is reset.
+
+    Raises:
+        KeyError: If ``target_col`` is missing from ``df``.
+    """
+    if target_col not in df.columns:
+        raise KeyError(f"Required column '{target_col}' not found in DataFrame.")
+
+    if "Timestamp" in df.columns:
+        df = df.sort_values("Timestamp").copy()
+    else:
+        df = df.copy()
+
+    lag_1 = f"{target_col}_lag_1"
+    lag_2 = f"{target_col}_lag_2"
+    lag_48 = f"{target_col}_lag_48"
+
+    df[lag_1] = df[target_col].shift(1)
+    df[lag_2] = df[target_col].shift(2)
+    df[lag_48] = df[target_col].shift(48)
+
+    return df.dropna(subset=[lag_1, lag_2, lag_48]).reset_index(drop=True)
 
 
 def add_cyclical_features(df: pd.DataFrame) -> pd.DataFrame:
