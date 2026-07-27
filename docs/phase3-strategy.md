@@ -9,10 +9,11 @@ Planning notes for the final technical phase: forecasting. Phase 1 (ingestion / 
     - **Golden rule:** Split data **in time order** (70% train / 15% validation / 15% test). Never shuffle — that would leak the future into the past.
     - **Model ladder:** Beat a simple “same time yesterday” baseline before trusting Prophet/ARIMA, then XGBoost, then LSTM.
     - **Day 1–2 shipped:** Clean-state gate, chronological split, metrics module, and naive floor are implemented — see [Forecasting Baseline](forecasting-baseline.md).
-    - **Terms:** [Glossary](glossary.md) — imputation, temporal split; forecasting metrics (MAE / RMSE / MAPE).
+    - **Week 7 Day 1 shipped:** Supervised lag features for XGBoost (`create_supervised_lags`) — see [XGBoost Prep](xgboost-prep.md).
+    - **Terms:** [Glossary](glossary.md) — imputation, temporal split; forecasting metrics (MAE / RMSE / MAPE); supervised lag features.
 
-**Status:** Week 6 Day 1–2 foundation **complete**; statistical and ML forecasters planned next  
-**Builds on:** [Clean Dataset](clean-data.md), [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md), [Architecture](architecture.md), [Forecasting Baseline](forecasting-baseline.md)
+**Status:** Week 6 Day 1–2 foundation and Week 7 Day 1 XGBoost lag prep **complete**; XGBoost trainer and LSTM planned next  
+**Builds on:** [Clean Dataset](clean-data.md), [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md), [Architecture](architecture.md), [Forecasting Baseline](forecasting-baseline.md), [XGBoost Prep](xgboost-prep.md)
 
 ---
 
@@ -107,12 +108,14 @@ Build complexity sequentially. If a complex model cannot beat a simpler one on t
 | **What** | Univariate time-series models that map trend and seasonality |
 | **Why** | Strong mathematical floor; Prophet handles daily/weekly seasonality with less custom feature work |
 
-### C. Advanced ML (XGBoost)
+### C. Advanced ML (XGBoost) — lag prep **implemented**
 
 | | |
 |--|--|
 | **What** | Gradient-boosted trees on tabular features |
 | **How** | XGBoost does not “read time” natively — feed **lag features** (e.g. \(t-1\), \(t-2\), \(t-48\)) plus temporal features (hour, day-of-week) from Phase 2 engineering |
+| **Code (Day 1)** | `create_supervised_lags` + `scripts/verify_xgboost_prep.py` — [XGBoost Prep](xgboost-prep.md) |
+| **Next** | XGBoost trainer + test evaluation vs naive / Prophet floors |
 
 ### D. Deep learning (LSTM)
 
@@ -154,11 +157,14 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
 **Done (Week 6 Day 1–2):** Step 0 audit script, `time_series_split`, `evaluate_forecast`, naive seasonal baseline — see [Forecasting Baseline](forecasting-baseline.md).
 
+**Done (Week 7 Day 1):** `create_supervised_lags`, `verify_xgboost_prep.py` — see [XGBoost Prep](xgboost-prep.md).
+
 Still deferred for later Phase 3 weeks:
 
 - Choice of deep-learning stack (TensorFlow vs PyTorch) for LSTM
 - Whether weather stays in the exogenous set after Ablation-style checks (Phase 2 already showed weak linear weather signal for *anomaly* detection; forecasting may differ)
-- Prophet / Auto-ARIMA / XGBoost trainers
+- XGBoost trainer / evaluation script
+- Prophet / Auto-ARIMA dedicated docs (Prophet code may exist on branch; doc page not yet written)
 
 ---
 
@@ -169,6 +175,8 @@ Still deferred for later Phase 3 weeks:
     **Split:** `time_series_split` — first 70% train, next 15% validation, final 15% test. Verify with `python -m src.data.make_forecast_dataset`.
 
     **Naive lag:** 48 steps = 24 h × 2 samples/hour — `naive_seasonal_forecast` in `train_forecast_models.py`.
+
+    **Supervised lags (XGBoost prep):** `create_supervised_lags` in `build_features.py` — lags 1, 2, 48; verify with `python scripts/verify_xgboost_prep.py`.
 
     **Metrics:** `evaluate_forecast` in `evaluate_forecast.py` (MAE / RMSE / MAPE on test for headline numbers).
 
@@ -181,6 +189,7 @@ Still deferred for later Phase 3 weeks:
 ## References
 
 - [Forecasting Baseline](forecasting-baseline.md) — Week 6 Day 1–2 implementation notes
+- [XGBoost Prep](xgboost-prep.md) — Week 7 Day 1 supervised lag features
 - [Clean Dataset](clean-data.md) — Phase 2 imputation artifact for Phase 3
 - [Anomaly Detection](anomaly-detection.md) — Isolation Forest production path used for cleaning
 - [Feature Engineering](feature-engineering.md) — temporal and rolling features to reuse / extend for lags

@@ -49,7 +49,8 @@ energy-anomaly-forecasting/
 │   ├── tune_isolation_forest_by_segment.py  # Per-segment enhanced IF test F1
 │   ├── generate_clean_data.py        # Generate Phase 3 clean dataset artifact (--profile)
 │   ├── verify_phase2_state.py        # Phase 3 gate: clean CSV continuity / NaNs
-│   └── evaluate_naive_baseline.py    # Score naive seasonal forecast on test set
+│   ├── evaluate_naive_baseline.py    # Score naive seasonal forecast on test set
+│   └── verify_xgboost_prep.py        # Verify supervised lag tabular frame
 ├── src/
 │   ├── __init__.py
 │   ├── data/
@@ -61,7 +62,7 @@ energy-anomaly-forecasting/
 │   │   └── clean_dataset.py          # End-to-end clean artifact orchestration
 │   ├── features/
 │   │   ├── __init__.py
-│   │   └── build_features.py         # Phase 2 feature engineering
+│   │   └── build_features.py         # Phase 2 features + Phase 3 supervised lags
 │   ├── models/
 │   │   ├── __init__.py
 │   │   ├── evaluate_models.py        # Imbalance-aware anomaly evaluation
@@ -93,7 +94,7 @@ energy-anomaly-forecasting/
 | `data/raw/` | Future canonical storage for raw files |
 | `docs/` | Human-readable documentation source |
 | `docs/assets/eda/` | Exported EDA plots for MkDocs |
-| `src/features/` | Model-ready feature engineering (Phase 2) |
+| `src/features/` | Model-ready feature engineering (Phase 2 temporal/rolling + Phase 3 supervised lags) |
 | `src/models/` | Anomaly detection (Phase 2) and forecast metrics / baselines (Phase 3) |
 | `scripts/` | CLI utilities (EDA export, feature verification, model testing, forecast baseline) |
 | `Smart Meter Electricity Consumption Dataset/` | Legacy download location; supported by dynamic discovery |
@@ -281,7 +282,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
 | **2 — Anomaly Detection** | Feature engineering, IF/DBSCAN, clean dataset, educational notebook | `src/features/build_features.py`, `src/models/train_anomaly_models.py`, `src/data/clean_data.py`, `notebooks/03_anomaly_detection.ipynb` |
-| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive baseline; then Prophet/ARIMA → XGBoost → LSTM | `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py` |
+| **3 — Forecasting** | Clean-state gate, split, metrics, naive baseline; supervised lags; Prophet/XGBoost/LSTM trainers | `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`, `build_features.create_supervised_lags` |
 
 ---
 
@@ -298,14 +299,14 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Anomaly detection | scikit-learn | >= 1.3.0 |
 | Documentation | mkdocs, mkdocs-material | >= 1.6.0, >= 9.5.0 |
 
-Phase 3 Day 1–2 uses the existing scikit-learn stack for metrics and the naive baseline. Forecasting libraries (xgboost, Prophet, tensorflow/pytorch) will be added when those models land.
+Phase 3 Week 6 Day 1–2 uses scikit-learn for metrics and the naive baseline; Week 7 Day 1 adds supervised lag prep in `build_features`. Prophet and XGBoost libraries land with their trainers; LSTM will add a DL stack.
 
 ??? info "Technical deep dive"
 
-    **Module map:** `ingest_data` → `build_features` → `train_anomaly_models` → `clean_data` / `clean_dataset` → `make_forecast_dataset` / `train_forecast_models` / `evaluate_forecast`.
+    **Module map:** `ingest_data` -> `build_features` -> `train_anomaly_models` -> `clean_data` / `clean_dataset` -> `make_forecast_dataset` / `train_forecast_models` / `evaluate_forecast` / `create_supervised_lags`.
 
-    **Script inventory:** See repository tree above — Phase 3 foundation includes `verify_phase2_state.py` and `evaluate_naive_baseline.py`.
+    **Script inventory:** See repository tree above — Phase 3 includes `verify_phase2_state.py`, `evaluate_naive_baseline.py`, and `verify_xgboost_prep.py`.
 
     **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink).
 
-    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Phase 3 Strategy](phase3-strategy.md).
+    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [XGBoost Prep](xgboost-prep.md) · [Phase 3 Strategy](phase3-strategy.md).

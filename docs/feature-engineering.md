@@ -156,9 +156,45 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 
 ---
 
+## Phase 3 — Supervised lags (XGBoost prep)
+
+`create_supervised_lags(df, target_col="Electricity_Consumed")` converts the clean time series into a **tabular forecasting frame** for tree models. Each row at time **t** keeps the target plus past consumption shifted onto the same row:
+
+| Column | Shift | Meaning |
+|--------|-------|---------|
+| `Electricity_Consumed_lag_1` | 1 | 30 minutes ago |
+| `Electricity_Consumed_lag_2` | 2 | 1 hour ago |
+| `Electricity_Consumed_lag_48` | 48 | 24 hours ago |
+
+Design details:
+
+- **Chronological sort** before shifting — same rule as rolling metrics.
+- **Copy semantics** — input DataFrame is never mutated.
+- **Row drop after shift** — rows with incomplete lag history are removed (first **48** rows on a continuous 5,000-row clean CSV -> **4952** rows). XGBoost tolerates NaNs, but dropping keeps evaluation timelines aligned across models.
+- **Fail fast** — missing `target_col` raises `KeyError`.
+
+Usage:
+
+```python
+from src.features.build_features import create_supervised_lags
+
+tabular = create_supervised_lags(clean_df)
+```
+
+Verify:
+
+```bash
+python scripts/verify_xgboost_prep.py
+```
+
+Full notes: [XGBoost Prep](xgboost-prep.md).
+
+---
+
 ## What's Next
 
-- **Week 4 complete** — IF + DBSCAN baselines; clean dataset for Phase 3. See [Anomaly Detection](anomaly-detection.md) and [Clean Dataset](clean-data.md).
+- **Week 7 Day 1 complete** — supervised lags for XGBoost. See [XGBoost Prep](xgboost-prep.md).
+- **Phase 3 training** — XGBoost trainer on chronological split; see [Phase 3 Strategy](phase3-strategy.md).
 
 ??? info "Technical deep dive"
 
@@ -170,6 +206,8 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 
     **Verify:** `python scripts/verify_features.py`
 
+    **XGBoost prep:** `create_supervised_lags()` — lags 1, 2, 48; `python scripts/verify_xgboost_prep.py`
+
 ---
 
 ## References
@@ -178,4 +216,5 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 - [EDA Insights](eda-insights.md) — the 02:00 peak and weekday/weekend findings
 - [Anomaly Detection](anomaly-detection.md) — Week 4 IF + DBSCAN baselines and model comparison
 - [Clean Dataset](clean-data.md) — Week 4 Day 3 imputation pipeline for Phase 3
+- [XGBoost Prep](xgboost-prep.md) — Week 7 Day 1 supervised lag features
 - [Architecture](architecture.md) — where `src/features/` sits in the repo
