@@ -6,7 +6,7 @@ Plain-English definitions for terms used across this project. Each entry include
 
     - **Purpose:** One place to decode jargon used in executive summaries and technical reports.
     - **How to use:** Skim the **Business** line for decisions; read **Technical** for implementation and reproducibility.
-    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, and supervised lag features.
+    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, Prophet, XGBoost, and supervised lag features.
 
 ---
 
@@ -47,6 +47,14 @@ Plain-English definitions for terms used across this project. Each entry include
 **Business:** A richer set of timing and consumption-change signals used in research tuning — not the default production pipeline.
 
 **Technical:** `build_enhanced_anomaly_features`: legacy 15 columns plus cyclical time encodings (`hour_sin/cos`, `dow_sin/cos`) and derivatives (`consumption_diff`, `consumption_residual_24h`).
+
+---
+
+## eval_set (XGBoost)
+
+**Business:** A way to watch validation performance while the model trains — without using the final test window for tuning decisions.
+
+**Technical:** XGBoost `fit(..., eval_set=[(X_val, y_val)])` in `train_xgboost_model`. Validation loss is monitored during training; reported business metrics still come from the held-out **test** split via `evaluate_xgboost.py`.
 
 ---
 
@@ -114,6 +122,14 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## Prophet
+
+**Business:** A statistical forecast model that learns daily and weekly patterns from timestamps — a stronger floor than “same time yesterday” without hand-built lag columns.
+
+**Technical:** Facebook Prophet via `train_prophet_model` in `train_forecast_models.py`. Maps `Timestamp` → `ds` and `Electricity_Consumed` → `y`; fits on train only; returns `yhat` on the test horizon. Dependency: `prophet>=1.1.5`. See [Prophet Baseline](prophet-baseline.md).
+
+---
+
 ## Precision
 
 **Business:** When the model raises an alarm, how often is it right?
@@ -156,17 +172,9 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ## Supervised lag features
 
-**Business:** Past consumption values placed on the same spreadsheet row as the reading we want to predict — so tree models can “see” recent history without reading a clock.
+**Business:** Past consumption values placed on the same row as the value we want to predict — so tree models can “see” recent history without reading a clock.
 
-**Technical:** `create_supervised_lags` adds `{target}_lag_1`, `_lag_2`, `_lag_48` via `Series.shift` on chronologically sorted data. Default target: `Electricity_Consumed`. See [XGBoost Prep](xgboost-prep.md).
-
----
-
-## Tabular forecasting frame
-
-**Business:** A dataset shaped like a normal ML table — each row has predictors and a target — built from a time series for models that do not understand timestamps natively.
-
-**Technical:** Output of `create_supervised_lags`: original columns plus lag predictors; first **48** incomplete rows dropped on continuous clean data (5000 -> 4952 rows). Used for XGBoost prep before training.
+**Technical:** `create_supervised_lags` adds `{target}_lag_1`, `_lag_2`, `_lag_48` (30 min, 1 h, 24 h at 30-minute resolution) and drops the first 48 incomplete rows. See [XGBoost Prep](xgboost-prep.md).
 
 ---
 
@@ -183,6 +191,14 @@ Plain-English definitions for terms used across this project. Each entry include
 **Business:** The final held-out time window used only to report honest performance numbers.
 
 **Technical:** Last 20% of eval rows (991 rows). All fair-comparison F1s in [Anomaly Tuning Results](anomaly-tuning-results.md) use this slice.
+
+---
+
+## XGBoost (gradient boosting)
+
+**Business:** An advanced machine-learning forecaster that combines many small decision trees — here fed with lags, weather, and calendar columns.
+
+**Technical:** `XGBRegressor(n_estimators=100, learning_rate=0.1)` in `train_xgboost_model`. Trained on tabular features from [XGBoost Prep](xgboost-prep.md); scored via `evaluate_xgboost.py`. Dependency: `xgboost>=2.0.0`. See [XGBoost Forecasting](xgboost-forecasting.md).
 
 ---
 

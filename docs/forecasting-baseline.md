@@ -114,8 +114,8 @@ Re-run the script after regenerating the clean artifact; numbers may shift sligh
 
 Per [Phase 3 Strategy](phase3-strategy.md):
 
-1. Statistical baselines (Prophet / Auto-ARIMA) — Prophet trainer exists on branch; dedicated doc page planned
-2. **XGBoost prep (Week 7 Day 1)** — supervised lags: [XGBoost Prep](xgboost-prep.md); trainer next
+1. ~~Statistical baselines (Prophet)~~ — **done:** [Prophet Baseline](prophet-baseline.md) (Auto-ARIMA still deferred)
+2. ~~XGBoost with lag + temporal features~~ — **done:** [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md)
 3. LSTM sliding windows
 4. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
 

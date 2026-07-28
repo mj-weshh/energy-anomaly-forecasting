@@ -1,39 +1,37 @@
 # XGBoost Prep — Phase 3, Week 7 (Day 1)
 
-Working notes for preparing the first advanced ML forecaster: convert the cleaned half-hour timeline into a **supervised tabular** frame with lag predictors so gradient-boosted trees can learn from past consumption.
+Working notes for converting the continuous clean timeline into a **supervised tabular** frame before XGBoost training.
 
 <div class="admonition success" markdown="1">
 <p class="admonition-title">Executive summary</p>
 
 - **Why lags:** XGBoost does not read clock time — each row must carry past consumption as explicit columns beside the target at time **t**.
-- **What we add:** Three lag features — **t-1** (30 min), **t-2** (1 hour), **t-48** (24 hours at 30-min resolution).
-- **Row trim:** Shifting drops the first **48** rows on a continuous clean series (**5000 -> 4952** rows) so every remaining row has complete predictors.
+- **Lags added:** `t-1` (30 min), `t-2` (1 h), `t-48` (24 h at 30-minute resolution).
+- **Warm-up drop:** First **48** rows removed so every row has complete lag history → **4,952** rows on the default clean CSV.
 - **Verify:** `python scripts/verify_xgboost_prep.py` prints shape, columns, and a sample to confirm alignment.
-- **Terms:** [Glossary](glossary.md) — supervised lag features, tabular forecasting frame.
+- **Terms:** [Glossary](glossary.md) — supervised lag features, forecast chronological split.
 
 </div>
 
 **Status:** Week 7 Day 1 complete — supervised lag function and verification script  
 **Module:** `src/features/build_features.py` — `create_supervised_lags`  
 **Script:** `scripts/verify_xgboost_prep.py`  
-**Builds on:** [Forecasting Baseline](forecasting-baseline.md), [Feature Engineering](feature-engineering.md), [Phase 3 Strategy](phase3-strategy.md)
+**Builds on:** [Forecasting Baseline](forecasting-baseline.md), [Prophet Baseline](prophet-baseline.md), [Feature Engineering](feature-engineering.md)
 
 ---
 
-## Why Tabular Lags
+## Tree Models vs Time Series
 
 Statistical models like Prophet map timestamps natively. Tree models like **XGBoost** treat each row as a flat feature vector — they need **past values on the same row** as predictors for the target at time **t**.
 
-| Model family | Time handling |
-|--------------|---------------|
+| Model family | Time representation |
+|--------------|---------------------|
 | Prophet / ARIMA | Native datetime / seasonality |
 | XGBoost | Lag columns + optional temporal features from Phase 2 |
 
-Phase 1 EDA showed strong time-of-day structure. Lag **48** captures the same 24-hour persistence as the naive seasonal baseline; lags **1** and **2** add short-term momentum.
-
 ---
 
-## `create_supervised_lags`
+## API — `create_supervised_lags`
 
 Module: `src/features/build_features.py`
 
@@ -41,35 +39,15 @@ Module: `src/features/build_features.py`
 create_supervised_lags(df, target_col="Electricity_Consumed") -> pd.DataFrame
 ```
 
-| Step | Behavior |
-|------|----------|
-| **Validate** | Requires `target_col` in `df`; raises `KeyError` if missing |
-| **Sort** | Chronological sort by `Timestamp` when present |
-| **Shift** | Adds `{target_col}_lag_1`, `_lag_2`, `_lag_48` via `Series.shift` |
-| **Drop NaNs** | Removes rows with incomplete lag history; resets index |
-| **Copy semantics** | Never mutates the caller's DataFrame |
+| Output column | Meaning |
+|---------------|---------|
+| `{target_col}_lag_1` | Value at **t − 1** step (30 minutes earlier) |
+| `{target_col}_lag_2` | Value at **t − 2** steps (1 hour earlier) |
+| `{target_col}_lag_48` | Value at **t − 48** steps (24 hours earlier) |
 
-### Lag column reference
+Rows are sorted by `Timestamp` when present. After shifting, rows with missing lag history are **dropped** and the index is reset.
 
-| Column | Shift | Meaning |
-|--------|-------|---------|
-| `Electricity_Consumed_lag_1` | 1 | Consumption 30 minutes ago |
-| `Electricity_Consumed_lag_2` | 2 | Consumption 1 hour ago |
-| `Electricity_Consumed_lag_48` | 48 | Consumption 24 hours ago |
-
-### Why drop the first 48 rows?
-
-XGBoost can tolerate NaNs, but we drop incomplete rows so **all forecast models evaluate on the same timeline** after feature warm-up. On the default clean artifact (`5000` continuous rows), output shape is **4952 x 18** (original clean columns plus three lags).
-
-Usage:
-
-```python
-import pandas as pd
-from src.features.build_features import create_supervised_lags
-
-df = pd.read_csv("data/processed/clean_smart_meter_data.csv", parse_dates=["Timestamp"])
-tabular = create_supervised_lags(df)
-```
+XGBoost can tolerate NaNs, but we drop incomplete rows so **all forecast models evaluate on the same timeline** after feature warm-up. On the default clean artifact (`5000` continuous rows), output shape is **4952 × 18** (original clean columns plus three lags).
 
 ---
 
@@ -79,50 +57,44 @@ tabular = create_supervised_lags(df)
 python scripts/verify_xgboost_prep.py
 ```
 
-Workflow: load `data/processed/clean_smart_meter_data.csv` -> `create_supervised_lags` -> print input/output shape, column list, and `.head()` of target + lag columns.
+Expect printed confirmation of:
 
-### Expected output (local)
+- Input shape `(5000, …)` from the clean CSV
+- Output shape `(4952, 18)` after lag warm-up
+- Presence of `Electricity_Consumed_lag_1`, `_lag_2`, `_lag_48`
+- Sample rows showing target and lag alignment
 
-| Check | Value |
-|-------|-------|
-| Input shape | **5000 x 15** |
-| Output shape | **4952 x 18** |
-| Rows dropped | **48** |
-| Lag columns | `_lag_1`, `_lag_2`, `_lag_48` present |
+---
 
-Inspect the sample rows: `Electricity_Consumed_lag_1` at row **t** should equal `Electricity_Consumed` from the prior interval in the sorted series.
+## Relationship to Phase 2 Features
+
+The clean artifact already includes temporal and rolling columns from production cleaning (`hour`, `day_of_week`, `month`, `is_weekend`, etc.). Lag prep adds consumption history columns; those temporal features are reused as XGBoost inputs in [XGBoost Forecasting](xgboost-forecasting.md).
+
+**Module map:** `create_supervised_lags` lives alongside Phase 2 helpers in `build_features.py`. Day 1 verify uses the clean CSV directly; full XGBoost training chains `create_supervised_lags` → `time_series_split` → `train_xgboost_model`.
 
 ---
 
 ## What's Next
 
-Per [Phase 3 Strategy](phase3-strategy.md):
-
-1. XGBoost trainer on the chronological **70/15/15** split
-2. Score with `evaluate_forecast` on the held-out test window
-3. Compare MAE / RMSE against the naive floor and Prophet baseline
-4. Optionally add Phase 2 temporal columns (`hour`, `day_of_week`, rolling stats) as extra predictors
-
-XGBoost training and evaluation scripts are **not yet implemented** — this day stops at verified tabular prep.
+1. **XGBoost training and evaluation** — see [XGBoost Forecasting](xgboost-forecasting.md) (Week 7 Day 2 complete)
+2. Compare MAE / RMSE against naive and Prophet floors on the same test window
+3. **LSTM** sliding windows (planned)
+4. Hyperparameter tuning and feature ablation (deferred)
 
 ---
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>
 
-**Module map:** `create_supervised_lags` lives alongside Phase 2 helpers in `build_features.py`. Day 1 verify uses the clean CSV directly; full XGBoost training will chain `time_series_split` + lags + trainer.
-
-**Relationship to Phase 2 features:** The clean artifact already includes temporal and rolling columns from production cleaning. Lag prep adds consumption history columns; temporal features can be reused as XGBoost inputs in a later step.
-
-**Commands:**
+**Verify command:**
 
 ```bash
-python scripts/generate_clean_data.py          # if artifact missing
 python scripts/verify_xgboost_prep.py
-python scripts/verify_features.py              # Phase 2 feature sanity check
 ```
 
-**Fair comparison note:** Apply `create_supervised_lags` **after** chronological split in training code so validation/test rows only use past values from allowed history — the verify script runs on the full clean series for shape inspection only.
+**Split note:** After lags, `time_series_split` operates on **4,952** rows — not the raw 5,000. Train/val/test counts shrink proportionally (see [XGBoost Forecasting](xgboost-forecasting.md) for example sizes).
+
+**Chronological order:** Never shuffle after lag creation — future values must not appear in lag columns for past rows.
 
 </details>
 
@@ -130,9 +102,9 @@ python scripts/verify_features.py              # Phase 2 feature sanity check
 
 ## References
 
-- [Phase 3 Strategy](phase3-strategy.md) — model ladder and XGBoost plan
-- [Forecasting Baseline](forecasting-baseline.md) — chronological split and naive floor
+- [XGBoost Forecasting](xgboost-forecasting.md) — trainer, evaluation script, example metrics
+- [Prophet Baseline](prophet-baseline.md) — statistical floor Prophet sets
+- [Forecasting Baseline](forecasting-baseline.md) — gate and split
 - [Feature Engineering](feature-engineering.md) — Phase 2 temporal and rolling features
-- [Architecture](architecture.md) — repository layout
-- [Glossary](glossary.md) — supervised lag features, tabular forecasting frame
-- [Getting Started](getting-started.md) — install and Phase 3 commands
+- [Phase 3 Strategy](phase3-strategy.md) — model ladder and XGBoost plan
+- [Glossary](glossary.md) — supervised lag features

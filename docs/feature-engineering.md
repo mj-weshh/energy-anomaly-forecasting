@@ -156,38 +156,17 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 
 ---
 
-## Phase 3 — Supervised lags (XGBoost prep)
+## Phase 3 Supervised Lags (Week 7 Day 1)
 
-`create_supervised_lags(df, target_col="Electricity_Consumed")` converts the clean time series into a **tabular forecasting frame** for tree models. Each row at time **t** keeps the target plus past consumption shifted onto the same row:
+For XGBoost and other tabular forecasters, consumption history must appear as explicit columns on each row.
 
-| Column | Shift | Meaning |
-|--------|-------|---------|
-| `Electricity_Consumed_lag_1` | 1 | 30 minutes ago |
-| `Electricity_Consumed_lag_2` | 2 | 1 hour ago |
-| `Electricity_Consumed_lag_48` | 48 | 24 hours ago |
+| Function | Purpose |
+|----------|---------|
+| `create_supervised_lags(df, target_col)` | Adds `{target_col}_lag_1`, `_lag_2`, `_lag_48`; drops first 48 incomplete rows |
 
-Design details:
+On the default clean artifact (5,000 continuous rows), output shape is **4952 × 18**. Verify with `python scripts/verify_xgboost_prep.py`.
 
-- **Chronological sort** before shifting — same rule as rolling metrics.
-- **Copy semantics** — input DataFrame is never mutated.
-- **Row drop after shift** — rows with incomplete lag history are removed (first **48** rows on a continuous 5,000-row clean CSV -> **4952** rows). XGBoost tolerates NaNs, but dropping keeps evaluation timelines aligned across models.
-- **Fail fast** — missing `target_col` raises `KeyError`.
-
-Usage:
-
-```python
-from src.features.build_features import create_supervised_lags
-
-tabular = create_supervised_lags(clean_df)
-```
-
-Verify:
-
-```bash
-python scripts/verify_xgboost_prep.py
-```
-
-Full notes: [XGBoost Prep](xgboost-prep.md).
+Full notes: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
 
 ---
 
@@ -216,5 +195,5 @@ Full notes: [XGBoost Prep](xgboost-prep.md).
 - [EDA Insights](eda-insights.md) — the 02:00 peak and weekday/weekend findings
 - [Anomaly Detection](anomaly-detection.md) — Week 4 IF + DBSCAN baselines and model comparison
 - [Clean Dataset](clean-data.md) — Week 4 Day 3 imputation pipeline for Phase 3
-- [XGBoost Prep](xgboost-prep.md) — Week 7 Day 1 supervised lag features
+- [XGBoost Prep](xgboost-prep.md) — Phase 3 supervised lag features
 - [Architecture](architecture.md) — where `src/features/` sits in the repo

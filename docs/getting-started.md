@@ -288,7 +288,7 @@ After ingestion and Phase 2 pass:
 4. Run Phase 2 scripts (§7) and `notebooks/03_anomaly_detection.ipynb` (§8)
 5. Generate the Phase 3 artifact: `python scripts/generate_clean_data.py`
 6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see §9 and [Forecasting Baseline](forecasting-baseline.md))
-7. **Phase 3 XGBoost prep** — verify supervised lag features (see §10 and [XGBoost Prep](xgboost-prep.md))
+7. **Phase 3 Prophet + XGBoost** — statistical and tabular forecast baselines (see §10–11)
 
 ---
 
@@ -306,15 +306,28 @@ Expect: clean-state **PASS**, chronological boundary **PASS**, and printed test 
 
 ---
 
-## 10. Phase 3 XGBoost Prep (Week 7 Day 1)
+## 10. Prophet Baseline (Week 6 Day 3)
 
-After the clean CSV exists:
+After the clean CSV and foundation scripts pass:
+
+```bash
+python scripts/evaluate_prophet.py
+```
+
+Expect: Prophet test MAE / RMSE printed with comparison to the naive floor; **PASS** when MAE and RMSE beat naive. Requires `prophet>=1.1.5` in the project `.venv`. Details: [Prophet Baseline](prophet-baseline.md).
+
+---
+
+## 11. XGBoost (Week 7 Day 1–2)
+
+Verify supervised lag prep, then train and score the regressor:
 
 ```bash
 python scripts/verify_xgboost_prep.py
+python scripts/evaluate_xgboost.py
 ```
 
-Expect: input shape **5000 x 15**, output **4952 x 18**, **48** rows dropped, and a `.head()` sample showing lag alignment. Details: [XGBoost Prep](xgboost-prep.md) · [Feature Engineering](feature-engineering.md).
+Expect: tabular frame shape `(4952, 18)` after lag warm-up; XGBoost test metrics compared to naive and Prophet floors. Requires `xgboost>=2.0.0` in the project `.venv`. Details: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
 
 ??? info "Technical deep dive"
 
@@ -324,6 +337,6 @@ Expect: input shape **5000 x 15**, output **4952 x 18**, **48** rows dropped, an
 
     **Phase 3 (Day 1–2):** `verify_phase2_state.py`, `python -m src.data.make_forecast_dataset`, `evaluate_naive_baseline.py` · modules `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`
 
-    **Phase 3 (Week 7 Day 1):** `verify_xgboost_prep.py` · module `create_supervised_lags` in `build_features.py`
+    **Phase 3 (Day 3 + Week 7):** `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` · `create_supervised_lags` in `build_features.py` · Prophet and XGBoost trainers in `train_forecast_models.py`
 
     **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`

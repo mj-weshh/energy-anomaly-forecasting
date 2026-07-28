@@ -6,7 +6,7 @@
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built entirely on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
-**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 Week 6 adds forecasting foundation (naive floor MAE ≈ **0.171**, RMSE ≈ **0.214**); Week 7 Day 1 adds supervised lag features for XGBoost. **Production cleaning is unchanged** (~248 corrected intervals). Full docs: [docs site](docs/index.md) · [Forecasting Baseline](docs/forecasting-baseline.md) · [XGBoost Prep](docs/xgboost-prep.md) · [Glossary](docs/glossary.md).
+**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), and XGBoost (≈ **0.125** / **0.154**) on the same chronological test window. **Production cleaning is unchanged** (~248 corrected intervals). Full docs: [docs site](docs/index.md) · [Forecasting Baseline](docs/forecasting-baseline.md) · [Prophet Baseline](docs/prophet-baseline.md) · [XGBoost Forecasting](docs/xgboost-forecasting.md) · [Glossary](docs/glossary.md).
 
 ---
 
@@ -21,8 +21,10 @@ This repository implements a phased ML pipeline:
 | **Phase 2 Week 3** | Feature engineering (temporal + rolling metrics) | **Complete** |
 | **Phase 2 Week 4** | Anomaly detection (IF + DBSCAN baselines) | **Complete** |
 | **Phase 3 Week 6 Day 1–2** | Forecasting foundation (gate, split, metrics, naive baseline) | **Complete** |
-| **Phase 3 Week 7 Day 1** | XGBoost prep (supervised lag features) | **Complete** |
-| **Phase 3 (next)** | XGBoost training, Prophet docs, LSTM | Planned |
+| **Phase 3 Week 6 Day 3** | Prophet statistical baseline | **Complete** |
+| **Phase 3 Week 7 Day 1** | XGBoost supervised lag prep | **Complete** |
+| **Phase 3 Week 7 Day 2** | XGBoost regressor training and evaluation | **Complete** |
+| **Phase 3 (next)** | LSTM · research write-up · tutorial notebook | Planned |
 
 All work uses publicly available data. No proprietary datasets or systems are referenced.
 
@@ -113,7 +115,9 @@ energy-anomaly-forecasting/
 │   ├── generate_clean_data.py      # Generate Phase 3 clean dataset artifact
 │   ├── verify_phase2_state.py      # Phase 3 gate: clean CSV continuity / NaNs
 │   ├── evaluate_naive_baseline.py  # Score naive seasonal forecast on test set
-│   └── verify_xgboost_prep.py      # Verify supervised lag tabular frame
+│   ├── evaluate_prophet.py         # Score Prophet statistical baseline on test set
+│   ├── verify_xgboost_prep.py      # Verify supervised lag tabular frame
+│   └── evaluate_xgboost.py         # Train and score XGBoost regressor on test set
 ├── src/
 │   ├── data/
 │   │   ├── ingest_data.py          # Canonical ingestion module
@@ -125,7 +129,7 @@ energy-anomaly-forecasting/
 │   │   ├── evaluate_models.py      # Imbalance-aware anomaly evaluation
 │   │   ├── evaluate_forecast.py    # Forecast MAE / RMSE / MAPE
 │   │   ├── train_anomaly_models.py # Unsupervised anomaly training
-│   │   ├── train_forecast_models.py # Naive seasonal baseline (+ later models)
+│   │   └── train_forecast_models.py # Naive, Prophet, and XGBoost forecast trainers
 │   │   ├── anomaly_preprocessing.py # Train-fitted scaling for tuning
 │   │   ├── tuning_utils.py         # Temporal splits and threshold search
 │   │   └── anomaly_config.py       # Research-tuned hyperparameters
@@ -172,7 +176,9 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Anomaly Tuning Results](docs/anomaly-tuning-results.md) | Phase 2 research tuning report — enhanced features, temporal splits, fair comparison |
 | [Clean Dataset](docs/clean-data.md) | Phase 2 Week 4 Day 3 anomaly masking, interpolation, and Phase 3 artifact |
 | [Forecasting Baseline](docs/forecasting-baseline.md) | Phase 3 Week 6 Day 1–2 gate, chronological split, metrics, naive floor |
-| [XGBoost Prep](docs/xgboost-prep.md) | Phase 3 Week 7 Day 1 supervised lag features for tabular forecasting |
+| [Prophet Baseline](docs/prophet-baseline.md) | Phase 3 Week 6 Day 3 Prophet trainer and evaluation |
+| [XGBoost Prep](docs/xgboost-prep.md) | Phase 3 Week 7 Day 1 supervised lag features |
+| [XGBoost Forecasting](docs/xgboost-forecasting.md) | Phase 3 Week 7 Day 2 XGBoost trainer and scoring |
 | [Phase 3 Strategy](docs/phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](docs/glossary.md) | Shared plain-English and technical term definitions |
 
@@ -209,7 +215,9 @@ python scripts/compare_clean_artifacts.py
 python scripts/verify_phase2_state.py
 python -m src.data.make_forecast_dataset
 python scripts/evaluate_naive_baseline.py
+python scripts/evaluate_prophet.py
 python scripts/verify_xgboost_prep.py
+python scripts/evaluate_xgboost.py
 ```
 
 ### Python API
@@ -277,18 +285,39 @@ print(evaluate_forecast(test["Electricity_Consumed"].to_numpy(), y_pred))
 
 Full notes: [Forecasting Baseline](docs/forecasting-baseline.md).
 
-### XGBoost Prep (Phase 3 Week 7 Day 1)
+### XGBoost Forecasting (Phase 3 Week 7)
 
 ```python
 import pandas as pd
+from src.data.make_forecast_dataset import time_series_split
 from src.features.build_features import create_supervised_lags
+from src.models.train_forecast_models import train_xgboost_model
+from src.models.evaluate_forecast import evaluate_forecast
+
+FEATURE_COLUMNS = [
+    "Electricity_Consumed_lag_1",
+    "Electricity_Consumed_lag_2",
+    "Electricity_Consumed_lag_48",
+    "Temperature",
+    "Humidity",
+    "hour",
+    "day_of_week",
+    "month",
+    "is_weekend",
+]
 
 df = pd.read_csv("data/processed/clean_smart_meter_data.csv", parse_dates=["Timestamp"])
 tabular = create_supervised_lags(df)
-print(tabular.shape)  # (4952, 18) on continuous clean data
+train, val, test = time_series_split(tabular)
+model = train_xgboost_model(
+    train[FEATURE_COLUMNS], train["Electricity_Consumed"],
+    val[FEATURE_COLUMNS], val["Electricity_Consumed"],
+)
+y_pred = model.predict(test[FEATURE_COLUMNS])
+print(evaluate_forecast(test["Electricity_Consumed"].to_numpy(), y_pred))
 ```
 
-Full notes: [XGBoost Prep](docs/xgboost-prep.md).
+Full notes: [XGBoost Prep](docs/xgboost-prep.md) · [XGBoost Forecasting](docs/xgboost-forecasting.md) · [Prophet Baseline](docs/prophet-baseline.md).
 
 ### Phase 2 research results (held-out test)
 

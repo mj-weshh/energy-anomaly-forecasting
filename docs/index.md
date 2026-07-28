@@ -5,9 +5,9 @@ Open-source machine learning project for **energy consumption anomaly detection*
 !!! success "Executive summary"
 
     - **What this project does:** Turns smart-meter readings into trustworthy timelines — flag unusual consumption, clean gaps, and forecast demand.
-    - **Where we are:** Phases 1–2 are complete; Phase 3 foundation (Week 6) and XGBoost lag prep (Week 7 Day 1) are in place.
+    - **Where we are:** Phases 1–2 are complete; Phase 3 forecasting ladder through Prophet and XGBoost is implemented (naive floor → Prophet → XGBoost prep + trainer).
     - **Research headline:** Tuned anomaly models score better on held-out future data (**F1 0.460** vs **0.331** production baseline), but the default clean file still uses the conservative legacy recipe until leadership reviews artifact differences.
-    - **Forecasting floor:** Naive “same time yesterday” test MAE ≈ **0.171** / RMSE ≈ **0.214** — advanced models must beat this. See [Forecasting Baseline](forecasting-baseline.md).
+    - **Forecasting floors (test set, reproducible):** Naive MAE ≈ **0.171** / RMSE ≈ **0.214**; Prophet ≈ **0.121** / **0.149**; XGBoost ≈ **0.125** / **0.154**. See [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Forecasting](xgboost-forecasting.md).
     - **Terms:** See the [Glossary](glossary.md) for F1, MAE/RMSE/MAPE, imputation, and related metrics.
 
 ## How to read this documentation
@@ -37,8 +37,10 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | Phase 2 Week 3 | Feature engineering (temporal + rolling features) | **Complete** |
 | Phase 2 Week 4 | Anomaly detection (IF + DBSCAN baselines) | **Complete** |
 | Phase 3 Week 6 Day 1–2 | Forecasting foundation (gate, split, metrics, naive baseline) | **Complete** |
-| Phase 3 Week 7 Day 1 | XGBoost prep (supervised lag features) | **Complete** |
-| Phase 3 (next) | XGBoost training, Prophet docs, LSTM | Planned |
+| Phase 3 Week 6 Day 3 | Prophet statistical baseline | **Complete** |
+| Phase 3 Week 7 Day 1 | XGBoost supervised lag prep | **Complete** |
+| Phase 3 Week 7 Day 2 | XGBoost regressor training and evaluation | **Complete** |
+| Phase 3 (next) | LSTM · research write-up · tutorial notebook | Planned |
 
 ### Phase 1 Week 2 highlights
 
@@ -73,12 +75,17 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 - Naive seasonal baseline (48-step / 24h): example test MAE ≈ **0.171**, RMSE ≈ **0.214**
 - Full notes: [Forecasting Baseline](forecasting-baseline.md) · strategy: [Phase 3 Strategy](phase3-strategy.md)
 
-### Phase 3 Week 7 Day 1 highlights
+### Phase 3 Week 6 Day 3 — Prophet highlights
 
-- Supervised lag features: `create_supervised_lags` — **t-1**, **t-2**, **t-48** on `Electricity_Consumed`
-- Tabular frame: **5000 -> 4952** rows after 48-step warm-up drop
-- Verification: `scripts/verify_xgboost_prep.py`
-- Full notes: [XGBoost Prep](xgboost-prep.md)
+- Univariate Prophet baseline via `train_prophet_model` — beats naive floor on test MAE/RMSE
+- Example test scores: MAE ≈ **0.121**, RMSE ≈ **0.149**
+- Script: `scripts/evaluate_prophet.py` · notes: [Prophet Baseline](prophet-baseline.md)
+
+### Phase 3 Week 7 — XGBoost highlights
+
+- **Day 1:** `create_supervised_lags` — lags at t-1, t-2, t-48; 4,952 rows after warm-up · [XGBoost Prep](xgboost-prep.md)
+- **Day 2:** `train_xgboost_model` on 9 tabular features; example test MAE ≈ **0.125**, RMSE ≈ **0.154** · [XGBoost Forecasting](xgboost-forecasting.md)
+- Scripts: `verify_xgboost_prep.py`, `evaluate_xgboost.py`
 
 ## Documentation
 
@@ -95,7 +102,9 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 | [Anomaly Tuning Results](anomaly-tuning-results.md) | Phase 2 research tuning — enhanced features, temporal splits, fair comparison |
 | [Clean Dataset](clean-data.md) | Phase 2 Week 4 Day 3 anomaly masking, interpolation, and Phase 3 artifact |
 | [Forecasting Baseline](forecasting-baseline.md) | Phase 3 Week 6 Day 1–2 gate, chronological split, metrics, naive floor |
-| [XGBoost Prep](xgboost-prep.md) | Phase 3 Week 7 Day 1 supervised lag features for tabular forecasting |
+| [Prophet Baseline](prophet-baseline.md) | Phase 3 Week 6 Day 3 Prophet trainer and evaluation |
+| [XGBoost Prep](xgboost-prep.md) | Phase 3 Week 7 Day 1 supervised lag features for tree models |
+| [XGBoost Forecasting](xgboost-forecasting.md) | Phase 3 Week 7 Day 2 XGBoost trainer and test-set scoring |
 | [Phase 3 Strategy](phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](glossary.md) | Plain-English and technical definitions for metrics and pipeline terms |
 
@@ -109,7 +118,7 @@ Expected outcome: schema summary with shape `(5000, 7)`, zero nulls, and a conti
 
 ??? info "Technical deep dive"
 
-    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting (Week 6 foundation + Week 7 XGBoost lag prep complete; model training planned).
+    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting (naive + Prophet + XGBoost complete; LSTM and research deliverables planned).
 
     **Fair-comparison metrics** (991-row temporal test): legacy IF 0.340 (production params) / 0.389 (val threshold) / enhanced IF 0.460. Source: `src/models/anomaly_config.py`.
 
