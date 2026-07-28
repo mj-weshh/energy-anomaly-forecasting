@@ -16,6 +16,9 @@ scikit-learn>=1.3.0
 # Statistical forecasting (Phase 3 Week 6)
 prophet>=1.1.5
 
+# Advanced ML forecasting (Phase 3 Week 7)
+xgboost>=2.0.0
+
 # Testing (optional — for pytest)
 pytest>=7.0.0
 

@@ -139,3 +139,51 @@ def train_prophet_model(train_df: pd.DataFrame, test_df: pd.DataFrame) -> np.nda
     forecast = model.predict(future)
 
     return forecast["yhat"].to_numpy(dtype=np.float64)
+
+
+def train_xgboost_model(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_val: pd.DataFrame,
+    y_val: pd.Series,
+):
+    """Fit an XGBoost regressor with validation monitoring.
+
+    Uses ``eval_set`` on the chronological validation split so training loss
+    can be tracked without touching the held-out test window.
+
+    Args:
+        X_train: Training feature matrix (tabular predictors only).
+        y_train: Training target aligned row-for-row with ``X_train``.
+        X_val: Validation feature matrix with the same columns as ``X_train``.
+        y_val: Validation target aligned row-for-row with ``X_val``.
+
+    Returns:
+        Fitted ``xgboost.XGBRegressor`` instance.
+
+    Raises:
+        ValueError: If train/val frames are empty or X/y lengths mismatch.
+    """
+    from xgboost import XGBRegressor
+
+    if len(X_train) == 0 or len(X_val) == 0:
+        raise ValueError("X_train and X_val must be non-empty.")
+    if len(y_train) == 0 or len(y_val) == 0:
+        raise ValueError("y_train and y_val must be non-empty.")
+    if len(X_train) != len(y_train):
+        raise ValueError(
+            f"X_train rows ({len(X_train)}) must match y_train ({len(y_train)})."
+        )
+    if len(X_val) != len(y_val):
+        raise ValueError(
+            f"X_val rows ({len(X_val)}) must match y_val ({len(y_val)})."
+        )
+
+    model = XGBRegressor(n_estimators=100, learning_rate=0.1)
+    model.fit(
+        X_train,
+        y_train,
+        eval_set=[(X_val, y_val)],
+        verbose=False,
+    )
+    return model
