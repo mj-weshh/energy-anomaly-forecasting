@@ -8,10 +8,12 @@ Planning notes for the final technical phase: forecasting. Phase 1 (ingestion / 
     - **Starting point:** Default Phase 2 clean file (`clean_smart_meter_data.csv`) — continuous, ~248 repaired intervals, production recipe unchanged.
     - **Golden rule:** Split data **in time order** (70% train / 15% validation / 15% test). Never shuffle — that would leak the future into the past.
     - **Model ladder:** Beat a simple “same time yesterday” baseline before trusting Prophet/ARIMA, then XGBoost, then LSTM.
-    - **Day 1–2 shipped:** Clean-state gate, chronological split, metrics module, and naive floor are implemented — see [Forecasting Baseline](forecasting-baseline.md).
+    - **Day 1–2 shipped:** Clean-state gate, chronological split, metrics module, and naive floor — see [Forecasting Baseline](forecasting-baseline.md).
+    - **Prophet shipped (Day 3):** Univariate statistical baseline — see [Prophet Baseline](prophet-baseline.md).
+    - **XGBoost shipped (Week 7):** Supervised lags + gradient-boosted regressor — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
     - **Terms:** [Glossary](glossary.md) — imputation, temporal split; forecasting metrics (MAE / RMSE / MAPE).
 
-**Status:** Week 6 Day 1–2 foundation **complete**; statistical and ML forecasters planned next  
+**Status:** Week 6 Day 1–3 and Week 7 Day 1–2 **complete**; LSTM and research deliverables planned next  
 **Builds on:** [Clean Dataset](clean-data.md), [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md), [Architecture](architecture.md), [Forecasting Baseline](forecasting-baseline.md)
 
 ---
@@ -100,19 +102,22 @@ Build complexity sequentially. If a complex model cannot beat a simpler one on t
 | **Why** | If advanced models cannot beat this rule of thumb, they are not earning their complexity |
 | **Code** | `naive_seasonal_forecast` + `scripts/evaluate_naive_baseline.py` — [Forecasting Baseline](forecasting-baseline.md) |
 
-### B. Statistical baseline (Prophet / Auto-ARIMA)
+### B. Statistical baseline (Prophet) — **implemented**
 
 | | |
 |--|--|
-| **What** | Univariate time-series models that map trend and seasonality |
+| **What** | Univariate time-series model mapping trend and seasonality |
 | **Why** | Strong mathematical floor; Prophet handles daily/weekly seasonality with less custom feature work |
+| **Code** | `train_prophet_model` + `scripts/evaluate_prophet.py` — [Prophet Baseline](prophet-baseline.md) |
 
-### C. Advanced ML (XGBoost)
+Auto-ARIMA remains deferred.
+
+### C. Advanced ML (XGBoost) — **implemented**
 
 | | |
 |--|--|
 | **What** | Gradient-boosted trees on tabular features |
-| **How** | XGBoost does not “read time” natively — feed **lag features** (e.g. \(t-1\), \(t-2\), \(t-48\)) plus temporal features (hour, day-of-week) from Phase 2 engineering |
+| **How** | **Lag features** (\(t-1\), \(t-2\), \(t-48\)) plus temporal and weather columns from Phase 2 — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md) |
 
 ### D. Deep learning (LSTM)
 
@@ -154,11 +159,16 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
 **Done (Week 6 Day 1–2):** Step 0 audit script, `time_series_split`, `evaluate_forecast`, naive seasonal baseline — see [Forecasting Baseline](forecasting-baseline.md).
 
+**Done (Week 6 Day 3):** Prophet trainer and `evaluate_prophet.py` — see [Prophet Baseline](prophet-baseline.md).
+
+**Done (Week 7 Day 1–2):** `create_supervised_lags`, `train_xgboost_model`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
+
 Still deferred for later Phase 3 weeks:
 
 - Choice of deep-learning stack (TensorFlow vs PyTorch) for LSTM
-- Whether weather stays in the exogenous set after Ablation-style checks (Phase 2 already showed weak linear weather signal for *anomaly* detection; forecasting may differ)
-- Prophet / Auto-ARIMA / XGBoost trainers
+- Whether weather stays in the exogenous set after ablation-style checks (Phase 2 already showed weak linear weather signal for *anomaly* detection; forecasting may differ)
+- Auto-ARIMA trainer
+- Hyperparameter tuning for XGBoost and Prophet
 
 ---
 
@@ -172,7 +182,7 @@ Still deferred for later Phase 3 weeks:
 
     **Metrics:** `evaluate_forecast` in `evaluate_forecast.py` (MAE / RMSE / MAPE on test for headline numbers).
 
-    **Dependencies (Day 1–2):** existing stack (pandas, scikit-learn). Later: `xgboost`, Prophet and/or `statsmodels` / `pmdarima`, plus a DL stack for LSTM.
+    **Dependencies:** pandas, scikit-learn, `prophet>=1.1.5`, `xgboost>=2.0.0` (see `requirements.txt`). LSTM stack (TensorFlow or PyTorch) still planned.
 
     **Modularity:** Baseline path loads the clean CSV and does not call `detect_anomalies` unless you run `generate_clean_data.py` explicitly.
 
@@ -181,6 +191,9 @@ Still deferred for later Phase 3 weeks:
 ## References
 
 - [Forecasting Baseline](forecasting-baseline.md) — Week 6 Day 1–2 implementation notes
+- [Prophet Baseline](prophet-baseline.md) — Week 6 Day 3 Prophet trainer
+- [XGBoost Prep](xgboost-prep.md) — Week 7 Day 1 supervised lags
+- [XGBoost Forecasting](xgboost-forecasting.md) — Week 7 Day 2 XGBoost trainer
 - [Clean Dataset](clean-data.md) — Phase 2 imputation artifact for Phase 3
 - [Anomaly Detection](anomaly-detection.md) — Isolation Forest production path used for cleaning
 - [Feature Engineering](feature-engineering.md) — temporal and rolling features to reuse / extend for lags

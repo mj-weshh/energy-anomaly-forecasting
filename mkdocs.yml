@@ -34,6 +34,9 @@ nav:
   - Anomaly Detection: anomaly-detection.md
   - Clean Dataset: clean-data.md
   - Forecasting Baseline: forecasting-baseline.md
+  - Prophet Baseline: prophet-baseline.md
+  - XGBoost Prep: xgboost-prep.md
+  - XGBoost Forecasting: xgboost-forecasting.md
   - Research & Insights:
       - EDA Insights: eda-insights.md
       - Phase 2 Strategy: phase2-strategy.md

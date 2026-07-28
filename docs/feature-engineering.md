@@ -156,6 +156,20 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 
 ---
 
+## Phase 3 Supervised Lags (Week 7 Day 1)
+
+For XGBoost and other tabular forecasters, consumption history must appear as explicit columns on each row.
+
+| Function | Purpose |
+|----------|---------|
+| `create_supervised_lags(df, target_col)` | Adds `{target_col}_lag_1`, `_lag_2`, `_lag_48`; drops first 48 incomplete rows |
+
+On the default clean artifact (5,000 continuous rows), output shape is **4952 × 18**. Verify with `python scripts/verify_xgboost_prep.py`.
+
+Full notes: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
+
+---
+
 ## What's Next
 
 - **Week 4 complete** — IF + DBSCAN baselines; clean dataset for Phase 3. See [Anomaly Detection](anomaly-detection.md) and [Clean Dataset](clean-data.md).
@@ -178,4 +192,5 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 - [EDA Insights](eda-insights.md) — the 02:00 peak and weekday/weekend findings
 - [Anomaly Detection](anomaly-detection.md) — Week 4 IF + DBSCAN baselines and model comparison
 - [Clean Dataset](clean-data.md) — Week 4 Day 3 imputation pipeline for Phase 3
+- [XGBoost Prep](xgboost-prep.md) — Phase 3 supervised lag features
 - [Architecture](architecture.md) — where `src/features/` sits in the repo

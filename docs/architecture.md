@@ -49,7 +49,10 @@ energy-anomaly-forecasting/
 │   ├── tune_isolation_forest_by_segment.py  # Per-segment enhanced IF test F1
 │   ├── generate_clean_data.py        # Generate Phase 3 clean dataset artifact (--profile)
 │   ├── verify_phase2_state.py        # Phase 3 gate: clean CSV continuity / NaNs
-│   └── evaluate_naive_baseline.py    # Score naive seasonal forecast on test set
+│   ├── evaluate_naive_baseline.py    # Score naive seasonal forecast on test set
+│   ├── evaluate_prophet.py           # Score Prophet statistical baseline on test set
+│   ├── verify_xgboost_prep.py        # Verify supervised lag tabular frame
+│   └── evaluate_xgboost.py           # Train and score XGBoost regressor on test set
 ├── src/
 │   ├── __init__.py
 │   ├── data/
@@ -67,7 +70,7 @@ energy-anomaly-forecasting/
 │   │   ├── evaluate_models.py        # Imbalance-aware anomaly evaluation
 │   │   ├── evaluate_forecast.py      # Forecast MAE / RMSE / MAPE
 │   │   ├── train_anomaly_models.py   # Unsupervised anomaly training
-│   │   ├── train_forecast_models.py  # Naive seasonal baseline (+ later models)
+│   │   └── train_forecast_models.py  # Naive, Prophet, and XGBoost forecast trainers
 │   │   ├── feature_matrix.py         # Feature matrix prep and scaling
 │   │   ├── anomaly_preprocessing.py  # Train-fitted scaling for tuning
 │   │   ├── tuning_utils.py           # Temporal splits and threshold search
@@ -281,7 +284,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
 | **2 — Anomaly Detection** | Feature engineering, IF/DBSCAN, clean dataset, educational notebook | `src/features/build_features.py`, `src/models/train_anomaly_models.py`, `src/data/clean_data.py`, `notebooks/03_anomaly_detection.ipynb` |
-| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive baseline; then Prophet/ARIMA → XGBoost → LSTM | `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py` |
+| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive baseline, Prophet, XGBoost; LSTM planned | `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`, `build_features.create_supervised_lags` |
 
 ---
 
@@ -296,16 +299,18 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Visualization | matplotlib, seaborn | >= 3.7.0, >= 0.13.0 |
 | Statistics | scipy, statsmodels | >= 1.11.0, >= 0.14.0 |
 | Anomaly detection | scikit-learn | >= 1.3.0 |
+| Statistical forecasting | prophet | >= 1.1.5 |
+| Gradient boosting | xgboost | >= 2.0.0 |
 | Documentation | mkdocs, mkdocs-material | >= 1.6.0, >= 9.5.0 |
 
-Phase 3 Day 1–2 uses the existing scikit-learn stack for metrics and the naive baseline. Forecasting libraries (xgboost, Prophet, tensorflow/pytorch) will be added when those models land.
+Phase 3 forecasting uses scikit-learn metrics, Prophet for the statistical baseline, and XGBoost for tabular lag-based forecasting. LSTM dependencies (TensorFlow or PyTorch) remain planned.
 
 ??? info "Technical deep dive"
 
     **Module map:** `ingest_data` → `build_features` → `train_anomaly_models` → `clean_data` / `clean_dataset` → `make_forecast_dataset` / `train_forecast_models` / `evaluate_forecast`.
 
-    **Script inventory:** See repository tree above — Phase 3 foundation includes `verify_phase2_state.py` and `evaluate_naive_baseline.py`.
+    **Script inventory:** Phase 3 includes `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, and `evaluate_xgboost.py`.
 
     **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink).
 
-    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Phase 3 Strategy](phase3-strategy.md).
+    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [Phase 3 Strategy](phase3-strategy.md).

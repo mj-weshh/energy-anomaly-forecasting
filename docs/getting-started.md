@@ -287,7 +287,8 @@ After ingestion and Phase 2 pass:
 3. Run `notebooks/02_exploratory_data_analysis.ipynb` and review [EDA Insights](eda-insights.md)
 4. Run Phase 2 scripts (§7) and `notebooks/03_anomaly_detection.ipynb` (§8)
 5. Generate the Phase 3 artifact: `python scripts/generate_clean_data.py`
-6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see § below and [Forecasting Baseline](forecasting-baseline.md))
+6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see §9 and [Forecasting Baseline](forecasting-baseline.md))
+7. **Phase 3 Prophet + XGBoost** — statistical and tabular forecast baselines (see §10–11)
 
 ---
 
@@ -303,6 +304,31 @@ python scripts/evaluate_naive_baseline.py
 
 Expect: clean-state **PASS**, chronological boundary **PASS**, and printed test MAE / RMSE / MAPE for the naive seasonal floor. Details: [Forecasting Baseline](forecasting-baseline.md) · [Phase 3 Strategy](phase3-strategy.md).
 
+---
+
+## 10. Prophet Baseline (Week 6 Day 3)
+
+After the clean CSV and foundation scripts pass:
+
+```bash
+python scripts/evaluate_prophet.py
+```
+
+Expect: Prophet test MAE / RMSE printed with comparison to the naive floor; **PASS** when MAE and RMSE beat naive. Requires `prophet>=1.1.5` in the project `.venv`. Details: [Prophet Baseline](prophet-baseline.md).
+
+---
+
+## 11. XGBoost (Week 7 Day 1–2)
+
+Verify supervised lag prep, then train and score the regressor:
+
+```bash
+python scripts/verify_xgboost_prep.py
+python scripts/evaluate_xgboost.py
+```
+
+Expect: tabular frame shape `(4952, 18)` after lag warm-up; XGBoost test metrics compared to naive and Prophet floors. Requires `xgboost>=2.0.0` in the project `.venv`. Details: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
+
 ??? info "Technical deep dive"
 
     **Phase 1:** `python -m src.data.ingest_data` · `notebooks/01_*` · `notebooks/02_*`
@@ -310,5 +336,7 @@ Expect: clean-state **PASS**, chronological boundary **PASS**, and printed test 
     **Phase 2:** `scripts/verify_features.py`, `test_isolation_forest.py`, `tune_*.py`, `compare_anomaly_models.py`, research scripts (`analyze_detection_errors.py`, `compare_clean_artifacts.py`, `tune_isolation_forest_by_segment.py`), `generate_clean_data.py [--profile]`, `notebooks/03_*`
 
     **Phase 3 (Day 1–2):** `verify_phase2_state.py`, `python -m src.data.make_forecast_dataset`, `evaluate_naive_baseline.py` · modules `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`
+
+    **Phase 3 (Day 3 + Week 7):** `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` · `create_supervised_lags` in `build_features.py` · Prophet and XGBoost trainers in `train_forecast_models.py`
 
     **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`
