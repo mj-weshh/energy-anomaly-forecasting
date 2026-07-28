@@ -172,7 +172,8 @@ Full notes: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-for
 
 ## What's Next
 
-- **Week 4 complete** — IF + DBSCAN baselines; clean dataset for Phase 3. See [Anomaly Detection](anomaly-detection.md) and [Clean Dataset](clean-data.md).
+- **Week 7 Day 1 complete** — supervised lags for XGBoost. See [XGBoost Prep](xgboost-prep.md).
+- **Phase 3 training** — XGBoost trainer on chronological split; see [Phase 3 Strategy](phase3-strategy.md).
 
 ??? info "Technical deep dive"
 
@@ -183,6 +184,8 @@ Full notes: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-for
     **Warm-up:** First 47 rows may have NaN rolling features; `prepare_feature_matrix` drops them before model fit/score.
 
     **Verify:** `python scripts/verify_features.py`
+
+    **XGBoost prep:** `create_supervised_lags()` — lags 1, 2, 48; `python scripts/verify_xgboost_prep.py`
 
 ---
 

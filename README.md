@@ -124,7 +124,7 @@ energy-anomaly-forecasting/
 │   │   ├── clean_data.py           # Anomaly masking and interpolation
 │   │   └── make_forecast_dataset.py # Chronological train/val/test split
 │   ├── features/
-│   │   └── build_features.py       # Temporal + rolling feature engineering
+│   │   └── build_features.py       # Temporal, rolling, and supervised lag features
 │   ├── models/
 │   │   ├── evaluate_models.py      # Imbalance-aware anomaly evaluation
 │   │   ├── evaluate_forecast.py    # Forecast MAE / RMSE / MAPE

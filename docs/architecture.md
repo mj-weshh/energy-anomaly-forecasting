@@ -64,7 +64,7 @@ energy-anomaly-forecasting/
 │   │   └── clean_dataset.py          # End-to-end clean artifact orchestration
 │   ├── features/
 │   │   ├── __init__.py
-│   │   └── build_features.py         # Phase 2 feature engineering
+│   │   └── build_features.py         # Phase 2 features + Phase 3 supervised lags
 │   ├── models/
 │   │   ├── __init__.py
 │   │   ├── evaluate_models.py        # Imbalance-aware anomaly evaluation
@@ -96,7 +96,7 @@ energy-anomaly-forecasting/
 | `data/raw/` | Future canonical storage for raw files |
 | `docs/` | Human-readable documentation source |
 | `docs/assets/eda/` | Exported EDA plots for MkDocs |
-| `src/features/` | Model-ready feature engineering (Phase 2) |
+| `src/features/` | Model-ready feature engineering (Phase 2 temporal/rolling + Phase 3 supervised lags) |
 | `src/models/` | Anomaly detection (Phase 2) and forecast metrics / baselines (Phase 3) |
 | `scripts/` | CLI utilities (EDA export, feature verification, model testing, forecast baseline) |
 | `Smart Meter Electricity Consumption Dataset/` | Legacy download location; supported by dynamic discovery |
@@ -307,7 +307,7 @@ Phase 3 forecasting uses scikit-learn metrics, Prophet for the statistical basel
 
 ??? info "Technical deep dive"
 
-    **Module map:** `ingest_data` → `build_features` → `train_anomaly_models` → `clean_data` / `clean_dataset` → `make_forecast_dataset` / `train_forecast_models` / `evaluate_forecast`.
+    **Module map:** `ingest_data` -> `build_features` -> `train_anomaly_models` -> `clean_data` / `clean_dataset` -> `make_forecast_dataset` / `train_forecast_models` / `evaluate_forecast` / `create_supervised_lags`.
 
     **Script inventory:** Phase 3 includes `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, and `evaluate_xgboost.py`.
 

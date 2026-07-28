@@ -180,6 +180,8 @@ Still deferred for later Phase 3 weeks:
 
     **Naive lag:** 48 steps = 24 h × 2 samples/hour — `naive_seasonal_forecast` in `train_forecast_models.py`.
 
+    **Supervised lags (XGBoost prep):** `create_supervised_lags` in `build_features.py` — lags 1, 2, 48; verify with `python scripts/verify_xgboost_prep.py`.
+
     **Metrics:** `evaluate_forecast` in `evaluate_forecast.py` (MAE / RMSE / MAPE on test for headline numbers).
 
     **Dependencies:** pandas, scikit-learn, `prophet>=1.1.5`, `xgboost>=2.0.0` (see `requirements.txt`). LSTM stack (TensorFlow or PyTorch) still planned.
