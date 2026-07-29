@@ -22,6 +22,11 @@ Public API (Phase 3, Week 7 — XGBoost prep):
 - ``create_supervised_lags(df, target_col)`` — lag columns at t-1, t-2, t-48
   for supervised forecasting
 
+Public API (Phase 3, Week 7 Day 3 — LSTM prep):
+
+- ``create_sequences(data, seq_length)`` — sliding-window 3D arrays for LSTM
+  input ``[samples, time_steps, features]``
+
 Usage:
     Import in downstream scripts and notebooks::
 
@@ -162,6 +167,59 @@ def create_supervised_lags(
     df[lag_48] = df[target_col].shift(48)
 
     return df.dropna(subset=[lag_1, lag_2, lag_48]).reset_index(drop=True)
+
+
+def create_sequences(
+    data: np.ndarray,
+    seq_length: int = 24,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Build sliding-window sequences for LSTM-style sequence models.
+
+    LSTMs expect 3D input tensors ``[samples, time_steps, features]``. This
+    helper slides a fixed-length window over a chronological 2D feature matrix
+    and pairs each window with the **next** row as the prediction target.
+
+    At 30-minute resolution, ``seq_length=24`` corresponds to **12 hours**
+    of history per sample.
+
+    Args:
+        data: 2D array of shape ``(n_timesteps, n_features)`` in time order.
+        seq_length: Number of past timesteps per sample. Defaults to ``24``.
+
+    Returns:
+        Tuple ``(X, y)`` where:
+
+        - ``X`` has shape ``(num_samples, seq_length, n_features)``
+        - ``y`` has shape ``(num_samples, n_features)``
+
+        with ``num_samples = n_timesteps - seq_length``.
+
+    Raises:
+        ValueError: If ``data`` is not 2D, ``seq_length`` is less than 1, or
+            there are not enough timesteps to form at least one window.
+    """
+    if data.ndim != 2:
+        raise ValueError(
+            f"data must be a 2D array (n_timesteps, n_features); got ndim={data.ndim}."
+        )
+    if seq_length < 1:
+        raise ValueError(f"seq_length must be at least 1; got {seq_length}.")
+    if len(data) <= seq_length:
+        raise ValueError(
+            f"Need more than {seq_length} timesteps to build sequences; got {len(data)}."
+        )
+
+    n_timesteps, n_features = data.shape
+    num_samples = n_timesteps - seq_length
+
+    X = np.empty((num_samples, seq_length, n_features), dtype=data.dtype)
+    y = np.empty((num_samples, n_features), dtype=data.dtype)
+
+    for i in range(num_samples):
+        X[i] = data[i : i + seq_length]
+        y[i] = data[i + seq_length]
+
+    return X, y
 
 
 def add_cyclical_features(df: pd.DataFrame) -> pd.DataFrame:

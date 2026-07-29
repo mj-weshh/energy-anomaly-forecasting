@@ -19,6 +19,9 @@ prophet>=1.1.5
 # Advanced ML forecasting (Phase 3 Week 7)
 xgboost>=2.0.0
 
+# Deep learning forecasting (Phase 3 Week 7 Day 3 — LSTM)
+torch>=2.0.0
+
 # Testing (optional — for pytest)
 pytest>=7.0.0
 
