@@ -6,7 +6,7 @@
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built entirely on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
-**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), and XGBoost (≈ **0.125** / **0.154**) on the same chronological test window. **Production cleaning is unchanged** (~248 corrected intervals). Full docs: [docs site](docs/index.md) · [Forecasting Baseline](docs/forecasting-baseline.md) · [Prophet Baseline](docs/prophet-baseline.md) · [XGBoost Forecasting](docs/xgboost-forecasting.md) · [Glossary](docs/glossary.md).
+**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM **data prep** (3D tensor verify **(176, 24, 7)**). **Production cleaning is unchanged** (~248 corrected intervals). Full docs: [docs site](docs/index.md) · [Forecasting Baseline](docs/forecasting-baseline.md) · [Prophet Baseline](docs/prophet-baseline.md) · [XGBoost Forecasting](docs/xgboost-forecasting.md) · [LSTM Prep](docs/lstm-prep.md) · [Glossary](docs/glossary.md).
 
 ---
 
@@ -24,7 +24,8 @@ This repository implements a phased ML pipeline:
 | **Phase 3 Week 6 Day 3** | Prophet statistical baseline | **Complete** |
 | **Phase 3 Week 7 Day 1** | XGBoost supervised lag prep | **Complete** |
 | **Phase 3 Week 7 Day 2** | XGBoost regressor training and evaluation | **Complete** |
-| **Phase 3 (next)** | LSTM · research write-up · tutorial notebook | Planned |
+| **Phase 3 Week 7 Day 3** | LSTM sequence prep (PyTorch 3D tensors) | **Complete** |
+| **Phase 3 (next)** | LSTM training · research write-up · tutorial notebook | Planned |
 
 All work uses publicly available data. No proprietary datasets or systems are referenced.
 
@@ -117,14 +118,15 @@ energy-anomaly-forecasting/
 │   ├── evaluate_naive_baseline.py  # Score naive seasonal forecast on test set
 │   ├── evaluate_prophet.py         # Score Prophet statistical baseline on test set
 │   ├── verify_xgboost_prep.py      # Verify supervised lag tabular frame
-│   └── evaluate_xgboost.py         # Train and score XGBoost regressor on test set
+│   ├── evaluate_xgboost.py         # Train and score XGBoost regressor on test set
+│   └── verify_lstm_prep.py           # Verify 3D LSTM sequences and PyTorch tensors
 ├── src/
 │   ├── data/
 │   │   ├── ingest_data.py          # Canonical ingestion module
 │   │   ├── clean_data.py           # Anomaly masking and interpolation
 │   │   └── make_forecast_dataset.py # Chronological train/val/test split
 │   ├── features/
-│   │   └── build_features.py       # Temporal, rolling, and supervised lag features
+│   │   └── build_features.py       # Temporal, rolling, lags, and LSTM sequences
 │   ├── models/
 │   │   ├── evaluate_models.py      # Imbalance-aware anomaly evaluation
 │   │   ├── evaluate_forecast.py    # Forecast MAE / RMSE / MAPE
@@ -179,6 +181,7 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Prophet Baseline](docs/prophet-baseline.md) | Phase 3 Week 6 Day 3 Prophet trainer and evaluation |
 | [XGBoost Prep](docs/xgboost-prep.md) | Phase 3 Week 7 Day 1 supervised lag features |
 | [XGBoost Forecasting](docs/xgboost-forecasting.md) | Phase 3 Week 7 Day 2 XGBoost trainer and scoring |
+| [LSTM Prep](docs/lstm-prep.md) | Phase 3 Week 7 Day 3 sliding-window sequences and PyTorch tensors |
 | [Phase 3 Strategy](docs/phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](docs/glossary.md) | Shared plain-English and technical term definitions |
 
@@ -218,6 +221,7 @@ python scripts/evaluate_naive_baseline.py
 python scripts/evaluate_prophet.py
 python scripts/verify_xgboost_prep.py
 python scripts/evaluate_xgboost.py
+python scripts/verify_lstm_prep.py
 ```
 
 ### Python API
@@ -318,6 +322,33 @@ print(evaluate_forecast(test["Electricity_Consumed"].to_numpy(), y_pred))
 ```
 
 Full notes: [XGBoost Prep](docs/xgboost-prep.md) · [XGBoost Forecasting](docs/xgboost-forecasting.md) · [Prophet Baseline](docs/prophet-baseline.md).
+
+### LSTM Prep (Phase 3 Week 7 Day 3)
+
+```python
+import numpy as np
+import pandas as pd
+import torch
+from src.features.build_features import create_sequences
+
+FEATURE_COLUMNS = [
+    "Electricity_Consumed",
+    "Temperature",
+    "Humidity",
+    "hour",
+    "day_of_week",
+    "month",
+    "is_weekend",
+]
+
+df = pd.read_csv("data/processed/clean_smart_meter_data.csv", parse_dates=["Timestamp"])
+data = df.iloc[:200][FEATURE_COLUMNS].to_numpy(dtype=np.float32)
+X, y = create_sequences(data, seq_length=24)
+X_tensor = torch.tensor(X, dtype=torch.float32)
+print(X_tensor.shape)  # (176, 24, 7)
+```
+
+Full notes: [LSTM Prep](docs/lstm-prep.md).
 
 ### Phase 2 research results (held-out test)
 

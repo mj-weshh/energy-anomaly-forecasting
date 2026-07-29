@@ -5,9 +5,9 @@ Open-source machine learning project for **energy consumption anomaly detection*
 !!! success "Executive summary"
 
     - **What this project does:** Turns smart-meter readings into trustworthy timelines — flag unusual consumption, clean gaps, and forecast demand.
-    - **Where we are:** Phases 1–2 are complete; Phase 3 forecasting ladder through Prophet and XGBoost is implemented (naive floor → Prophet → XGBoost prep + trainer).
+    - **Where we are:** Phases 1–2 are complete; Phase 3 forecasting ladder through Prophet, XGBoost, and LSTM **data prep** is implemented (naive floor → Prophet → XGBoost → 3D sequences).
     - **Research headline:** Tuned anomaly models score better on held-out future data (**F1 0.460** vs **0.331** production baseline), but the default clean file still uses the conservative legacy recipe until leadership reviews artifact differences.
-    - **Forecasting floors (test set, reproducible):** Naive MAE ≈ **0.171** / RMSE ≈ **0.214**; Prophet ≈ **0.121** / **0.149**; XGBoost ≈ **0.125** / **0.154**. See [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Forecasting](xgboost-forecasting.md).
+    - **Forecasting floors (test set, reproducible):** Naive MAE ≈ **0.171** / RMSE ≈ **0.214**; Prophet ≈ **0.121** / **0.149**; XGBoost ≈ **0.125** / **0.154**. LSTM prep verified at tensor shape **(176, 24, 7)** on a 200-row slice. See [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [LSTM Prep](lstm-prep.md).
     - **Terms:** See the [Glossary](glossary.md) for F1, MAE/RMSE/MAPE, imputation, and related metrics.
 
 ## How to read this documentation
@@ -40,7 +40,8 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | Phase 3 Week 6 Day 3 | Prophet statistical baseline | **Complete** |
 | Phase 3 Week 7 Day 1 | XGBoost supervised lag prep | **Complete** |
 | Phase 3 Week 7 Day 2 | XGBoost regressor training and evaluation | **Complete** |
-| Phase 3 (next) | LSTM · research write-up · tutorial notebook | Planned |
+| Phase 3 Week 7 Day 3 | LSTM sequence prep (PyTorch 3D tensors) | **Complete** |
+| Phase 3 (next) | LSTM training · research write-up · tutorial notebook | Planned |
 
 ### Phase 1 Week 2 highlights
 
@@ -87,6 +88,13 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 - **Day 2:** `train_xgboost_model` on 9 tabular features; example test MAE ≈ **0.125**, RMSE ≈ **0.154** · [XGBoost Forecasting](xgboost-forecasting.md)
 - Scripts: `verify_xgboost_prep.py`, `evaluate_xgboost.py`
 
+### Phase 3 Week 7 Day 3 — LSTM prep highlights
+
+- **PyTorch** dependency (`torch>=2.0.0`) for deep-learning forecasting
+- `create_sequences` — sliding windows → 3D arrays `[samples, 24, features]`
+- Example verify: input `(200, 7)` → tensor `(176, 24, 7)` · [LSTM Prep](lstm-prep.md)
+- Script: `verify_lstm_prep.py`
+
 ## Documentation
 
 | Document | Purpose |
@@ -105,6 +113,7 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 | [Prophet Baseline](prophet-baseline.md) | Phase 3 Week 6 Day 3 Prophet trainer and evaluation |
 | [XGBoost Prep](xgboost-prep.md) | Phase 3 Week 7 Day 1 supervised lag features for tree models |
 | [XGBoost Forecasting](xgboost-forecasting.md) | Phase 3 Week 7 Day 2 XGBoost trainer and test-set scoring |
+| [LSTM Prep](lstm-prep.md) | Phase 3 Week 7 Day 3 sliding-window sequences and PyTorch tensors |
 | [Phase 3 Strategy](phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](glossary.md) | Plain-English and technical definitions for metrics and pipeline terms |
 
@@ -118,7 +127,7 @@ Expected outcome: schema summary with shape `(5000, 7)`, zero nulls, and a conti
 
 ??? info "Technical deep dive"
 
-    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting (naive + Prophet + XGBoost complete; LSTM and research deliverables planned).
+    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting (naive + Prophet + XGBoost + LSTM prep complete; LSTM trainer and research deliverables planned).
 
     **Fair-comparison metrics** (991-row temporal test): legacy IF 0.340 (production params) / 0.389 (val threshold) / enhanced IF 0.460. Source: `src/models/anomaly_config.py`.
 

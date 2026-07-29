@@ -6,7 +6,7 @@ Plain-English definitions for terms used across this project. Each entry include
 
     - **Purpose:** One place to decode jargon used in executive summaries and technical reports.
     - **How to use:** Skim the **Business** line for decisions; read **Technical** for implementation and reproducibility.
-    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, Prophet, XGBoost, and supervised lag features.
+    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, Prophet, XGBoost, supervised lag features, PyTorch, and sliding window.
 
 ---
 
@@ -106,6 +106,14 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## LSTM (prep stage)
+
+**Business:** The deep-learning path that reads **stretches of recent history** (not just one row) before predicting the next interval — prep work shapes that history into tensors the network can consume.
+
+**Technical:** Phase 3 Week 7 Day 3 implements **data prep only** via `create_sequences` and `verify_lstm_prep.py`. Default window: 24 steps (12 h). Full LSTM trainer not yet implemented. See [LSTM Prep](lstm-prep.md).
+
+---
+
 ## MAE (Mean Absolute Error)
 
 **Business:** On average, how far off are the forecasts? Easy to explain to management.
@@ -146,6 +154,14 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## PyTorch
+
+**Business:** The deep-learning toolkit we use to build and train the LSTM forecaster — chosen for fine-grained control over model architecture.
+
+**Technical:** `torch>=2.0.0` in `requirements.txt`. Day 3 prep converts NumPy sequence arrays to `torch.float32` tensors. Dependency for upcoming LSTM training code.
+
+---
+
 ## Recall
 
 **Business:** Of all real problems in the benchmark, what fraction did we catch?
@@ -167,6 +183,14 @@ Plain-English definitions for terms used across this project. Each entry include
 **Business:** The “same time yesterday” guess — tomorrow at 2:00 AM looks like today at 2:00 AM.
 
 **Technical:** `naive_seasonal_forecast(..., seasonal_periods=48)` — at 30-minute resolution, 48 steps = 24 hours. Prediction at time `t` is the observed value at `t - 48` on `train || test_true` (not recursive). Phase 3 floor that advanced models must beat.
+
+---
+
+## Sliding window / sequence tensor
+
+**Business:** A rolling slice of the recent timeline — like showing the model the last 12 hours of readings before asking it to guess the next half hour.
+
+**Technical:** `create_sequences(data, seq_length=24)` returns `X` with shape `(num_samples, seq_length, n_features)` and `y` with shape `(num_samples, n_features)`. `num_samples = n_timesteps - seq_length`. See [LSTM Prep](lstm-prep.md).
 
 ---
 

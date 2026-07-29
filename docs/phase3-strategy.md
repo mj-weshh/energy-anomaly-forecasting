@@ -11,9 +11,10 @@ Planning notes for the final technical phase: forecasting. Phase 1 (ingestion / 
     - **Day 1–2 shipped:** Clean-state gate, chronological split, metrics module, and naive floor — see [Forecasting Baseline](forecasting-baseline.md).
     - **Prophet shipped (Day 3):** Univariate statistical baseline — see [Prophet Baseline](prophet-baseline.md).
     - **XGBoost shipped (Week 7):** Supervised lags + gradient-boosted regressor — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
+    - **LSTM prep shipped (Week 7 Day 3):** PyTorch sliding-window sequences — see [LSTM Prep](lstm-prep.md).
     - **Terms:** [Glossary](glossary.md) — imputation, temporal split; forecasting metrics (MAE / RMSE / MAPE).
 
-**Status:** Week 6 Day 1–3 and Week 7 Day 1–2 **complete**; LSTM and research deliverables planned next  
+**Status:** Week 6 Day 1–3 and Week 7 Day 1–3 **complete**; LSTM trainer and research deliverables planned next  
 **Builds on:** [Clean Dataset](clean-data.md), [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md), [Architecture](architecture.md), [Forecasting Baseline](forecasting-baseline.md)
 
 ---
@@ -119,24 +120,26 @@ Auto-ARIMA remains deferred.
 | **What** | Gradient-boosted trees on tabular features |
 | **How** | **Lag features** (\(t-1\), \(t-2\), \(t-48\)) plus temporal and weather columns from Phase 2 — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md) |
 
-### D. Deep learning (LSTM)
+### D. Deep learning (LSTM) — **prep implemented**
 
 | | |
 |--|--|
 | **What** | Long Short-Term Memory network (recurrent architecture) |
-| **How** | Format data as sliding windows into 3D tensors `[samples, time_steps, features]` — e.g. past **12 hours** (24 steps) to predict the next **30 minutes** |
+| **Prep (done)** | Sliding windows → 3D tensors `[samples, time_steps, features]` via `create_sequences` — see [LSTM Prep](lstm-prep.md) |
+| **Training (planned)** | PyTorch LSTM model, chronological sequence batches, test-set scoring vs naive / Prophet / XGBoost floors |
 
 ```mermaid
 flowchart LR
   clean[CleanCSV_5000] --> split[Chronological_70_15_15]
   split --> naive[Naive_48lag]
-  split --> stats[Prophet_or_ARIMA]
+  split --> stats[Prophet]
   split --> xgb[XGBoost_lags]
-  split --> lstm[LSTM_windows]
+  split --> lstmPrep[LSTM_sequences]
+  lstmPrep --> lstmTrain[LSTM_trainer_planned]
   naive --> compare[Compare_MAE_RMSE_MAPE]
   stats --> compare
   xgb --> compare
-  lstm --> compare
+  lstmTrain --> compare
   compare --> docs[forecasting_research_and_tutorial]
 ```
 
@@ -163,9 +166,11 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
 **Done (Week 7 Day 1–2):** `create_supervised_lags`, `train_xgboost_model`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
 
+**Done (Week 7 Day 3):** `create_sequences`, `verify_lstm_prep.py`, PyTorch dependency — see [LSTM Prep](lstm-prep.md).
+
 Still deferred for later Phase 3 weeks:
 
-- Choice of deep-learning stack (TensorFlow vs PyTorch) for LSTM
+- LSTM model architecture, training loop, and evaluation script
 - Whether weather stays in the exogenous set after ablation-style checks (Phase 2 already showed weak linear weather signal for *anomaly* detection; forecasting may differ)
 - Auto-ARIMA trainer
 - Hyperparameter tuning for XGBoost and Prophet
@@ -182,9 +187,11 @@ Still deferred for later Phase 3 weeks:
 
     **Supervised lags (XGBoost prep):** `create_supervised_lags` in `build_features.py` — lags 1, 2, 48; verify with `python scripts/verify_xgboost_prep.py`.
 
+    **LSTM sequences (Day 3 prep):** `create_sequences` — default 24-step windows; verify with `python scripts/verify_lstm_prep.py`.
+
     **Metrics:** `evaluate_forecast` in `evaluate_forecast.py` (MAE / RMSE / MAPE on test for headline numbers).
 
-    **Dependencies:** pandas, scikit-learn, `prophet>=1.1.5`, `xgboost>=2.0.0` (see `requirements.txt`). LSTM stack (TensorFlow or PyTorch) still planned.
+    **Dependencies:** pandas, scikit-learn, `prophet>=1.1.5`, `xgboost>=2.0.0`, `torch>=2.0.0` (see `requirements.txt`). LSTM **trainer** still planned.
 
     **Modularity:** Baseline path loads the clean CSV and does not call `detect_anomalies` unless you run `generate_clean_data.py` explicitly.
 
@@ -196,6 +203,7 @@ Still deferred for later Phase 3 weeks:
 - [Prophet Baseline](prophet-baseline.md) — Week 6 Day 3 Prophet trainer
 - [XGBoost Prep](xgboost-prep.md) — Week 7 Day 1 supervised lags
 - [XGBoost Forecasting](xgboost-forecasting.md) — Week 7 Day 2 XGBoost trainer
+- [LSTM Prep](lstm-prep.md) — Week 7 Day 3 sliding-window sequences
 - [Clean Dataset](clean-data.md) — Phase 2 imputation artifact for Phase 3
 - [Anomaly Detection](anomaly-detection.md) — Isolation Forest production path used for cleaning
 - [Feature Engineering](feature-engineering.md) — temporal and rolling features to reuse / extend for lags

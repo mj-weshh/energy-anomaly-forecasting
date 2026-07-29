@@ -124,7 +124,7 @@ Re-run after regenerating the clean artifact or changing features; numbers may s
 
 Per [Phase 3 Strategy](phase3-strategy.md):
 
-1. **LSTM** sliding windows (3D tensor format)
+1. **LSTM model training** — prep complete at [LSTM Prep](lstm-prep.md); trainer and evaluation deferred
 2. Hyperparameter tuning for XGBoost (`n_estimators`, `learning_rate`, feature ablation)
 3. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
 4. Auto-ARIMA (deferred)
