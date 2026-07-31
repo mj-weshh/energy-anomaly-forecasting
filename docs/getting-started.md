@@ -287,8 +287,8 @@ After ingestion and Phase 2 pass:
 3. Run `notebooks/02_exploratory_data_analysis.ipynb` and review [EDA Insights](eda-insights.md)
 4. Run Phase 2 scripts (§7) and `notebooks/03_anomaly_detection.ipynb` (§8)
 5. Generate the Phase 3 artifact: `python scripts/generate_clean_data.py`
-6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see §9 and [Forecasting Baseline](forecasting-baseline.md))
-7. **Phase 3 Prophet + XGBoost** — statistical and tabular forecast baselines (see §10–11)
+6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see **Phase 3 Foundation** below and [Forecasting Baseline](forecasting-baseline.md))
+7. **Phase 3 Prophet + XGBoost + LSTM** — statistical, tabular, and sequence forecast baselines (see sections below)
 
 ---
 
@@ -329,6 +329,30 @@ python scripts/evaluate_xgboost.py
 
 Expect: tabular frame shape `(4952, 18)` after lag warm-up; XGBoost test metrics compared to naive and Prophet floors. Requires `xgboost>=2.0.0` in the project `.venv`. Details: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
 
+---
+
+## 12. LSTM Prep (Week 7 Day 3)
+
+Verify 3D sequence generation and PyTorch tensor conversion:
+
+```bash
+python scripts/verify_lstm_prep.py
+```
+
+Expect: input slice `(200, 7)` → tensor shape `(176, 24, 7)`; **PASS**. Requires `torch>=2.0.0` in the project `.venv`. Details: [LSTM Prep](lstm-prep.md).
+
+---
+
+## 13. LSTM Forecasting (Week 7 Days 4–5)
+
+Train and score the LSTM regressor on the chronological test set:
+
+```bash
+python scripts/evaluate_lstm.py
+```
+
+Expect: 20 epochs of training output; LSTM test MAE / RMSE compared to naive, Prophet, and XGBoost floors; normalized-scale note printed before metrics. Requires `torch>=2.0.0`. Details: [LSTM Forecasting](lstm-forecasting.md).
+
 ??? info "Technical deep dive"
 
     **Phase 1:** `python -m src.data.ingest_data` · `notebooks/01_*` · `notebooks/02_*`
@@ -337,6 +361,6 @@ Expect: tabular frame shape `(4952, 18)` after lag warm-up; XGBoost test metrics
 
     **Phase 3 (Day 1–2):** `verify_phase2_state.py`, `python -m src.data.make_forecast_dataset`, `evaluate_naive_baseline.py` · modules `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`
 
-    **Phase 3 (Day 3 + Week 7):** `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` · `create_supervised_lags` in `build_features.py` · Prophet and XGBoost trainers in `train_forecast_models.py`
+    **Phase 3 (Day 3 + Week 7):** `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, `evaluate_lstm.py` · `create_supervised_lags` and `create_sequences` in `build_features.py` · Prophet, XGBoost, and LSTM trainers in `train_forecast_models.py` · `EnergyLSTM` in `lstm_model.py`
 
     **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`
