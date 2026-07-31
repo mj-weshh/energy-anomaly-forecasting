@@ -324,3 +324,39 @@ def train_lstm_model(
         )
 
     return model
+
+
+def predict_lstm(model, test_loader) -> np.ndarray:
+    """Run inference on a test ``DataLoader`` and return flat NumPy predictions.
+
+    Sets ``model.eval()`` and runs under ``torch.no_grad()``. Outputs are
+    detached from the computation graph and moved to CPU for sklearn metrics.
+
+    Args:
+        model: Trained ``EnergyLSTM`` (or compatible module on the target device).
+        test_loader: ``DataLoader`` of ``(batch_X, batch_y)`` test batches.
+            Targets in ``batch_y`` are ignored; callers align actuals separately.
+
+    Returns:
+        1-D ``float`` array of predictions in loader order (length equals the
+        number of test samples when ``shuffle=False``).
+
+    Raises:
+        ValueError: If ``test_loader`` is empty.
+    """
+    import torch
+
+    if len(test_loader) == 0:
+        raise ValueError("test_loader must contain at least one batch.")
+
+    device = next(model.parameters()).device
+    model.eval()
+    chunks: list[np.ndarray] = []
+
+    with torch.no_grad():
+        for batch_X, _ in test_loader:
+            batch_X = batch_X.to(device)
+            outputs = model(batch_X)
+            chunks.append(outputs.detach().cpu().numpy())
+
+    return np.concatenate(chunks).reshape(-1)

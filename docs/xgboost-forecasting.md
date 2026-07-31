@@ -124,7 +124,7 @@ Re-run after regenerating the clean artifact or changing features; numbers may s
 
 Per [Phase 3 Strategy](phase3-strategy.md):
 
-1. **LSTM** sliding windows (3D tensor format)
+1. ~~**LSTM** sliding windows (3D tensor format)~~ — **done:** [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 2. Hyperparameter tuning for XGBoost (`n_estimators`, `learning_rate`, feature ablation)
 3. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
 4. Auto-ARIMA (deferred)
@@ -144,6 +144,7 @@ Each model must use the same chronological cut and `evaluate_forecast` helpers.
 
 - Naive: MAE **0.171150**, RMSE **0.214034**
 - Prophet: MAE **0.121071**, RMSE **0.148670**
+- LSTM: MAE **0.122735**, RMSE **0.152336** — see [LSTM Forecasting](lstm-forecasting.md)
 
 **Commands:**
 
@@ -165,6 +166,7 @@ python scripts/evaluate_xgboost.py
 - [Forecasting Baseline](forecasting-baseline.md) — gate, split, metrics
 - [Feature Engineering](feature-engineering.md) — Phase 2 temporal columns reused here
 - [Phase 3 Strategy](phase3-strategy.md) — model ladder
+- [LSTM Forecasting](lstm-forecasting.md) — sequence-based deep learning baseline
 - [Architecture](architecture.md) — repository layout
 - [Glossary](glossary.md) — XGBoost, eval_set, supervised lags
 - [Getting Started](getting-started.md) — install and Phase 3 commands
