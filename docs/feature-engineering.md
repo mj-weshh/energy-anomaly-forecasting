@@ -172,22 +172,22 @@ Full notes: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-for
 
 ## Phase 3 LSTM Sequences (Week 7 Day 3)
 
-For LSTM and other recurrent forecasters, history must be shaped as **sliding windows** over consecutive rows.
+For LSTM and other sequence models, multivariate history must be shaped as 3D tensors.
 
 | Function | Purpose |
 |----------|---------|
-| `create_sequences(data, seq_length=24)` | Builds `X` `(samples, 24, features)` and `y` `(samples, features)` from a 2D matrix |
+| `create_sequences(data, seq_length=24)` | Sliding windows → `X` `(samples, 24, features)` and `y` `(samples, features)` |
 
-Default `seq_length=24` = **12 hours** at 30-minute resolution. Verify with `python scripts/verify_lstm_prep.py` (example tensor shape `(176, 24, 7)` on a 200-row slice).
+On the default clean artifact (5,000 continuous rows), full-series output is **4,976** samples. Verify with `python scripts/verify_lstm_prep.py` (200-row slice → tensor shape `(176, 24, 7)`).
 
-Full notes: [LSTM Prep](lstm-prep.md).
+Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
 
 ---
 
 ## What's Next
 
-- **Week 7 Day 3 complete** — LSTM sliding-window sequences. See [LSTM Prep](lstm-prep.md).
-- **Phase 3 training** — LSTM model (planned); see [Phase 3 Strategy](phase3-strategy.md).
+- **Week 7 complete** — XGBoost and LSTM forecasters on chronological split; see [Phase 3 Strategy](phase3-strategy.md).
+- **Research deliverables** — forecasting write-up and tutorial notebook (planned).
 
 ??? info "Technical deep dive"
 
@@ -201,7 +201,7 @@ Full notes: [LSTM Prep](lstm-prep.md).
 
     **XGBoost prep:** `create_supervised_lags()` — lags 1, 2, 48; `python scripts/verify_xgboost_prep.py`
 
-    **LSTM prep:** `create_sequences()` — 24-step windows; `python scripts/verify_lstm_prep.py`
+    **LSTM prep:** `create_sequences()` — default window 24; `python scripts/verify_lstm_prep.py`
 
 ---
 

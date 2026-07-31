@@ -116,7 +116,7 @@ Per [Phase 3 Strategy](phase3-strategy.md):
 
 1. ~~Statistical baselines (Prophet)~~ — **done:** [Prophet Baseline](prophet-baseline.md) (Auto-ARIMA still deferred)
 2. ~~XGBoost with lag + temporal features~~ — **done:** [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md)
-3. ~~LSTM sliding windows~~ — **prep done:** [LSTM Prep](lstm-prep.md); LSTM **training** still deferred
+3. ~~LSTM sliding windows~~ — **done:** [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 4. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
 
 Each model must be scored with the same chronological cut and `evaluate_forecast` helpers.

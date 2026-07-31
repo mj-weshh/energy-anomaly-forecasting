@@ -1,8 +1,7 @@
 """Phase 3 forecasting model trainers.
 
-Starts with a seasonal naive baseline. Advanced models (Prophet/ARIMA, XGBoost,
-LSTM) land in later Phase 3 weeks — they must beat this floor on the same
-held-out test window to be considered useful.
+Naive seasonal baseline, Prophet, XGBoost, and LSTM trainers. Advanced models
+must beat the naive floor on the same held-out test window to be useful.
 """
 
 from __future__ import annotations
@@ -187,3 +186,177 @@ def train_xgboost_model(
         verbose=False,
     )
     return model
+
+
+def make_lstm_dataloader(
+    X: np.ndarray | "torch.Tensor",
+    y: np.ndarray | "torch.Tensor",
+    *,
+    batch_size: int = 32,
+    consumption_index: int = 0,
+    shuffle: bool = False,
+):
+    """Wrap LSTM sequence arrays in a PyTorch ``DataLoader``.
+
+    Converts ``X`` and ``y`` to ``float32`` tensors and batches them for
+    ``train_lstm_model``. When ``y`` has shape ``(N, n_features)``, only the
+    consumption column at ``consumption_index`` is used as the scalar target
+    (default index ``0`` = ``Electricity_Consumed`` in the prep feature order).
+
+    Args:
+        X: Sequence features with shape ``(N, seq_len, n_features)``.
+        y: Targets with shape ``(N,)`` or ``(N, n_features)``.
+        batch_size: Mini-batch size. Defaults to ``32``.
+        consumption_index: Column index for consumption when ``y`` is 2D.
+        shuffle: Whether to shuffle batches. Defaults to ``False`` to preserve
+            chronological order within a split.
+
+    Returns:
+        ``torch.utils.data.DataLoader`` yielding ``(batch_X, batch_y)`` tuples.
+
+    Raises:
+        ValueError: If ``X`` and ``y`` lengths mismatch or arrays are empty.
+    """
+    import torch
+    from torch.utils.data import DataLoader, TensorDataset
+
+    X_arr = np.asarray(X)
+    y_arr = np.asarray(y)
+
+    if X_arr.size == 0 or y_arr.size == 0:
+        raise ValueError("X and y must be non-empty.")
+    if len(X_arr) != len(y_arr):
+        raise ValueError(
+            f"X samples ({len(X_arr)}) must match y samples ({len(y_arr)})."
+        )
+    if y_arr.ndim == 2:
+        y_arr = y_arr[:, consumption_index]
+    elif y_arr.ndim != 1:
+        raise ValueError(
+            f"y must be 1D or 2D; got ndim={y_arr.ndim}."
+        )
+
+    X_tensor = torch.as_tensor(X_arr, dtype=torch.float32)
+    y_tensor = torch.as_tensor(y_arr, dtype=torch.float32).reshape(-1)
+
+    dataset = TensorDataset(X_tensor, y_tensor)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+
+
+def train_lstm_model(
+    model,
+    train_loader,
+    val_loader,
+    epochs: int = 20,
+    learning_rate: float = 1e-3,
+):
+    """Train an ``EnergyLSTM`` with Adam and MSE loss.
+
+    Runs a standard PyTorch epoch loop: zero gradients, forward pass, loss,
+    backward pass, optimizer step. Prints mean training and validation loss
+    per epoch to monitor overfitting.
+
+    Args:
+        model: ``EnergyLSTM`` instance (or compatible ``nn.Module`` returning
+            shape ``(batch,)`` predictions).
+        train_loader: ``DataLoader`` of ``(batch_X, batch_y)`` training batches.
+        val_loader: ``DataLoader`` of validation batches.
+        epochs: Number of full passes over the training loader. Defaults to ``20``.
+        learning_rate: Adam learning rate. Defaults to ``1e-3``.
+
+    Returns:
+        The same ``model`` instance, trained in place.
+
+    Raises:
+        ValueError: If ``epochs < 1`` or either loader is empty.
+    """
+    import torch
+    import torch.nn as nn
+
+    if epochs < 1:
+        raise ValueError(f"epochs must be >= 1, got {epochs}.")
+    if len(train_loader) == 0:
+        raise ValueError("train_loader must contain at least one batch.")
+    if len(val_loader) == 0:
+        raise ValueError("val_loader must contain at least one batch.")
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    for epoch in range(1, epochs + 1):
+        model.train()
+        train_loss_sum = 0.0
+        train_batches = 0
+
+        for batch_X, batch_y in train_loader:
+            batch_X = batch_X.to(device)
+            batch_y = batch_y.to(device)
+
+            optimizer.zero_grad()
+            outputs = model(batch_X)
+            loss = criterion(outputs, batch_y)
+            loss.backward()
+            optimizer.step()
+
+            train_loss_sum += loss.item()
+            train_batches += 1
+
+        model.eval()
+        val_loss_sum = 0.0
+        val_batches = 0
+
+        with torch.no_grad():
+            for batch_X, batch_y in val_loader:
+                batch_X = batch_X.to(device)
+                batch_y = batch_y.to(device)
+                outputs = model(batch_X)
+                loss = criterion(outputs, batch_y)
+                val_loss_sum += loss.item()
+                val_batches += 1
+
+        train_loss = train_loss_sum / train_batches
+        val_loss = val_loss_sum / val_batches
+        print(
+            f"Epoch {epoch}/{epochs} — train_loss: {train_loss:.6f} — "
+            f"val_loss: {val_loss:.6f}"
+        )
+
+    return model
+
+
+def predict_lstm(model, test_loader) -> np.ndarray:
+    """Run inference on a test ``DataLoader`` and return flat NumPy predictions.
+
+    Sets ``model.eval()`` and runs under ``torch.no_grad()``. Outputs are
+    detached from the computation graph and moved to CPU for sklearn metrics.
+
+    Args:
+        model: Trained ``EnergyLSTM`` (or compatible module on the target device).
+        test_loader: ``DataLoader`` of ``(batch_X, batch_y)`` test batches.
+            Targets in ``batch_y`` are ignored; callers align actuals separately.
+
+    Returns:
+        1-D ``float`` array of predictions in loader order (length equals the
+        number of test samples when ``shuffle=False``).
+
+    Raises:
+        ValueError: If ``test_loader`` is empty.
+    """
+    import torch
+
+    if len(test_loader) == 0:
+        raise ValueError("test_loader must contain at least one batch.")
+
+    device = next(model.parameters()).device
+    model.eval()
+    chunks: list[np.ndarray] = []
+
+    with torch.no_grad():
+        for batch_X, _ in test_loader:
+            batch_X = batch_X.to(device)
+            outputs = model(batch_X)
+            chunks.append(outputs.detach().cpu().numpy())
+
+    return np.concatenate(chunks).reshape(-1)

@@ -38,6 +38,7 @@ nav:
   - XGBoost Prep: xgboost-prep.md
   - XGBoost Forecasting: xgboost-forecasting.md
   - LSTM Prep: lstm-prep.md
+  - LSTM Forecasting: lstm-forecasting.md
   - Research & Insights:
       - EDA Insights: eda-insights.md
       - Phase 2 Strategy: phase2-strategy.md

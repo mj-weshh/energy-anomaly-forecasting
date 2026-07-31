@@ -7,28 +7,45 @@ Working notes for converting the clean timeline into **3D sequence tensors** bef
 
 - **Framework:** **PyTorch** (`torch>=2.0.0`) chosen for deep-learning forecasting — architectural control over the LSTM stack.
 - **Why 3D:** LSTMs read **sequences**, not single flat rows — input shape `[samples, time_steps, features]`.
-- **Default window:** **24 steps = 12 hours** at 30-minute resolution; each sample predicts the **next** row.
-- **Verify:** `python scripts/verify_lstm_prep.py` confirms tensor shape `(176, 24, 7)` on a 200-row slice.
-- **Terms:** [Glossary](glossary.md) — sliding window, PyTorch, LSTM prep, sequence tensor.
+- **Default window:** **24 steps** = **12 hours** of history at 30-minute resolution per sample.
+- **Feature matrix:** 7 columns (consumption + weather + calendar fields from the clean artifact).
+- **Verify:** `python scripts/verify_lstm_prep.py` — example tensor shape `(176, 24, 7)` on a 200-row slice.
+- **Terms:** [Glossary](glossary.md) — LSTM, PyTorch, sliding window / sequence tensor.
 
 </div>
 
-**Status:** Week 7 Day 3 complete — sliding-window generator and tensor verification script  
+**Status:** Week 7 Day 3 complete — sliding-window sequences and verification script  
 **Module:** `src/features/build_features.py` — `create_sequences`  
 **Script:** `scripts/verify_lstm_prep.py`  
-**Builds on:** [XGBoost Forecasting](xgboost-forecasting.md), [Feature Engineering](feature-engineering.md), [Phase 3 Strategy](phase3-strategy.md)
+**Builds on:** [Forecasting Baseline](forecasting-baseline.md), [Feature Engineering](feature-engineering.md), [XGBoost Forecasting](xgboost-forecasting.md)
 
 ---
 
-## Tabular vs Sequence Models
+## Recurrent Models vs Tabular Trees
 
-| Model family | Data shape | How history is represented |
-|--------------|------------|----------------------------|
-| XGBoost | 2D tabular | Lag columns on one row — see [XGBoost Prep](xgboost-prep.md) |
-| LSTM | 3D sequences | Sliding window of past rows per sample |
+XGBoost uses **explicit lag columns** on each row ([XGBoost Prep](xgboost-prep.md)). LSTMs consume a **contiguous window** of past timesteps as a single 3D tensor — the network learns temporal patterns internally rather than relying on hand-picked lag indices alone.
 
-XGBoost asks: “What were consumption and context **at fixed lags** on this row?”  
-LSTM asks: “What happened over the **last N consecutive intervals** before this prediction?”
+| Model family | Time representation |
+|--------------|---------------------|
+| Prophet / ARIMA | Native datetime / seasonality |
+| XGBoost | Lag columns + temporal features |
+| LSTM | Sliding window tensor `[samples, seq_len, features]` |
+
+---
+
+## Feature Matrix (7 columns)
+
+Defined in `scripts/verify_lstm_prep.py` and reused in `scripts/evaluate_lstm.py` — column order must match the trainer:
+
+| Column | Source |
+|--------|--------|
+| `Electricity_Consumed` | Clean artifact (target column at index 0) |
+| `Temperature` | Clean artifact |
+| `Humidity` | Clean artifact |
+| `hour` | Phase 2 temporal features |
+| `day_of_week` | Phase 2 temporal features |
+| `month` | Phase 2 temporal features |
+| `is_weekend` | Phase 2 temporal features |
 
 ---
 
@@ -37,43 +54,26 @@ LSTM asks: “What happened over the **last N consecutive intervals** before thi
 Module: `src/features/build_features.py`
 
 ```python
-create_sequences(data: np.ndarray, seq_length: int = 24) -> tuple[np.ndarray, np.ndarray]
+create_sequences(data, seq_length=24) -> tuple[np.ndarray, np.ndarray]
 ```
 
-| Argument | Meaning |
-|----------|---------|
+| Input | Shape / meaning |
+|-------|-----------------|
 | `data` | 2D array `(n_timesteps, n_features)` in chronological order |
-| `seq_length` | Window length (default **24** = 12 hours) |
+| `seq_length` | Past window length (default **24** steps) |
 
-For each index `i` from `0` to `n_timesteps - seq_length - 1`:
+| Output | Shape / meaning |
+|--------|-----------------|
+| `X` | `(num_samples, seq_length, n_features)` — input windows |
+| `y` | `(num_samples, n_features)` — **next** row after each window |
 
-- `X[i] = data[i : i + seq_length]` → shape `(seq_length, n_features)`
-- `y[i] = data[i + seq_length]` → shape `(n_features,)`
+With `num_samples = n_timesteps - seq_length`. On the default clean artifact (**5,000** rows), full-series output is **4,976** samples.
 
-Returns:
-
-| Array | Shape |
-|-------|-------|
-| `X` | `(num_samples, seq_length, n_features)` |
-| `y` | `(num_samples, n_features)` |
-
-with `num_samples = n_timesteps - seq_length`.
-
-**Validation:** raises `ValueError` if `data` is not 2D, `seq_length < 1`, or the series is too short.
+Each sample uses the **observed** rows in its window; targets are the row immediately following the window (one-step-ahead forecast).
 
 ---
 
-## Feature Columns (verify script)
-
-From `scripts/verify_lstm_prep.py` — seven numeric columns on the clean artifact:
-
-`Electricity_Consumed`, `Temperature`, `Humidity`, `hour`, `day_of_week`, `month`, `is_weekend`
-
-Full-series LSTM training will reuse or extend this set when the trainer lands.
-
----
-
-## Verify Sequences and Tensors
+## Verify Sequence Prep
 
 ```bash
 python scripts/verify_lstm_prep.py
@@ -86,49 +86,61 @@ On Windows:
 python scripts/verify_lstm_prep.py
 ```
 
-Workflow: load clean CSV → take first **200** chronological rows → build 2D feature matrix → `create_sequences` → `torch.tensor(X, dtype=torch.float32)` → assert shape → **PASS**.
+Expect printed confirmation of:
 
-The script includes a venv guard when PyTorch is missing from the active interpreter.
+- Input 2D shape `(200, 7)` (first 200 rows of clean CSV)
+- NumPy `X` shape `(176, 24, 7)` and matching `torch.float32` tensor
+- **PASS** — 3D sequence tensor ready for LSTM input
 
-### Example run (local, reproducible)
+Requires `torch>=2.0.0` in the project `.venv`.
 
-| Artifact | Shape |
-|----------|-------|
-| Input 2D | `(200, 7)` |
-| NumPy `X` | `(176, 24, 7)` |
-| NumPy `y` | `(176, 7)` |
-| PyTorch `X_tensor` | `(176, 24, 7)` |
+---
 
-Sample count: `176 = 200 - 24`.
+## Split Semantics (Important)
 
-Exit line: `PASS — 3D sequence tensor ready for LSTM input.`
+Unlike XGBoost (which calls `time_series_split` on a tabular frame after lag warm-up), the LSTM evaluation path:
+
+1. Builds sequences on the **full** chronological feature matrix first.
+2. Splits `(X, y)` arrays by index using the same **70 / 15 / 15** fraction math as `time_series_split`.
+
+Do **not** split the raw DataFrame before `create_sequences` — that would break window continuity at split boundaries.
+
+Full training and scoring: [LSTM Forecasting](lstm-forecasting.md).
+
+---
+
+## Relationship to Phase 2 Features
+
+The clean artifact already includes temporal columns from production cleaning. LSTM prep stacks them with consumption and weather into a multivariate window — no additional lag columns are required at this stage.
+
+**Module map:** `create_sequences` lives alongside Phase 2 helpers and `create_supervised_lags` in `build_features.py`.
 
 ---
 
 ## What's Next
 
-1. **LSTM model architecture** and training loop (deferred)
-2. Chronological train/val/test wiring for sequence batches
-3. Score against naive / Prophet / XGBoost floors with `evaluate_forecast`
-4. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
+1. **LSTM architecture, training, and evaluation** — see [LSTM Forecasting](lstm-forecasting.md) (Week 7 Days 4–5 complete)
+2. Compare MAE / RMSE against naive, Prophet, and XGBoost floors on the same held-out test window
+3. Research write-up and tutorial notebook (deferred)
 
 ---
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>
 
-**Dependency:** `torch>=2.0.0` in `requirements.txt` — install via [Getting Started](getting-started.md).
-
-**No split yet:** Day 3 stops at sequence + tensor verification. Chronological splitting of sequence samples will ship with the LSTM trainer.
-
-**Tensor dtype:** Verification uses `torch.float32` to match typical GPU/CPU training defaults.
-
-**Commands:**
+**Verify command:**
 
 ```bash
-pip install -r requirements.txt
 python scripts/verify_lstm_prep.py
 ```
+
+**Full-series sample count:** `5000 - 24 = 4976` sequence samples when using all clean rows.
+
+**Tensor dtype:** Verification converts `X` to `torch.float32`; `make_lstm_dataloader` uses the same dtype for training.
+
+**Chronological order:** Never shuffle sequence arrays before splitting — future values must not appear inside past windows.
+
+**Dependency:** `torch>=2.0.0` in `requirements.txt`.
 
 </details>
 
@@ -136,10 +148,11 @@ python scripts/verify_lstm_prep.py
 
 ## References
 
-- [XGBoost Prep](xgboost-prep.md) — tabular lag alternative
-- [XGBoost Forecasting](xgboost-forecasting.md) — prior model in the ladder
-- [Feature Engineering](feature-engineering.md) — Phase 2 columns reused as LSTM features
-- [Phase 3 Strategy](phase3-strategy.md) — model ladder and PyTorch decision
+- [LSTM Forecasting](lstm-forecasting.md) — `EnergyLSTM`, training loop, test-set scoring
+- [XGBoost Prep](xgboost-prep.md) — tabular lag alternative for tree models
+- [Forecasting Baseline](forecasting-baseline.md) — gate and split fractions
+- [Feature Engineering](feature-engineering.md) — Phase 2 temporal columns reused here
+- [Phase 3 Strategy](phase3-strategy.md) — model ladder
 - [Architecture](architecture.md) — repository layout
-- [Glossary](glossary.md) — sliding window, PyTorch, LSTM prep
+- [Glossary](glossary.md) — LSTM, PyTorch, sliding window
 - [Getting Started](getting-started.md) — install and Phase 3 commands
