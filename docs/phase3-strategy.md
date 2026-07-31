@@ -133,13 +133,14 @@ Auto-ARIMA remains deferred.
 flowchart LR
   clean[CleanCSV_5000] --> split[Chronological_70_15_15]
   split --> naive[Naive_48lag]
-  split --> stats[Prophet_or_ARIMA]
+  split --> stats[Prophet]
   split --> xgb[XGBoost_lags]
-  split --> lstm[LSTM_windows]
+  split --> lstmPrep[LSTM_sequences]
+  lstmPrep --> lstmTrain[LSTM_trainer_planned]
   naive --> compare[Compare_MAE_RMSE_MAPE]
   stats --> compare
   xgb --> compare
-  lstm --> compare
+  lstmTrain --> compare
   compare --> docs[forecasting_research_and_tutorial]
 ```
 
@@ -165,6 +166,8 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 **Done (Week 6 Day 3):** Prophet trainer and `evaluate_prophet.py` — see [Prophet Baseline](prophet-baseline.md).
 
 **Done (Week 7 Day 1–5):** `create_supervised_lags`, `train_xgboost_model`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md). `create_sequences`, `EnergyLSTM`, `train_lstm_model`, `predict_lstm`, `verify_lstm_prep.py`, `evaluate_lstm.py` — see [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
+
+**Done (Week 7 Day 3):** `create_sequences`, `verify_lstm_prep.py`, PyTorch dependency — see [LSTM Prep](lstm-prep.md).
 
 Still deferred for later Phase 3 weeks:
 
