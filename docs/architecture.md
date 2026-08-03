@@ -30,7 +30,8 @@ energy-anomaly-forecasting/
 │   └── processed/                    # Generated clean CSV (gitignored)
 ├── docs/                             # Project documentation (MkDocs source)
 │   └── assets/                       # Screenshots and static assets
-│       └── eda/                      # Phase 1 Week 2 EDA figures (PNG)
+│       ├── eda/                      # Phase 1 Week 2 EDA figures (PNG)
+│       └── forecast_comparison.png   # Phase 3 Week 8 model comparison plot
 ├── notebooks/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
 │   ├── 02_exploratory_data_analysis.ipynb
@@ -52,7 +53,9 @@ energy-anomaly-forecasting/
 │   ├── evaluate_naive_baseline.py    # Score naive seasonal forecast on test set
 │   ├── evaluate_prophet.py           # Score Prophet statistical baseline on test set
 │   ├── verify_xgboost_prep.py        # Verify supervised lag tabular frame
-│   └── evaluate_xgboost.py           # Train and score XGBoost regressor on test set
+│   ├── evaluate_xgboost.py           # Train and score XGBoost regressor on test set
+│   ├── verify_lstm_prep.py           # Verify 3D LSTM sequence tensors
+│   └── compare_forecasts.py          # Run all four models; metrics table + PNG
 ├── src/
 │   ├── __init__.py
 │   ├── data/
@@ -64,13 +67,14 @@ energy-anomaly-forecasting/
 │   │   └── clean_dataset.py          # End-to-end clean artifact orchestration
 │   ├── features/
 │   │   ├── __init__.py
-│   │   └── build_features.py         # Phase 2 features + Phase 3 supervised lags
+│   │   └── build_features.py         # Phase 2 features + Phase 3 lags and LSTM sequences
 │   ├── models/
 │   │   ├── __init__.py
 │   │   ├── evaluate_models.py        # Imbalance-aware anomaly evaluation
 │   │   ├── evaluate_forecast.py      # Forecast MAE / RMSE / MAPE
 │   │   ├── train_anomaly_models.py   # Unsupervised anomaly training
-│   │   └── train_forecast_models.py  # Naive, Prophet, and XGBoost forecast trainers
+│   │   ├── train_forecast_models.py  # Naive, Prophet, XGBoost, and LSTM forecast trainers
+│   │   ├── lstm_model.py             # EnergyLSTM architecture (PyTorch)
 │   │   ├── feature_matrix.py         # Feature matrix prep and scaling
 │   │   ├── anomaly_preprocessing.py  # Train-fitted scaling for tuning
 │   │   ├── tuning_utils.py           # Temporal splits and threshold search
@@ -284,7 +288,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
 | **2 — Anomaly Detection** | Feature engineering, IF/DBSCAN, clean dataset, educational notebook | `src/features/build_features.py`, `src/models/train_anomaly_models.py`, `src/data/clean_data.py`, `notebooks/03_anomaly_detection.ipynb` |
-| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive baseline, Prophet, XGBoost; LSTM planned | `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`, `build_features.create_supervised_lags` |
+| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive baseline, Prophet, XGBoost, LSTM, unified comparison | `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`, `lstm_model.py`, `build_features.create_supervised_lags`, `build_features.create_sequences`, `compare_forecasts.py` |
 
 ---
 
@@ -301,16 +305,17 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 | Anomaly detection | scikit-learn | >= 1.3.0 |
 | Statistical forecasting | prophet | >= 1.1.5 |
 | Gradient boosting | xgboost | >= 2.0.0 |
+| Deep learning | torch (PyTorch) | >= 2.0.0 |
 | Documentation | mkdocs, mkdocs-material | >= 1.6.0, >= 9.5.0 |
 
-Phase 3 forecasting uses scikit-learn metrics, Prophet for the statistical baseline, and XGBoost for tabular lag-based forecasting. LSTM dependencies (TensorFlow or PyTorch) remain planned.
+Phase 3 forecasting uses scikit-learn metrics, Prophet for the statistical baseline, XGBoost for tabular lag-based forecasting, and PyTorch LSTM for sequence-based forecasting. Unified comparison via `compare_forecasts.py`.
 
 ??? info "Technical deep dive"
 
     **Module map:** `ingest_data` -> `build_features` -> `train_anomaly_models` -> `clean_data` / `clean_dataset` -> `make_forecast_dataset` / `train_forecast_models` / `evaluate_forecast` / `create_supervised_lags`.
 
-    **Script inventory:** Phase 3 includes `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, and `evaluate_xgboost.py`.
+    **Script inventory:** Phase 3 includes `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, and `compare_forecasts.py`.
 
-    **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink).
+    **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink); `python scripts/compare_forecasts.py` (forecast comparison PNG).
 
-    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [Phase 3 Strategy](phase3-strategy.md).
+    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md) · [Forecast Model Comparison](forecast-model-comparison.md) · [Phase 3 Strategy](phase3-strategy.md).

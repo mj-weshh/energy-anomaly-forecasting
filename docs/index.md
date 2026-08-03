@@ -5,9 +5,9 @@ Open-source machine learning project for **energy consumption anomaly detection*
 !!! success "Executive summary"
 
     - **What this project does:** Turns smart-meter readings into trustworthy timelines — flag unusual consumption, clean gaps, and forecast demand.
-    - **Where we are:** Phases 1–2 are complete; Phase 3 forecasting ladder through Prophet and XGBoost is implemented (naive floor → Prophet → XGBoost prep + trainer).
+    - **Where we are:** Phases 1–2 are complete; Phase 3 forecasting ladder is **implemented** — naive floor → Prophet → XGBoost → LSTM → unified comparison script.
     - **Research headline:** Tuned anomaly models score better on held-out future data (**F1 0.460** vs **0.331** production baseline), but the default clean file still uses the conservative legacy recipe until leadership reviews artifact differences.
-    - **Forecasting floors (test set, reproducible):** Naive MAE ≈ **0.171** / RMSE ≈ **0.214**; Prophet ≈ **0.121** / **0.149**; XGBoost ≈ **0.125** / **0.154**. See [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Forecasting](xgboost-forecasting.md).
+    - **Forecasting floors (test set, reproducible):** Naive MAE ≈ **0.171** / RMSE ≈ **0.214**; Prophet ≈ **0.121** / **0.149**; XGBoost ≈ **0.125** / **0.154**; LSTM ≈ **0.122** / **0.151**. Unified table: [Forecast Model Comparison](forecast-model-comparison.md) · individual pages: [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [LSTM Forecasting](lstm-forecasting.md).
     - **Terms:** See the [Glossary](glossary.md) for F1, MAE/RMSE/MAPE, imputation, and related metrics.
 
 ## How to read this documentation
@@ -40,7 +40,10 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | Phase 3 Week 6 Day 3 | Prophet statistical baseline | **Complete** |
 | Phase 3 Week 7 Day 1 | XGBoost supervised lag prep | **Complete** |
 | Phase 3 Week 7 Day 2 | XGBoost regressor training and evaluation | **Complete** |
-| Phase 3 (next) | LSTM · research write-up · tutorial notebook | Planned |
+| Phase 3 Week 7 Day 3 | LSTM sequence prep (`create_sequences`) | **Complete** |
+| Phase 3 Week 7 Days 4–5 | LSTM architecture, training, inference | **Complete** |
+| Phase 3 Week 8 Day 1 | Unified forecast model comparison | **Complete** |
+| Phase 3 (next) | Research write-up · tutorial notebook | Planned |
 
 ### Phase 1 Week 2 highlights
 
@@ -87,6 +90,18 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 - **Day 2:** `train_xgboost_model` on 9 tabular features; example test MAE ≈ **0.125**, RMSE ≈ **0.154** · [XGBoost Forecasting](xgboost-forecasting.md)
 - Scripts: `verify_xgboost_prep.py`, `evaluate_xgboost.py`
 
+### Phase 3 Week 7 — LSTM highlights
+
+- **Day 3:** `create_sequences` — 24-step sliding windows → `(samples, 24, 7)` tensors · [LSTM Prep](lstm-prep.md)
+- **Days 4–5:** `EnergyLSTM`, `train_lstm_model`, `predict_lstm`; example test MAE ≈ **0.122**, RMSE ≈ **0.151** · [LSTM Forecasting](lstm-forecasting.md)
+- Scripts: `verify_lstm_prep.py`, `compare_forecasts.py` (trains LSTM as part of full ladder)
+
+### Phase 3 Week 8 — model comparison highlights
+
+- **Day 1:** `compare_forecasts.py` — runs all four models, prints Markdown metrics table, saves presentation PNG
+- Headline: Prophet leads MAE/RMSE; LSTM beats naive and XGBoost on this run
+- Asset: `docs/assets/forecast_comparison.png` · notes: [Forecast Model Comparison](forecast-model-comparison.md)
+
 ## Documentation
 
 | Document | Purpose |
@@ -105,6 +120,9 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 | [Prophet Baseline](prophet-baseline.md) | Phase 3 Week 6 Day 3 Prophet trainer and evaluation |
 | [XGBoost Prep](xgboost-prep.md) | Phase 3 Week 7 Day 1 supervised lag features for tree models |
 | [XGBoost Forecasting](xgboost-forecasting.md) | Phase 3 Week 7 Day 2 XGBoost trainer and test-set scoring |
+| [LSTM Prep](lstm-prep.md) | Phase 3 Week 7 Day 3 sliding-window sequence tensors for PyTorch |
+| [LSTM Forecasting](lstm-forecasting.md) | Phase 3 Week 7 Days 4–5 LSTM architecture, training, and inference |
+| [Forecast Model Comparison](forecast-model-comparison.md) | Phase 3 Week 8 Day 1 unified ladder scoring and visualization |
 | [Phase 3 Strategy](phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](glossary.md) | Plain-English and technical definitions for metrics and pipeline terms |
 
@@ -118,7 +136,7 @@ Expected outcome: schema summary with shape `(5000, 7)`, zero nulls, and a conti
 
 ??? info "Technical deep dive"
 
-    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting (naive + Prophet + XGBoost complete; LSTM and research deliverables planned).
+    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting ladder complete via `compare_forecasts.py` (naive + Prophet + XGBoost + LSTM); research write-up and tutorial notebook remain planned.
 
     **Fair-comparison metrics** (991-row temporal test): legacy IF 0.340 (production params) / 0.389 (val threshold) / enhanced IF 0.460. Source: `src/models/anomaly_config.py`.
 

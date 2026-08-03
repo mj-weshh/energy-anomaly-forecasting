@@ -6,7 +6,7 @@ Plain-English definitions for terms used across this project. Each entry include
 
     - **Purpose:** One place to decode jargon used in executive summaries and technical reports.
     - **How to use:** Skim the **Business** line for decisions; read **Technical** for implementation and reproducibility.
-    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, Prophet, XGBoost, and supervised lag features.
+    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, Prophet, XGBoost, LSTM, PyTorch, and supervised lag features.
 
 ---
 
@@ -74,6 +74,22 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## EnergyLSTM
+
+**Business:** The project's compact neural network for forecasting — reads the last 12 hours of consumption and context, then predicts the next half-hour.
+
+**Technical:** PyTorch module in `src/models/lstm_model.py`: `nn.LSTM(input_size=7, hidden_size=64)` + linear head on the final timestep. Trained via `train_lstm_model`; scored via `predict_lstm`. See [LSTM Forecasting](lstm-forecasting.md).
+
+---
+
+## Forecast model comparison
+
+**Business:** One command that scores all four forecasters side by side and produces a table and chart for reports.
+
+**Technical:** `scripts/compare_forecasts.py` — runs Naive, Prophet, XGBoost, and LSTM on native test pipelines, prints Markdown metrics, saves `docs/assets/forecast_comparison.png`. See [Forecast Model Comparison](forecast-model-comparison.md).
+
+---
+
 ## False positive (FP)
 
 **Business:** A false alarm — the model flagged a normal interval as a problem.
@@ -106,6 +122,14 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## LSTM (Long Short-Term Memory)
+
+**Business:** A neural network that remembers patterns over recent history — useful when consumption depends on what happened over the last several hours, not just one lag ago.
+
+**Technical:** Recurrent architecture consuming 3D tensors `[samples, time_steps, features]`. This project uses a single-layer LSTM with 24-step (12-hour) windows via `create_sequences` and `EnergyLSTM`. See [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
+
+---
+
 ## MAE (Mean Absolute Error)
 
 **Business:** On average, how far off are the forecasts? Easy to explain to management.
@@ -119,6 +143,22 @@ Plain-English definitions for terms used across this project. Each entry include
 **Business:** Relative forecast error as a percentage of the true value.
 
 **Technical:** Mean of `|y_true - y_pred| / max(|y_true|, epsilon) × 100` with `epsilon=1e-8`. Can explode when true consumption is near zero on this normalized scale — prefer MAE/RMSE for headline comparisons. Implemented in `mean_absolute_percentage_error_forecast`.
+
+---
+
+## Normalized forecast metrics
+
+**Business:** Forecast errors reported on a 0–1 consumption scale from the Kaggle dataset — good for comparing models, but not directly interpretable as kWh without inverse scaling.
+
+**Technical:** The clean artifact stores normalized values. Phase 3 pipelines report MAE/RMSE on this scale without `StandardScaler` inverse transform. MAPE is especially unstable near zero. See [LSTM Forecasting — Normalized Metrics](lstm-forecasting.md#normalized-metrics).
+
+---
+
+## predict_lstm
+
+**Business:** The helper that turns trained LSTM batch outputs into plain numbers suitable for error scoring.
+
+**Technical:** `predict_lstm(model, test_loader)` in `train_forecast_models.py` — sets `eval()` mode, runs `torch.no_grad()`, returns flat NumPy array via `.detach().cpu().numpy()`. Used by `compare_forecasts.py` and LSTM evaluation paths.
 
 ---
 
@@ -146,6 +186,14 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## PyTorch
+
+**Business:** The deep-learning library used for LSTM forecasting in this project.
+
+**Technical:** `torch>=2.0.0` dependency. Provides `nn.LSTM`, `DataLoader`, and GPU/CPU device handling for `EnergyLSTM` training and `predict_lstm` inference. Chosen over TensorFlow for architectural control. See [LSTM Prep](lstm-prep.md).
+
+---
+
 ## Recall
 
 **Business:** Of all real problems in the benchmark, what fraction did we catch?
@@ -167,6 +215,14 @@ Plain-English definitions for terms used across this project. Each entry include
 **Business:** The “same time yesterday” guess — tomorrow at 2:00 AM looks like today at 2:00 AM.
 
 **Technical:** `naive_seasonal_forecast(..., seasonal_periods=48)` — at 30-minute resolution, 48 steps = 24 hours. Prediction at time `t` is the observed value at `t - 48` on `train || test_true` (not recursive). Phase 3 floor that advanced models must beat.
+
+---
+
+## Sliding window / sequence tensor
+
+**Business:** Instead of one row per prediction, the model sees a stack of recent half-hour readings — like flipping back through the last 12 hours before guessing the next value.
+
+**Technical:** `create_sequences(data, seq_length=24)` returns `X` with shape `(samples, 24, n_features)` and targets `y` with shape `(samples, n_features)`. Each sample uses rows `[i : i+24]` to predict row `i+24`. See [LSTM Prep](lstm-prep.md).
 
 ---
 

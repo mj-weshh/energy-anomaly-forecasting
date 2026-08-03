@@ -289,6 +289,7 @@ After ingestion and Phase 2 pass:
 5. Generate the Phase 3 artifact: `python scripts/generate_clean_data.py`
 6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see §9 and [Forecasting Baseline](forecasting-baseline.md))
 7. **Phase 3 Prophet + XGBoost** — statistical and tabular forecast baselines (see §10–11)
+8. **Phase 3 LSTM + comparison** — sequence prep, LSTM training, unified ladder (see §12–14)
 
 ---
 
@@ -329,6 +330,49 @@ python scripts/evaluate_xgboost.py
 
 Expect: tabular frame shape `(4952, 18)` after lag warm-up; XGBoost test metrics compared to naive and Prophet floors. Requires `xgboost>=2.0.0` in the project `.venv`. Details: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
 
+---
+
+## 12. LSTM Prep (Week 7 Day 3)
+
+Verify 3D sequence tensors before training:
+
+```bash
+python scripts/verify_lstm_prep.py
+```
+
+Expect: example slice shape `(176, 24, 7)` on a 200-row test; **PASS** confirmation. Requires `torch>=2.0.0` in the project `.venv`. Details: [LSTM Prep](lstm-prep.md).
+
+---
+
+## 13. LSTM Forecasting (Week 7 Days 4–5)
+
+Train and score the LSTM via the unified comparison script (trains 20 epochs as part of the full ladder):
+
+```bash
+python scripts/compare_forecasts.py
+```
+
+For LSTM-only context, see [LSTM Forecasting](lstm-forecasting.md). Example test MAE ≈ **0.122**, RMSE ≈ **0.151** on the default clean artifact.
+
+---
+
+## 14. Forecast Model Comparison (Week 8 Day 1)
+
+Run all four models and generate the presentation asset:
+
+```bash
+python scripts/compare_forecasts.py
+```
+
+Expect:
+
+1. Per-model progress and LSTM epoch loss lines
+2. Copy-paste Markdown metrics table on stdout
+3. `Saved comparison plot: .../docs/assets/forecast_comparison.png`
+4. Final line: `PASS — predictions collected, metrics table and plot generated.`
+
+Requires `prophet>=1.1.5`, `xgboost>=2.0.0`, and `torch>=2.0.0`. Runtime ~1–2 minutes on CPU. Details: [Forecast Model Comparison](forecast-model-comparison.md).
+
 ??? info "Technical deep dive"
 
     **Phase 1:** `python -m src.data.ingest_data` · `notebooks/01_*` · `notebooks/02_*`
@@ -338,5 +382,7 @@ Expect: tabular frame shape `(4952, 18)` after lag warm-up; XGBoost test metrics
     **Phase 3 (Day 1–2):** `verify_phase2_state.py`, `python -m src.data.make_forecast_dataset`, `evaluate_naive_baseline.py` · modules `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`
 
     **Phase 3 (Day 3 + Week 7):** `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` · `create_supervised_lags` in `build_features.py` · Prophet and XGBoost trainers in `train_forecast_models.py`
+
+    **Phase 3 (Week 7 LSTM + Week 8 comparison):** `verify_lstm_prep.py`, `compare_forecasts.py` · `create_sequences` in `build_features.py` · `EnergyLSTM` in `lstm_model.py` · `predict_lstm` in `train_forecast_models.py`
 
     **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`

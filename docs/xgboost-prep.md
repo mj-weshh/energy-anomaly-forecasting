@@ -76,9 +76,9 @@ The clean artifact already includes temporal and rolling columns from production
 
 ## What's Next
 
-1. **XGBoost training and evaluation** — see [XGBoost Forecasting](xgboost-forecasting.md) (Week 7 Day 2 complete)
-2. Compare MAE / RMSE against naive and Prophet floors on the same test window
-3. **LSTM** sliding windows (planned)
+1. ~~XGBoost training and evaluation~~ — see [XGBoost Forecasting](xgboost-forecasting.md) (Week 7 Day 2 complete)
+2. ~~Compare MAE / RMSE against naive and Prophet floors~~ — see [Forecast Model Comparison](forecast-model-comparison.md)
+3. ~~LSTM~~ sliding windows → [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 4. Hyperparameter tuning and feature ablation (deferred)
 
 ---
