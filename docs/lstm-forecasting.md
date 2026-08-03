@@ -8,15 +8,15 @@ Working notes for the PyTorch LSTM regressor: architecture, training loop, test-
 - **What we added:** `EnergyLSTM` — compact LSTM on **7 multivariate features**, 24-step windows, scalar consumption forecast.
 - **Training:** Adam + MSE for **20 epochs**; validation loss printed each epoch to monitor overfitting.
 - **Inference:** `predict_lstm` detaches PyTorch outputs to NumPy for sklearn-compatible metrics.
-- **Beats naive and XGBoost floors:** Example test MAE ≈ **0.123**, RMSE ≈ **0.152** vs naive **0.171** / **0.214** and XGBoost **0.125** / **0.154**; slightly above Prophet **0.121** / **0.149** on this default run.
+- **Beats naive and XGBoost floors:** Example test MAE ≈ **0.122**, RMSE ≈ **0.151** vs naive **0.171** / **0.214** and XGBoost **0.125** / **0.154**; slightly above Prophet **0.121** / **0.149** on this default run.
 - **Metrics scale:** MAE/RMSE are on **normalized** consumption (0–1); no inverse transform in this pipeline.
 - **Terms:** [Glossary](glossary.md) — EnergyLSTM, PyTorch DataLoader, normalized forecast metrics.
 
 </div>
 
-**Status:** Week 7 Days 4–5 complete — architecture, training, inference, and evaluation script  
+**Status:** Week 7 Days 4–5 complete — architecture, training, inference  
 **Modules:** `src/models/lstm_model.py`, `src/models/train_forecast_models.py`, `src/models/evaluate_forecast.py`  
-**Scripts:** `scripts/evaluate_lstm.py`  
+**Scripts:** `scripts/compare_forecasts.py` (unified comparison; trains LSTM as part of the full ladder)  
 **Builds on:** [LSTM Prep](lstm-prep.md), [Forecasting Baseline](forecasting-baseline.md), [XGBoost Forecasting](xgboost-forecasting.md)
 
 ---
@@ -43,7 +43,7 @@ flowchart LR
   loader --> train[train_lstm_model]
   train --> predict[predict_lstm]
   predict --> metrics[evaluate_forecast]
-  metrics --> compare[Compare_naive_Prophet_XGBoost]
+  metrics --> compare[Forecast_Model_Comparison]
 ```
 
 ---
@@ -62,7 +62,7 @@ Forward pass: `lstm_out[:, -1, :]` → fully connected head → squeeze to 1-D p
 
 ---
 
-## Training APIs
+## Training and Inference APIs
 
 Module: `src/models/train_forecast_models.py`
 
@@ -103,20 +103,22 @@ Actuals for scoring come from `y_test[:, 0]`, not from loader targets during inf
 
 ---
 
-## Score the Model
+## Scoring
+
+LSTM test metrics are produced by the unified comparison script:
 
 ```bash
-python scripts/evaluate_lstm.py
+python scripts/compare_forecasts.py
 ```
 
 On Windows:
 
 ```powershell
 .venv\Scripts\activate
-python scripts/evaluate_lstm.py
+python scripts/compare_forecasts.py
 ```
 
-Training runs **20 epochs** (~1–2 minutes on CPU). The script compares test MAE/RMSE against documented **naive**, **Prophet**, and **XGBoost** floor constants.
+Training runs **20 epochs** (~1–2 minutes on CPU) as part of the four-model pipeline.
 
 ### Example run (local, reproducible)
 
@@ -130,9 +132,8 @@ Chronological split sizes **after sequence warm-up**:
 
 | Metric | LSTM | Naive floor | Prophet floor | XGBoost floor |
 |--------|------|-------------|---------------|---------------|
-| MAE | **0.122735** | 0.171150 | 0.121071 | 0.125274 |
-| RMSE | **0.152336** | 0.214034 | 0.148670 | 0.153876 |
-| MAPE | Unstable on near-zero true values — use MAE/RMSE | — | — | — |
+| MAE | **0.122156** | 0.171150 | 0.121071 | 0.125274 |
+| RMSE | **0.151200** | 0.214034 | 0.148670 | 0.153876 |
 
 **Interpretation:** LSTM beats the naive and XGBoost floors on MAE and RMSE but is slightly above Prophet on this first-pass hyperparameter run — reasonable without tuning or early stopping.
 
@@ -140,11 +141,11 @@ Re-run after regenerating the clean artifact or changing features; numbers may s
 
 ---
 
-## Normalized Metrics (Day 5)
+## Normalized Metrics
 
 The Kaggle clean artifact stores consumption and weather in a **0–1 normalized** range. The LSTM pipeline does **not** apply `StandardScaler` on top of that — reported MAE/RMSE are **relative** errors on normalized consumption, not absolute kWh.
 
-`scripts/evaluate_lstm.py` prints an explicit note before metrics. If LSTM-specific scaling is added later, apply `scaler.inverse_transform` to both `y_true` and `y_pred` before calling `evaluate_forecast` (commented hook left in the script).
+If LSTM-specific scaling is added later, apply `scaler.inverse_transform` to both `y_true` and `y_pred` before calling `evaluate_forecast`.
 
 ---
 
@@ -152,34 +153,26 @@ The Kaggle clean artifact stores consumption and weather in a **0–1 normalized
 
 Per [Phase 3 Strategy](phase3-strategy.md):
 
-1. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
-2. Hyperparameter tuning (hidden size, epochs, learning rate)
-3. Early stopping and model checkpointing
-4. Auto-ARIMA (deferred)
-
-The **model ladder** (naive → Prophet → XGBoost → LSTM) is complete on the same evaluation protocol.
+1. **Unified model comparison** — [Forecast Model Comparison](forecast-model-comparison.md) (Week 8 Day 1 complete)
+2. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
+3. Hyperparameter tuning (hidden size, epochs, learning rate)
+4. Early stopping and model checkpointing
 
 ---
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>
 
-**Why sequence-level split:** Splitting the raw DataFrame before `create_sequences` would truncate windows at split edges incorrectly. `evaluate_lstm.py` uses `int(n * 0.7)` and `int(n * 0.85)` on `(X, y)` arrays — same fraction math as `time_series_split`.
+**Why sequence-level split:** Splitting the raw DataFrame before `create_sequences` would truncate windows at split edges incorrectly. Comparison and LSTM paths use `int(n * 0.7)` and `int(n * 0.85)` on `(X, y)` arrays — same fraction math as `time_series_split`.
 
 **PyTorch → sklearn bridge:** `predict_lstm` must `.detach().cpu().numpy()` before `evaluate_forecast`; raw tensors are not accepted.
 
-**Baseline floor constants** (hardcoded reference in `evaluate_lstm.py`):
-
-- Naive: MAE **0.171150**, RMSE **0.214034**
-- Prophet: MAE **0.121071**, RMSE **0.148670**
-- XGBoost: MAE **0.125274**, RMSE **0.153876**
-
-**Commands:**
+**Smoke test:**
 
 ```bash
+python -m src.models.lstm_model   # forward-shape check (batch,) output
 python scripts/verify_lstm_prep.py
-python scripts/evaluate_lstm.py
-python -m src.models.lstm_model   # forward-shape smoke test
+python scripts/compare_forecasts.py
 ```
 
 **Modularity:** Loads clean CSV only; does not retrain anomaly models unless you run `generate_clean_data.py` explicitly.
@@ -191,6 +184,7 @@ python -m src.models.lstm_model   # forward-shape smoke test
 ## References
 
 - [LSTM Prep](lstm-prep.md) — 3D sequence generation
+- [Forecast Model Comparison](forecast-model-comparison.md) — side-by-side ladder scoring
 - [XGBoost Forecasting](xgboost-forecasting.md) — tabular gradient-boosted baseline
 - [Prophet Baseline](prophet-baseline.md) — statistical floor
 - [Forecasting Baseline](forecasting-baseline.md) — gate, split, metrics

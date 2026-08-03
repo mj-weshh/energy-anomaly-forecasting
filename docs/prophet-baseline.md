@@ -91,10 +91,11 @@ Re-run after regenerating the clean artifact; numbers may shift slightly if clea
 
 ## What's Next
 
-1. **XGBoost prep** — supervised lag features for tabular forecasting → [XGBoost Prep](xgboost-prep.md)
-2. **XGBoost training** — gradient-boosted trees on lags + temporal/weather columns → [XGBoost Forecasting](xgboost-forecasting.md)
-3. ~~**LSTM** sliding windows~~ — **done:** [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
-4. Auto-ARIMA remains deferred
+1. ~~XGBoost prep~~ — supervised lag features → [XGBoost Prep](xgboost-prep.md)
+2. ~~XGBoost training~~ — gradient-boosted trees → [XGBoost Forecasting](xgboost-forecasting.md)
+3. ~~LSTM~~ sliding windows → [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
+4. **Unified comparison** — all four models → [Forecast Model Comparison](forecast-model-comparison.md)
+5. Auto-ARIMA remains deferred
 
 ---
 

@@ -108,11 +108,11 @@ Chronological split sizes **after lag warm-up**:
 
 Test window: `2024-03-29 16:30:00` → `2024-04-14 03:30:00`
 
-| Metric | XGBoost | Naive floor | Prophet floor |
-|--------|---------|-------------|---------------|
-| MAE | **0.125274** | 0.171150 | 0.121071 |
-| RMSE | **0.153876** | 0.214034 | 0.148670 |
-| MAPE | Unstable on near-zero true values — use MAE/RMSE | — | — |
+| Metric | XGBoost | Naive floor | Prophet floor | LSTM floor |
+|--------|---------|-------------|---------------|------------|
+| MAE | **0.125274** | 0.171150 | 0.121071 | 0.122156 |
+| RMSE | **0.153876** | 0.214034 | 0.148670 | 0.151200 |
+| MAPE | Unstable on near-zero true values — use MAE/RMSE | — | — | — |
 
 **Interpretation:** XGBoost beats the naive floor on MAE and RMSE but is slightly above Prophet on this default hyperparameter run — reasonable for a first-pass trainer without tuning.
 
@@ -124,10 +124,11 @@ Re-run after regenerating the clean artifact or changing features; numbers may s
 
 Per [Phase 3 Strategy](phase3-strategy.md):
 
-1. ~~**LSTM** sliding windows (3D tensor format)~~ — **done:** [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
-2. Hyperparameter tuning for XGBoost (`n_estimators`, `learning_rate`, feature ablation)
-3. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
-4. Auto-ARIMA (deferred)
+1. ~~LSTM~~ sliding windows → [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
+2. ~~Unified model comparison~~ → [Forecast Model Comparison](forecast-model-comparison.md)
+3. Hyperparameter tuning for XGBoost (`n_estimators`, `learning_rate`, feature ablation)
+4. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
+5. Auto-ARIMA (deferred)
 
 Each model must use the same chronological cut and `evaluate_forecast` helpers.
 
@@ -144,7 +145,9 @@ Each model must use the same chronological cut and `evaluate_forecast` helpers.
 
 - Naive: MAE **0.171150**, RMSE **0.214034**
 - Prophet: MAE **0.121071**, RMSE **0.148670**
-- LSTM: MAE **0.122735**, RMSE **0.152336** — see [LSTM Forecasting](lstm-forecasting.md)
+- LSTM: MAE **0.122156**, RMSE **0.151200**
+
+**Unified comparison:** `python scripts/compare_forecasts.py` — see [Forecast Model Comparison](forecast-model-comparison.md).
 
 **Commands:**
 
@@ -162,6 +165,8 @@ python scripts/evaluate_xgboost.py
 ## References
 
 - [XGBoost Prep](xgboost-prep.md) — supervised lag feature engineering
+- [LSTM Forecasting](lstm-forecasting.md) — recurrent baseline
+- [Forecast Model Comparison](forecast-model-comparison.md) — unified ladder scoring
 - [Prophet Baseline](prophet-baseline.md) — statistical floor
 - [Forecasting Baseline](forecasting-baseline.md) — gate, split, metrics
 - [Feature Engineering](feature-engineering.md) — Phase 2 temporal columns reused here

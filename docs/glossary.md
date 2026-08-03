@@ -82,6 +82,22 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## EnergyLSTM
+
+**Business:** The project's compact neural network for forecasting — reads the last 12 hours of consumption and context, then predicts the next half-hour.
+
+**Technical:** PyTorch module in `src/models/lstm_model.py`: `nn.LSTM(input_size=7, hidden_size=64)` + linear head on the final timestep. Trained via `train_lstm_model`; scored via `predict_lstm`. See [LSTM Forecasting](lstm-forecasting.md).
+
+---
+
+## Forecast model comparison
+
+**Business:** One command that scores all four forecasters side by side and produces a table and chart for reports.
+
+**Technical:** `scripts/compare_forecasts.py` — runs Naive, Prophet, XGBoost, and LSTM on native test pipelines, prints Markdown metrics, saves `docs/assets/forecast_comparison.png`. See [Forecast Model Comparison](forecast-model-comparison.md).
+
+---
+
 ## False positive (FP)
 
 **Business:** A false alarm — the model flagged a normal interval as a problem.
@@ -116,9 +132,9 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ## LSTM (Long Short-Term Memory)
 
-**Business:** A recurrent neural network that learns patterns across **stretches of recent history** — the deepest model in the Phase 3 forecasting ladder.
+**Business:** A neural network that remembers patterns over recent history — useful when consumption depends on what happened over the last several hours, not just one lag ago.
 
-**Technical:** Implemented as `EnergyLSTM` with PyTorch. Input windows from `create_sequences` — shape `(samples, 24, 7)` — predict next-step `Electricity_Consumed`. Example test MAE **0.122735**, RMSE **0.152336**. See [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
+**Technical:** Recurrent architecture consuming 3D tensors `[samples, time_steps, features]`. This project uses a single-layer LSTM with 24-step (12-hour) windows via `create_sequences` and `EnergyLSTM`. See [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
 
 ---
 
@@ -140,9 +156,17 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ## Normalized forecast metrics
 
-**Business:** Forecast errors reported on a **0–1 scale** because the Kaggle dataset is pre-normalized — useful for comparing models, not for absolute kWh savings claims.
+**Business:** Forecast errors reported on a 0–1 consumption scale from the Kaggle dataset — good for comparing models, but not directly interpretable as kWh without inverse scaling.
 
-**Technical:** Clean CSV values sit in ~0–1. The LSTM path does not apply `StandardScaler`; MAE/RMSE from `evaluate_lstm.py` are relative to normalized consumption. If LSTM-specific scaling is added, use `inverse_transform` before `evaluate_forecast`. See [LSTM Forecasting — Normalized Metrics](lstm-forecasting.md#normalized-metrics-day-5).
+**Technical:** The clean artifact stores normalized values. Phase 3 pipelines report MAE/RMSE on this scale without `StandardScaler` inverse transform. MAPE is especially unstable near zero. See [LSTM Forecasting — Normalized Metrics](lstm-forecasting.md#normalized-metrics).
+
+---
+
+## predict_lstm
+
+**Business:** The helper that turns trained LSTM batch outputs into plain numbers suitable for error scoring.
+
+**Technical:** `predict_lstm(model, test_loader)` in `train_forecast_models.py` — sets `eval()` mode, runs `torch.no_grad()`, returns flat NumPy array via `.detach().cpu().numpy()`. Used by `compare_forecasts.py` and LSTM evaluation paths.
 
 ---
 
@@ -172,17 +196,9 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ## PyTorch
 
-**Business:** The deep-learning library used to build and train the LSTM forecaster.
+**Business:** The deep-learning library used for LSTM forecasting in this project.
 
-**Technical:** Dependency `torch>=2.0.0` in `requirements.txt`. Chosen over TensorFlow for explicit control over the LSTM module and training loop. Tensors converted to NumPy via `.detach().cpu().numpy()` before sklearn metrics. See [LSTM Prep](lstm-prep.md).
-
----
-
-## PyTorch DataLoader (LSTM)
-
-**Business:** Batches of sequence windows fed to the LSTM during training and inference — like serving the network several timelines at once.
-
-**Technical:** `make_lstm_dataloader` wraps `TensorDataset` + `DataLoader` with `batch_size=32`, `shuffle=False` on eval splits. Scalar target is `y[:, consumption_index]` (default index 0 = consumption).
+**Technical:** `torch>=2.0.0` dependency. Provides `nn.LSTM`, `DataLoader`, and GPU/CPU device handling for `EnergyLSTM` training and `predict_lstm` inference. Chosen over TensorFlow for architectural control. See [LSTM Prep](lstm-prep.md).
 
 ---
 
@@ -212,9 +228,9 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ## Sliding window / sequence tensor
 
-**Business:** A fixed-length slice of recent history (12 hours here) shaped for the LSTM — each sample is "what happened recently" paired with "what happens next."
+**Business:** Instead of one row per prediction, the model sees a stack of recent half-hour readings — like flipping back through the last 12 hours before guessing the next value.
 
-**Technical:** `create_sequences(data, seq_length=24)` returns `X` `(samples, 24, features)` and `y` `(samples, features)`. Verify with `verify_lstm_prep.py`. See [LSTM Prep](lstm-prep.md).
+**Technical:** `create_sequences(data, seq_length=24)` returns `X` with shape `(samples, 24, n_features)` and targets `y` with shape `(samples, n_features)`. Each sample uses rows `[i : i+24]` to predict row `i+24`. See [LSTM Prep](lstm-prep.md).
 
 ---
 

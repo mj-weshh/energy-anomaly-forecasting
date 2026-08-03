@@ -172,22 +172,23 @@ Full notes: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-for
 
 ## Phase 3 LSTM Sequences (Week 7 Day 3)
 
-For LSTM and other sequence models, multivariate history must be shaped as 3D tensors.
+For LSTM and other recurrent forecasters, consumption history must appear as contiguous sliding windows in a 3D tensor.
 
 | Function | Purpose |
 |----------|---------|
-| `create_sequences(data, seq_length=24)` | Sliding windows → `X` `(samples, 24, features)` and `y` `(samples, features)` |
+| `create_sequences(data, seq_length=24)` | Builds `(samples, seq_length, n_features)` input windows and matching `(samples, n_features)` targets |
 
-On the default clean artifact (5,000 continuous rows), full-series output is **4,976** samples. Verify with `python scripts/verify_lstm_prep.py` (200-row slice → tensor shape `(176, 24, 7)`).
+On the default clean artifact (5,000 continuous rows, 7 features), full-series output is **4,976** samples. Verify with `python scripts/verify_lstm_prep.py`.
 
-Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
+Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md) · [Forecast Model Comparison](forecast-model-comparison.md).
 
 ---
 
 ## What's Next
 
-- **Week 7 complete** — XGBoost and LSTM forecasters on chronological split; see [Phase 3 Strategy](phase3-strategy.md).
-- **Research deliverables** — forecasting write-up and tutorial notebook (planned).
+- **Week 7 complete** — supervised lags (XGBoost) and LSTM sequences. See [XGBoost Prep](xgboost-prep.md) · [LSTM Prep](lstm-prep.md).
+- **Week 8 complete** — unified model comparison. See [Forecast Model Comparison](forecast-model-comparison.md).
+- **Phase 3 research** — write-up and tutorial notebook; see [Phase 3 Strategy](phase3-strategy.md).
 
 ??? info "Technical deep dive"
 
@@ -201,7 +202,7 @@ Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 
     **XGBoost prep:** `create_supervised_lags()` — lags 1, 2, 48; `python scripts/verify_xgboost_prep.py`
 
-    **LSTM prep:** `create_sequences()` — default window 24; `python scripts/verify_lstm_prep.py`
+    **LSTM prep:** `create_sequences()` — 24-step windows; `python scripts/verify_lstm_prep.py`
 
 ---
 
@@ -212,5 +213,5 @@ Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 - [Anomaly Detection](anomaly-detection.md) — Week 4 IF + DBSCAN baselines and model comparison
 - [Clean Dataset](clean-data.md) — Week 4 Day 3 imputation pipeline for Phase 3
 - [XGBoost Prep](xgboost-prep.md) — Phase 3 supervised lag features
-- [LSTM Prep](lstm-prep.md) — Phase 3 sliding-window sequences
+- [LSTM Prep](lstm-prep.md) — Phase 3 LSTM sequence tensors
 - [Architecture](architecture.md) — where `src/features/` sits in the repo

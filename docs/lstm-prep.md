@@ -35,7 +35,7 @@ XGBoost uses **explicit lag columns** on each row ([XGBoost Prep](xgboost-prep.m
 
 ## Feature Matrix (7 columns)
 
-Defined in `scripts/verify_lstm_prep.py` and reused in `scripts/evaluate_lstm.py` — column order must match the trainer:
+Defined in `scripts/verify_lstm_prep.py` and reused in `scripts/compare_forecasts.py` — column order must match the trainer:
 
 | Column | Source |
 |--------|--------|
@@ -98,14 +98,14 @@ Requires `torch>=2.0.0` in the project `.venv`.
 
 ## Split Semantics (Important)
 
-Unlike XGBoost (which calls `time_series_split` on a tabular frame after lag warm-up), the LSTM evaluation path:
+Unlike XGBoost (which calls `time_series_split` on a tabular frame after lag warm-up), the LSTM evaluation and comparison paths:
 
-1. Builds sequences on the **full** chronological feature matrix first.
-2. Splits `(X, y)` arrays by index using the same **70 / 15 / 15** fraction math as `time_series_split`.
+1. Build sequences on the **full** chronological feature matrix first.
+2. Split `(X, y)` arrays by index using the same **70 / 15 / 15** fraction math as `time_series_split`.
 
 Do **not** split the raw DataFrame before `create_sequences` — that would break window continuity at split boundaries.
 
-Full training and scoring: [LSTM Forecasting](lstm-forecasting.md).
+Full training and scoring: [LSTM Forecasting](lstm-forecasting.md) · unified comparison: [Forecast Model Comparison](forecast-model-comparison.md).
 
 ---
 
@@ -119,8 +119,8 @@ The clean artifact already includes temporal columns from production cleaning. L
 
 ## What's Next
 
-1. **LSTM architecture, training, and evaluation** — see [LSTM Forecasting](lstm-forecasting.md) (Week 7 Days 4–5 complete)
-2. Compare MAE / RMSE against naive, Prophet, and XGBoost floors on the same held-out test window
+1. **LSTM architecture, training, and inference** — see [LSTM Forecasting](lstm-forecasting.md) (Week 7 Days 4–5 complete)
+2. **Unified model comparison** — see [Forecast Model Comparison](forecast-model-comparison.md) (Week 8 Day 1)
 3. Research write-up and tutorial notebook (deferred)
 
 ---
@@ -148,7 +148,8 @@ python scripts/verify_lstm_prep.py
 
 ## References
 
-- [LSTM Forecasting](lstm-forecasting.md) — `EnergyLSTM`, training loop, test-set scoring
+- [LSTM Forecasting](lstm-forecasting.md) — `EnergyLSTM`, training loop, `predict_lstm`
+- [Forecast Model Comparison](forecast-model-comparison.md) — side-by-side scoring of all four models
 - [XGBoost Prep](xgboost-prep.md) — tabular lag alternative for tree models
 - [Forecasting Baseline](forecasting-baseline.md) — gate and split fractions
 - [Feature Engineering](feature-engineering.md) — Phase 2 temporal columns reused here

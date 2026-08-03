@@ -6,7 +6,7 @@
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built entirely on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
-**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.123** / **0.152**) on the same chronological test window. **Production cleaning is unchanged** (~248 corrected intervals). Full docs: [docs site](docs/index.md) · [Forecasting Baseline](docs/forecasting-baseline.md) · [Prophet Baseline](docs/prophet-baseline.md) · [XGBoost Forecasting](docs/xgboost-forecasting.md) · [LSTM Forecasting](docs/lstm-forecasting.md) · [Glossary](docs/glossary.md).
+**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.122** / **0.151**) on native test windows. Unified comparison: `python scripts/compare_forecasts.py`. **Production cleaning is unchanged** (~248 corrected intervals). Full docs: [docs site](docs/index.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md) · [LSTM Forecasting](docs/lstm-forecasting.md) · [Glossary](docs/glossary.md).
 
 ---
 
@@ -24,9 +24,9 @@ This repository implements a phased ML pipeline:
 | **Phase 3 Week 6 Day 3** | Prophet statistical baseline | **Complete** |
 | **Phase 3 Week 7 Day 1** | XGBoost supervised lag prep | **Complete** |
 | **Phase 3 Week 7 Day 2** | XGBoost regressor training and evaluation | **Complete** |
-| **Phase 3 Week 7 Day 3** | LSTM 3D sequence prep (PyTorch) | **Complete** |
-| **Phase 3 Week 7 Day 4** | LSTM architecture and training loop | **Complete** |
-| **Phase 3 Week 7 Day 5** | LSTM test-set inference and evaluation | **Complete** |
+| **Phase 3 Week 7 Day 3** | LSTM sequence prep | **Complete** |
+| **Phase 3 Week 7 Days 4–5** | LSTM architecture, training, inference | **Complete** |
+| **Phase 3 Week 8 Day 1** | Unified forecast model comparison | **Complete** |
 | **Phase 3 (next)** | Research write-up · tutorial notebook | Planned |
 
 All work uses publicly available data. No proprietary datasets or systems are referenced.
@@ -98,7 +98,8 @@ energy-anomaly-forecasting/
 │   └── processed/                  # Generated clean CSV (gitignored)
 ├── docs/                           # Documentation (MkDocs source)
 │   └── assets/                     # Verification screenshots and EDA figures
-│       └── eda/                    # Exported Phase 1 Week 2 plots (PNG)
+│       ├── eda/                    # Exported Phase 1 Week 2 plots (PNG)
+│       └── forecast_comparison.png # Phase 3 Week 8 model comparison plot
 ├── notebooks/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
 │   ├── 02_exploratory_data_analysis.ipynb
@@ -121,21 +122,21 @@ energy-anomaly-forecasting/
 │   ├── evaluate_prophet.py         # Score Prophet statistical baseline on test set
 │   ├── verify_xgboost_prep.py      # Verify supervised lag tabular frame
 │   ├── evaluate_xgboost.py         # Train and score XGBoost regressor on test set
-│   ├── verify_lstm_prep.py         # Verify 3D LSTM sequences and PyTorch tensors
-│   └── evaluate_lstm.py            # Train and score LSTM regressor on test set
+│   ├── verify_lstm_prep.py         # Verify 3D LSTM sequence tensors
+│   └── compare_forecasts.py        # Run all four models; metrics table + PNG
 ├── src/
 │   ├── data/
 │   │   ├── ingest_data.py          # Canonical ingestion module
 │   │   ├── clean_data.py           # Anomaly masking and interpolation
 │   │   └── make_forecast_dataset.py # Chronological train/val/test split
 │   ├── features/
-│   │   └── build_features.py       # Temporal, rolling, lag, and LSTM sequence features
+│   │   └── build_features.py       # Temporal, rolling, supervised lags, and LSTM sequences
 │   ├── models/
 │   │   ├── evaluate_models.py      # Imbalance-aware anomaly evaluation
 │   │   ├── evaluate_forecast.py    # Forecast MAE / RMSE / MAPE
 │   │   ├── train_anomaly_models.py # Unsupervised anomaly training
 │   │   ├── train_forecast_models.py # Naive, Prophet, XGBoost, and LSTM forecast trainers
-│   │   ├── lstm_model.py           # EnergyLSTM PyTorch architecture
+│   │   ├── lstm_model.py           # EnergyLSTM architecture (PyTorch)
 │   │   ├── anomaly_preprocessing.py # Train-fitted scaling for tuning
 │   │   ├── tuning_utils.py         # Temporal splits and threshold search
 │   │   └── anomaly_config.py       # Research-tuned hyperparameters
@@ -185,8 +186,9 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Prophet Baseline](docs/prophet-baseline.md) | Phase 3 Week 6 Day 3 Prophet trainer and evaluation |
 | [XGBoost Prep](docs/xgboost-prep.md) | Phase 3 Week 7 Day 1 supervised lag features |
 | [XGBoost Forecasting](docs/xgboost-forecasting.md) | Phase 3 Week 7 Day 2 XGBoost trainer and scoring |
-| [LSTM Prep](docs/lstm-prep.md) | Phase 3 Week 7 Day 3 sliding-window sequences for PyTorch |
-| [LSTM Forecasting](docs/lstm-forecasting.md) | Phase 3 Week 7 Days 4–5 LSTM trainer, inference, and scoring |
+| [LSTM Prep](docs/lstm-prep.md) | Phase 3 Week 7 Day 3 sliding-window sequence tensors |
+| [LSTM Forecasting](docs/lstm-forecasting.md) | Phase 3 Week 7 Days 4–5 LSTM training and inference |
+| [Forecast Model Comparison](docs/forecast-model-comparison.md) | Phase 3 Week 8 unified ladder scoring and visualization |
 | [Phase 3 Strategy](docs/phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](docs/glossary.md) | Shared plain-English and technical term definitions |
 
@@ -227,7 +229,7 @@ python scripts/evaluate_prophet.py
 python scripts/verify_xgboost_prep.py
 python scripts/evaluate_xgboost.py
 python scripts/verify_lstm_prep.py
-python scripts/evaluate_lstm.py
+python scripts/compare_forecasts.py
 ```
 
 ### Python API
@@ -329,51 +331,46 @@ print(evaluate_forecast(test["Electricity_Consumed"].to_numpy(), y_pred))
 
 Full notes: [XGBoost Prep](docs/xgboost-prep.md) · [XGBoost Forecasting](docs/xgboost-forecasting.md) · [Prophet Baseline](docs/prophet-baseline.md).
 
-### LSTM Forecasting (Phase 3 Week 7 Days 3–5)
+### LSTM Forecasting (Phase 3 Week 7)
 
 ```python
 import numpy as np
 import pandas as pd
+import torch
 from src.features.build_features import create_sequences
 from src.models.lstm_model import EnergyLSTM
 from src.models.train_forecast_models import (
     make_lstm_dataloader,
-    predict_lstm,
     train_lstm_model,
+    predict_lstm,
 )
 from src.models.evaluate_forecast import evaluate_forecast
 
 FEATURE_COLUMNS = [
-    "Electricity_Consumed",
-    "Temperature",
-    "Humidity",
-    "hour",
-    "day_of_week",
-    "month",
-    "is_weekend",
+    "Electricity_Consumed", "Temperature", "Humidity",
+    "hour", "day_of_week", "month", "is_weekend",
 ]
 
 df = pd.read_csv("data/processed/clean_smart_meter_data.csv", parse_dates=["Timestamp"])
-data = df[FEATURE_COLUMNS].to_numpy(dtype=np.float64)
-X, y = create_sequences(data, seq_length=24)
-
+matrix = df[FEATURE_COLUMNS].to_numpy(dtype=np.float32)
+X, y = create_sequences(matrix, seq_length=24)
 n = len(X)
-train_end = int(n * 0.7)
-val_end = int(n * 0.85)
-X_train, X_val, X_test = X[:train_end], X[train_end:val_end], X[val_end:]
-y_train, y_val, y_test = y[:train_end], y[train_end:val_end], y[val_end:]
+train_end, val_end = int(n * 0.7), int(n * 0.85)
+X_train, y_train = X[:train_end], y[:train_end]
+X_val, y_val = X[train_end:val_end], y[train_end:val_end]
+X_test, y_test = X[val_end:], y[val_end:]
 
-train_loader = make_lstm_dataloader(X_train, y_train, batch_size=32)
-val_loader = make_lstm_dataloader(X_val, y_val, batch_size=32)
-test_loader = make_lstm_dataloader(X_test, y_test, batch_size=32)
+train_loader = make_lstm_dataloader(X_train, y_train)
+val_loader = make_lstm_dataloader(X_val, y_val)
+test_loader = make_lstm_dataloader(X_test, y_test)
 
-model = EnergyLSTM(input_size=7)
-model = train_lstm_model(model, train_loader, val_loader, epochs=20)
+model = EnergyLSTM(input_size=7, hidden_size=64)
+train_lstm_model(model, train_loader, val_loader, epochs=20)
 y_pred = predict_lstm(model, test_loader)
 print(evaluate_forecast(y_test[:, 0], y_pred))
 ```
 
-Full notes: [LSTM Prep](docs/lstm-prep.md) · [LSTM Forecasting](docs/lstm-forecasting.md).
+Full notes: [LSTM Prep](docs/lstm-prep.md) · [LSTM Forecasting](docs/lstm-forecasting.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md).
 
 ### Phase 2 research results (held-out test)
 
