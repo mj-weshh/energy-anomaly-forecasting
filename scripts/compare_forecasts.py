@@ -1,9 +1,8 @@
 """Run all Phase 3 forecasting models and collect test-set predictions.
 
 Loads the Phase 2 clean CSV, executes Naive, Prophet, XGBoost, and LSTM on
-their native chronological test pipelines, aggregates predictions, and prints
-a Markdown metrics table for copy-paste into MkDocs documentation. Presentation
-plots are added in a later step.
+their native chronological test pipelines, aggregates predictions, prints
+a Markdown metrics table, and saves a 3-day comparison plot for documentation.
 
 Run from repository root (use the project ``.venv``)::
 
@@ -21,6 +20,11 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.dates as mdates  # noqa: E402
 import numpy as np
 import pandas as pd
 
@@ -81,6 +85,9 @@ MODEL_LABELS = {
     "xgboost": "XGBoost",
     "lstm": "LSTM",
 }
+
+PLOT_WINDOW_STEPS = 144  # 3 days at 30-minute resolution
+FORECAST_COMPARISON_PNG = REPO_ROOT / "docs" / "assets" / "forecast_comparison.png"
 
 
 def _fail(message: str) -> None:
@@ -366,6 +373,67 @@ def print_markdown_table(results_dict: dict[str, dict[str, float]]) -> None:
     )
 
 
+def plot_model_comparison(
+    predictions: dict[str, pd.DataFrame],
+    output_path: Path = FORECAST_COMPARISON_PNG,
+    window_steps: int = PLOT_WINDOW_STEPS,
+) -> Path:
+    """Plot actual vs predicted consumption for each model over a 3-day test window.
+
+    Uses a 2×2 subplot grid (one panel per model) with the last ``window_steps``
+    test intervals so lines remain readable at 30-minute resolution.
+
+    Args:
+        predictions: Model name → frame with ``timestamp``, ``y_true``, ``y_pred``.
+        output_path: PNG destination under ``docs/assets/``.
+        window_steps: Number of test steps to display. Defaults to ``144`` (3 days).
+
+    Returns:
+        Absolute path to the saved PNG.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    fig, axes = plt.subplots(2, 2, figsize=(14, 8), sharex=False)
+    axes_flat = axes.ravel()
+
+    for ax, name in zip(axes_flat, MODEL_ORDER):
+        frame = predictions[name].sort_values("timestamp").reset_index(drop=True)
+        window = frame.tail(min(window_steps, len(frame)))
+
+        label = MODEL_LABELS.get(name, name)
+        ax.plot(
+            window["timestamp"],
+            window["y_true"],
+            label="Actual",
+            color="#1f77b4",
+            linewidth=1.5,
+        )
+        ax.plot(
+            window["timestamp"],
+            window["y_pred"],
+            label="Predicted",
+            color="#ff7f0e",
+            linewidth=1.5,
+            linestyle="--",
+        )
+        ax.set_title(f"{label} — last {len(window)} steps (~3 days)")
+        ax.set_ylabel("Electricity (normalized)")
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H:%M"))
+        ax.tick_params(axis="x", rotation=30)
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc="upper right", fontsize=8)
+
+    fig.suptitle(
+        "Forecast comparison — actual vs predicted (normalized consumption)",
+        fontsize=13,
+        y=1.02,
+    )
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=120, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    return output_path.resolve()
+
+
 def main() -> None:
     _ensure_prophet_available()
     _ensure_xgboost_available()
@@ -398,8 +466,12 @@ def main() -> None:
     results = compute_metrics(predictions)
     print_markdown_table(results)
 
+    plot_path = plot_model_comparison(predictions)
+    print()
+    print(f"Saved comparison plot: {plot_path}")
+
     print("=" * 60)
-    print("PASS — predictions collected and metrics table generated.")
+    print("PASS — predictions collected, metrics table and plot generated.")
     print("=" * 60)
     sys.exit(0)
 
