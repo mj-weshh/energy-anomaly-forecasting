@@ -147,7 +147,7 @@ flowchart LR
   naive --> compare[compare_forecasts.py]
   stats --> compare
   xgb --> compare
-  lstm --> compare
+  lstmTrain --> compare
   compare --> docs[forecasting_research_and_tutorial]
 ```
 
@@ -172,7 +172,9 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
 **Done (Week 6 Day 3):** Prophet trainer and `evaluate_prophet.py` — see [Prophet Baseline](prophet-baseline.md).
 
-**Done (Week 7 Day 1–2):** `create_supervised_lags`, `train_xgboost_model`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
+**Done (Week 7 Day 1–5):** `create_supervised_lags`, `train_xgboost_model`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md). `create_sequences`, `EnergyLSTM`, `train_lstm_model`, `predict_lstm`, `verify_lstm_prep.py`, `evaluate_lstm.py` — see [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
+
+**Done (Week 7 Day 3):** `create_sequences`, `verify_lstm_prep.py`, PyTorch dependency — see [LSTM Prep](lstm-prep.md).
 
 **Done (Week 7 Days 3–5):** `create_sequences`, `EnergyLSTM`, `train_lstm_model`, `predict_lstm`, `verify_lstm_prep.py` — see [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
 
@@ -195,6 +197,8 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
     **Naive lag:** 48 steps = 24 h × 2 samples/hour — `naive_seasonal_forecast` in `train_forecast_models.py`.
 
     **Supervised lags (XGBoost prep):** `create_supervised_lags` in `build_features.py` — lags 1, 2, 48; verify with `python scripts/verify_xgboost_prep.py`.
+
+    **LSTM sequences:** `create_sequences` in `build_features.py` — default window 24; verify with `python scripts/verify_lstm_prep.py`; score with `python scripts/evaluate_lstm.py`.
 
     **Metrics:** `evaluate_forecast` in `evaluate_forecast.py` (MAE / RMSE / MAPE on test for headline numbers).
 

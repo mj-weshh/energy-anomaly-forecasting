@@ -171,6 +171,7 @@ python scripts/evaluate_xgboost.py
 - [Forecasting Baseline](forecasting-baseline.md) — gate, split, metrics
 - [Feature Engineering](feature-engineering.md) — Phase 2 temporal columns reused here
 - [Phase 3 Strategy](phase3-strategy.md) — model ladder
+- [LSTM Forecasting](lstm-forecasting.md) — sequence-based deep learning baseline
 - [Architecture](architecture.md) — repository layout
 - [Glossary](glossary.md) — XGBoost, eval_set, supervised lags
 - [Getting Started](getting-started.md) — install and Phase 3 commands

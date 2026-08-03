@@ -50,6 +50,14 @@ Plain-English definitions for terms used across this project. Each entry include
 
 ---
 
+## EnergyLSTM
+
+**Business:** The project's deep-learning forecaster — reads the last 12 hours of multivariate readings and predicts the next half-hour of electricity use.
+
+**Technical:** `EnergyLSTM` in `src/models/lstm_model.py` — `nn.LSTM(7, 64, batch_first=True)` + `nn.Linear(64, 1)` on the final timestep. Trained via `train_lstm_model`; scored via `predict_lstm` and `evaluate_lstm.py`. See [LSTM Forecasting](lstm-forecasting.md).
+
+---
+
 ## eval_set (XGBoost)
 
 **Business:** A way to watch validation performance while the model trains — without using the final test window for tuning decisions.

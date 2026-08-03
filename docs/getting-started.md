@@ -381,7 +381,7 @@ Requires `prophet>=1.1.5`, `xgboost>=2.0.0`, and `torch>=2.0.0`. Runtime ~1–2 
 
     **Phase 3 (Day 1–2):** `verify_phase2_state.py`, `python -m src.data.make_forecast_dataset`, `evaluate_naive_baseline.py` · modules `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`
 
-    **Phase 3 (Day 3 + Week 7):** `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py` · `create_supervised_lags` in `build_features.py` · Prophet and XGBoost trainers in `train_forecast_models.py`
+    **Phase 3 (Day 3 + Week 7):** `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, `evaluate_lstm.py` · `create_supervised_lags` and `create_sequences` in `build_features.py` · Prophet, XGBoost, and LSTM trainers in `train_forecast_models.py` · `EnergyLSTM` in `lstm_model.py`
 
     **Phase 3 (Week 7 LSTM + Week 8 comparison):** `verify_lstm_prep.py`, `compare_forecasts.py` · `create_sequences` in `build_features.py` · `EnergyLSTM` in `lstm_model.py` · `predict_lstm` in `train_forecast_models.py`
 
