@@ -1,9 +1,9 @@
 """Run all Phase 3 forecasting models and collect test-set predictions.
 
 Loads the Phase 2 clean CSV, executes Naive, Prophet, XGBoost, and LSTM on
-their native chronological test pipelines, and aggregates predictions into a
-shared dictionary of DataFrames for downstream comparison (metrics table and
-plots are added in later steps).
+their native chronological test pipelines, aggregates predictions, and prints
+a Markdown metrics table for copy-paste into MkDocs documentation. Presentation
+plots are added in a later step.
 
 Run from repository root (use the project ``.venv``)::
 
@@ -31,6 +31,7 @@ if str(REPO_ROOT) not in sys.path:
 from src.data.ingest_data import get_project_root  # noqa: E402
 from src.data.make_forecast_dataset import time_series_split  # noqa: E402
 from src.features.build_features import create_sequences, create_supervised_lags  # noqa: E402
+from src.models.evaluate_forecast import evaluate_forecast  # noqa: E402
 from src.models.lstm_model import EnergyLSTM  # noqa: E402
 from src.models.train_forecast_models import (  # noqa: E402
     make_lstm_dataloader,
@@ -72,6 +73,14 @@ LSTM_FEATURE_COLUMNS = [
 SEQ_LENGTH = 24
 BATCH_SIZE = 32
 LSTM_EPOCHS = 20
+
+MODEL_ORDER = ("naive", "prophet", "xgboost", "lstm")
+MODEL_LABELS = {
+    "naive": "Naive",
+    "prophet": "Prophet",
+    "xgboost": "XGBoost",
+    "lstm": "LSTM",
+}
 
 
 def _fail(message: str) -> None:
@@ -324,6 +333,39 @@ def _print_prediction_summary(predictions: dict[str, pd.DataFrame]) -> None:
         print(f"  {name:8s}: {len(frame):4d} rows  ({start} -> {end})")
 
 
+def compute_metrics(
+    predictions: dict[str, pd.DataFrame],
+) -> dict[str, dict[str, float]]:
+    """Score each model's test predictions with MAE, RMSE, and MAPE."""
+    results: dict[str, dict[str, float]] = {}
+    for name, frame in predictions.items():
+        results[name] = evaluate_forecast(frame["y_true"], frame["y_pred"])
+    return results
+
+
+def print_markdown_table(results_dict: dict[str, dict[str, float]]) -> None:
+    """Print a copy-pasteable Markdown table of forecast metrics to stdout."""
+    print()
+    print("Markdown table (copy into MkDocs):")
+    print()
+    print("| Model | MAE | RMSE | MAPE (%) |")
+    print("|-------|-----|------|----------|")
+    for name in MODEL_ORDER:
+        if name not in results_dict:
+            continue
+        metrics = results_dict[name]
+        label = MODEL_LABELS.get(name, name)
+        print(
+            f"| {label} | {metrics['mae']:.6f} | {metrics['rmse']:.6f} | "
+            f"{metrics['mape']:.4f} |"
+        )
+    print()
+    print(
+        "Note: MAE/RMSE are on normalized consumption (0–1). MAPE can be "
+        "unstable when true values are near zero."
+    )
+
+
 def main() -> None:
     _ensure_prophet_available()
     _ensure_xgboost_available()
@@ -352,8 +394,12 @@ def main() -> None:
             _fail(f"{name}: y_true and y_pred length mismatch.")
 
     _print_prediction_summary(predictions)
+
+    results = compute_metrics(predictions)
+    print_markdown_table(results)
+
     print("=" * 60)
-    print("PASS — predictions collected for all four models.")
+    print("PASS — predictions collected and metrics table generated.")
     print("=" * 60)
     sys.exit(0)
 
