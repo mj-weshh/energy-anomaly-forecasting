@@ -13,9 +13,10 @@ Planning notes for the final technical phase: forecasting. Phase 1 (ingestion / 
     - **XGBoost shipped (Week 7):** Supervised lags + gradient-boosted regressor — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
     - **LSTM shipped (Week 7 Days 3–5):** PyTorch sequence prep + `EnergyLSTM` — see [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
     - **Unified comparison shipped (Week 8 Day 1):** All four models via `compare_forecasts.py` — see [Forecast Model Comparison](forecast-model-comparison.md).
+    - **E2E CLI scaffold shipped (Week 8 Day 2):** Root `main.py` wires ingest + features — see [E2E Pipeline](e2e-pipeline.md).
     - **Terms:** [Glossary](glossary.md) — imputation, temporal split; forecasting metrics (MAE / RMSE / MAPE).
 
-**Status:** Week 6 Day 1–3, Week 7, and Week 8 Day 1 **complete**; research write-up and tutorial notebook planned next  
+**Status:** Week 6 Day 1–3, Week 7, and Week 8 Day 1–2 **complete**; E2E Days 3–4, research write-up, and tutorial notebook planned next  
 **Builds on:** [Clean Dataset](clean-data.md), [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md), [Architecture](architecture.md), [Forecasting Baseline](forecasting-baseline.md)
 
 ---
@@ -137,8 +138,20 @@ Auto-ARIMA remains deferred.
 | **Why** | Research reporting — copy-paste Markdown metrics table and presentation PNG for grant write-ups |
 | **Code** | `scripts/compare_forecasts.py` — [Forecast Model Comparison](forecast-model-comparison.md) |
 
+### F. E2E pipeline consolidation (Week 8) — **in progress**
+
+| | |
+|--|--|
+| **What** | Root `main.py` single CLI for the full Phase 1–3 workflow |
+| **Day 2 done** | argparse (`--data_path`, `--model`, `--epochs`), INFO logging, `load_smart_meter_data` + `build_all_features` |
+| **Later days** | Anomaly detection, clean artifact, chronological split, and `--model` forecasting |
+| **Code** | `main.py` — [E2E Pipeline](e2e-pipeline.md) |
+
 ```mermaid
 flowchart LR
+  mainCli[main.py_CLI] --> ingest[load_smart_meter_data]
+  ingest --> feats[build_all_features]
+  feats --> later[anomaly_clean_forecast_planned]
   clean[CleanCSV_5000] --> split[Chronological_70_15_15]
   split --> naive[Naive_48lag]
   split --> stats[Prophet]
@@ -147,7 +160,7 @@ flowchart LR
   naive --> compare[compare_forecasts.py]
   stats --> compare
   xgb --> compare
-  lstmTrain --> compare
+  lstm --> compare
   compare --> docs[forecasting_research_and_tutorial]
 ```
 
@@ -180,7 +193,9 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
 **Done (Week 8 Day 1):** `compare_forecasts.py`, `docs/assets/forecast_comparison.png` — see [Forecast Model Comparison](forecast-model-comparison.md).
 
-**Model ladder complete.** Still deferred:
+**Done (Week 8 Day 2):** Root `main.py` — CLI + logging + ingestion + `build_all_features` — see [E2E Pipeline](e2e-pipeline.md).
+
+**Model ladder complete.** E2E consolidation in progress (Days 3–4). Still deferred:
 
 - Whether weather stays in the exogenous set after ablation-style checks (Phase 2 already showed weak linear weather signal for *anomaly* detection; forecasting may differ)
 - Auto-ARIMA trainer
@@ -208,7 +223,9 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
     **Unified comparison:** `python scripts/compare_forecasts.py` — all four models, Markdown table, PNG asset.
 
-    **Modularity:** Baseline path loads the clean CSV and does not call `detect_anomalies` unless you run `generate_clean_data.py` explicitly.
+    **E2E CLI:** `python main.py` — Day 2 runs ingest + features; `--model` / `--epochs` reserved.
+
+    **Modularity:** Baseline path loads the clean CSV and does not call `detect_anomalies` unless you run `generate_clean_data.py` explicitly. `main.py` delegates to `src/` only.
 
 ---
 
@@ -221,6 +238,7 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 - [LSTM Prep](lstm-prep.md) — Week 7 Day 3 sequence tensors
 - [LSTM Forecasting](lstm-forecasting.md) — Week 7 Days 4–5 LSTM trainer
 - [Forecast Model Comparison](forecast-model-comparison.md) — Week 8 Day 1 unified ladder
+- [E2E Pipeline](e2e-pipeline.md) — Week 8 Day 2 root CLI scaffold
 - [Clean Dataset](clean-data.md) — Phase 2 imputation artifact for Phase 3
 - [Anomaly Detection](anomaly-detection.md) — Isolation Forest production path used for cleaning
 - [Feature Engineering](feature-engineering.md) — temporal and rolling features to reuse / extend for lags

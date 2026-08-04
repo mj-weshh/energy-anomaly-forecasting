@@ -171,12 +171,13 @@ Use individual scripts for quick single-model checks; use the comparison script 
 
 Per [Phase 3 Strategy](phase3-strategy.md):
 
-1. Research write-up (`docs/forecasting-research.md`) synthesizing ladder results
-2. Tutorial notebook (`notebooks/04_forecasting_tutorial.ipynb`)
-3. Hyperparameter tuning across models
-4. Optional: aligned timestamp intersection for single-panel overlay plots
+1. **E2E pipeline consolidation** — root `main.py` CLI (Day 2: ingest + features) → [E2E Pipeline](e2e-pipeline.md)
+2. Research write-up (`docs/forecasting-research.md`) synthesizing ladder results
+3. Tutorial notebook (`notebooks/04_forecasting_tutorial.ipynb`)
+4. Hyperparameter tuning across models
+5. Optional: aligned timestamp intersection for single-panel overlay plots
 
-The **model ladder implementation** (naive → Prophet → XGBoost → LSTM → comparison) is complete.
+The **model ladder implementation** (naive → Prophet → XGBoost → LSTM → comparison) is complete. E2E CLI consolidation continues in Week 8 Days 3–4.
 
 ---
 
@@ -217,6 +218,7 @@ mkdocs serve   # preview docs with embedded PNG
 - [XGBoost Forecasting](xgboost-forecasting.md) — tabular gradient-boosted model
 - [LSTM Prep](lstm-prep.md) — 3D sequence generation
 - [LSTM Forecasting](lstm-forecasting.md) — recurrent model training and inference
+- [E2E Pipeline](e2e-pipeline.md) — Week 8 Day 2 root CLI scaffold
 - [Phase 3 Strategy](phase3-strategy.md) — model ladder and evaluation protocol
 - [Architecture](architecture.md) — repository layout and script inventory
 - [Glossary](glossary.md) — MAE, RMSE, forecast model comparison

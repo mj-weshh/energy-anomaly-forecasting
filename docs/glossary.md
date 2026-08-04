@@ -6,7 +6,7 @@ Plain-English definitions for terms used across this project. Each entry include
 
     - **Purpose:** One place to decode jargon used in executive summaries and technical reports.
     - **How to use:** Skim the **Business** line for decisions; read **Technical** for implementation and reproducibility.
-    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, Prophet, XGBoost, LSTM, PyTorch, and supervised lag features.
+    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, Prophet, XGBoost, LSTM, PyTorch, E2E pipeline / main.py, and supervised lag features.
 
 ---
 
@@ -39,6 +39,14 @@ Plain-English definitions for terms used across this project. Each entry include
 **Business:** A second detection method that flags readings in sparse, lonely regions of the data — useful as a comparison, but weaker than Isolation Forest on this dataset.
 
 **Technical:** Density-based clustering; points labeled `-1` (noise) map to Abnormal. Sensitive to `eps` and `min_samples` on multivariate features.
+
+---
+
+## E2E pipeline / main.py
+
+**Business:** One command at the project root that walks the meter data through the full analysis pipeline — so contributors do not need to remember a dozen separate scripts.
+
+**Technical:** Repository-root `main.py` with argparse (`--data_path`, `--model`, `--epochs`) and INFO logging. Week 8 Day 2 wires `load_smart_meter_data` + `build_all_features` only; anomaly detection, cleaning, and forecasting are reserved for later E2E days. See [E2E Pipeline](e2e-pipeline.md).
 
 ---
 
