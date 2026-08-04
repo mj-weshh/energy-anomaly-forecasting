@@ -13,7 +13,11 @@ Example:
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,12 +64,17 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     """Parse CLI arguments and run the E2E pipeline.
 
-    Step 1 scaffolds argument parsing only. Subsequent Day 2 steps add
-    logging, ingestion, and feature engineering.
+    Logging is configured at module load. Subsequent Day 2 steps wire
+    ingestion and feature engineering.
     """
     args = parse_args()
+    logger.info(
+        "E2E pipeline starting (model=%s, epochs=%s, data_path=%s)",
+        args.model,
+        args.epochs,
+        args.data_path,
+    )
     # Pipeline body (ingestion, features, models) is wired in later steps.
-    _ = args
 
 
 if __name__ == "__main__":
