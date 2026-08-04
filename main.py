@@ -16,6 +16,9 @@ import argparse
 import logging
 from pathlib import Path
 
+from src.data.ingest_data import load_smart_meter_data
+from src.features.build_features import build_all_features
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -64,8 +67,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     """Parse CLI arguments and run the E2E pipeline.
 
-    Logging is configured at module load. Subsequent Day 2 steps wire
-    ingestion and feature engineering.
+    Day 2 wires Phase 1 ingestion and Phase 2 feature engineering.
+    Later days add cleaning, anomaly detection, and forecasting.
     """
     args = parse_args()
     logger.info(
@@ -74,7 +77,22 @@ def main() -> None:
         args.epochs,
         args.data_path,
     )
-    # Pipeline body (ingestion, features, models) is wired in later steps.
+
+    data_path = Path(args.data_path)
+    logger.info("Starting data ingestion from %s ...", data_path)
+    df = load_smart_meter_data(data_path)
+    logger.info("Raw data loaded: shape=%s", df.shape)
+
+    logger.info("Building temporal and rolling features ...")
+    df_feat = build_all_features(df)
+    warmup_nans = int(df_feat.isna().any(axis=1).sum())
+    logger.info(
+        "Feature matrix ready: shape=%s (%s rows with rolling-window warm-up NaNs; "
+        "row count preserved - no rows dropped)",
+        df_feat.shape,
+        warmup_nans,
+    )
+    # Later days: anomaly detection, cleaning, and --model forecasting.
 
 
 if __name__ == "__main__":
