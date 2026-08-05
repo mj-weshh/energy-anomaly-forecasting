@@ -18,6 +18,7 @@ from pathlib import Path
 
 from src.data.ingest_data import load_smart_meter_data
 from src.features.build_features import build_all_features
+from src.models.train_anomaly_models import detect_anomalies
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -68,7 +69,8 @@ def main() -> None:
     """Parse CLI arguments and run the E2E pipeline.
 
     Day 2 wires Phase 1 ingestion and Phase 2 feature engineering.
-    Later days add cleaning, anomaly detection, and forecasting.
+    Day 3 Step 1 adds Isolation Forest anomaly detection on the
+    engineered frame. Later steps add interpolation and forecasting.
     """
     args = parse_args()
     logger.info(
@@ -92,7 +94,16 @@ def main() -> None:
         df_feat.shape,
         warmup_nans,
     )
-    # Later days: anomaly detection, cleaning, and --model forecasting.
+
+    logger.info("Running Isolation Forest anomaly detection ...")
+    _model, predictions = detect_anomalies(df_feat, model_type="isolation_forest")
+    n_anomalies = int(predictions.sum())
+    logger.info(
+        "Anomalies detected: %s of %s scored rows",
+        n_anomalies,
+        len(predictions),
+    )
+    # Later steps: interpolation, optional save, and --model forecasting.
 
 
 if __name__ == "__main__":
