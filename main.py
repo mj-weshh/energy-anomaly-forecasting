@@ -16,6 +16,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from src.data.clean_data import interpolate_anomalies
 from src.data.ingest_data import load_smart_meter_data
 from src.features.build_features import build_all_features
 from src.models.train_anomaly_models import detect_anomalies
@@ -69,8 +70,8 @@ def main() -> None:
     """Parse CLI arguments and run the E2E pipeline.
 
     Day 2 wires Phase 1 ingestion and Phase 2 feature engineering.
-    Day 3 Step 1 adds Isolation Forest anomaly detection on the
-    engineered frame. Later steps add interpolation and forecasting.
+    Day 3 adds Isolation Forest detection and in-memory interpolation.
+    Later steps add optional save and forecasting.
     """
     args = parse_args()
     logger.info(
@@ -103,7 +104,15 @@ def main() -> None:
         n_anomalies,
         len(predictions),
     )
-    # Later steps: interpolation, optional save, and --model forecasting.
+
+    logger.info("Masking anomalies and time-interpolating Electricity_Consumed ...")
+    df_clean = interpolate_anomalies(df_feat, predictions)
+    logger.info(
+        "Clean in-memory dataset ready: shape=%s, consumption_NaNs=%s",
+        df_clean.shape,
+        int(df_clean["Electricity_Consumed"].isna().sum()),
+    )
+    # Later steps: optional save and --model forecasting.
 
 
 if __name__ == "__main__":
