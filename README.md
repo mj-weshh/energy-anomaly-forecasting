@@ -6,7 +6,7 @@
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built entirely on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
-**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.122** / **0.151**) on native test windows. Unified comparison: `python scripts/compare_forecasts.py`. Root E2E CLI: `python main.py` (Day 2: ingest + features; `--model` reserved). **Production cleaning is unchanged** (~248 corrected intervals). Full docs: [docs site](docs/index.md) · [E2E Pipeline](docs/e2e-pipeline.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md) · [Glossary](docs/glossary.md).
+**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.122** / **0.151**) on native test windows. Unified comparison: `python scripts/compare_forecasts.py`. Root E2E CLI: `python main.py` (ingest → features → Isolation Forest → in-memory clean; `--save_clean_data` optional; `--model` reserved for Day 4). **Production cleaning is unchanged** (~248 corrected intervals via `generate_clean_data.py`). Full docs: [docs site](docs/index.md) · [E2E Pipeline](docs/e2e-pipeline.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md) · [Glossary](docs/glossary.md).
 
 ---
 
@@ -28,7 +28,8 @@ This repository implements a phased ML pipeline:
 | **Phase 3 Week 7 Days 4–5** | LSTM architecture, training, inference | **Complete** |
 | **Phase 3 Week 8 Day 1** | Unified forecast model comparison | **Complete** |
 | **Phase 3 Week 8 Day 2** | E2E pipeline scaffold (`main.py`) | **Complete** |
-| **Phase 3 (next)** | E2E Days 3–4 · research write-up · tutorial notebook | Planned |
+| **Phase 3 Week 8 Day 3** | E2E detect + interpolate + `--save_clean_data` | **Complete** |
+| **Phase 3 (next)** | E2E Day 4 (forecast) · research write-up · tutorial notebook | Planned |
 
 All work uses publicly available data. No proprietary datasets or systems are referenced.
 
@@ -191,7 +192,7 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [LSTM Prep](docs/lstm-prep.md) | Phase 3 Week 7 Day 3 sliding-window sequence tensors |
 | [LSTM Forecasting](docs/lstm-forecasting.md) | Phase 3 Week 7 Days 4–5 LSTM training and inference |
 | [Forecast Model Comparison](docs/forecast-model-comparison.md) | Phase 3 Week 8 unified ladder scoring and visualization |
-| [E2E Pipeline](docs/e2e-pipeline.md) | Phase 3 Week 8 Day 2 root `main.py` CLI (ingest + features) |
+| [E2E Pipeline](docs/e2e-pipeline.md) | Phase 3 Week 8 Days 2–3 root `main.py` CLI (ingest → detect → clean) |
 | [Phase 3 Strategy](docs/phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](docs/glossary.md) | Shared plain-English and technical term definitions |
 
@@ -209,10 +210,11 @@ mkdocs build    # output to site/
 
 ### CLI
 
-Root E2E entry (Day 2: ingest + features; `--model` / `--epochs` reserved for later days):
+Root E2E entry (Days 2–3: ingest → features → IF detect → interpolate; `--model` reserved for Day 4):
 
 ```bash
 python main.py
+python main.py --save_clean_data
 python main.py --help
 ```
 

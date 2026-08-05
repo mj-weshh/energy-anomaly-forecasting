@@ -278,6 +278,7 @@ _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 ## What's Next
 
 - **Phase 3 forecasting** — train on the clean artifact; see [Clean Dataset](clean-data.md)
+- **E2E CLI** — `main.py` calls `detect_anomalies` (Isolation Forest) then interpolates in memory; see [E2E Pipeline](e2e-pipeline.md)
 - Optional: adopt tuned IF config for production cleaning (currently legacy by design)
 
 ---
@@ -287,5 +288,6 @@ _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 - [Phase 2 Strategy](phase2-strategy.md) — why context-aware detection and imbalance-aware metrics matter
 - [Feature Engineering](feature-engineering.md) — the 12 features fed into the model
 - [Clean Dataset](clean-data.md) — Day 3 imputation pipeline for Phase 3
+- [E2E Pipeline](e2e-pipeline.md) — Week 8 consolidating CLI using Isolation Forest
 - [Architecture](architecture.md) — where `src/models/` sits in the repo
 - [Anomaly Tuning Results](anomaly-tuning-results.md) — enhanced features, temporal splits, fair head-to-head comparison

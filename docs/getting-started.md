@@ -290,7 +290,7 @@ After ingestion and Phase 2 pass:
 6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see §9 and [Forecasting Baseline](forecasting-baseline.md))
 7. **Phase 3 Prophet + XGBoost** — statistical and tabular forecast baselines (see §10–11)
 8. **Phase 3 LSTM + comparison** — sequence prep, LSTM training, unified ladder (see §12–14)
-9. **E2E CLI** — root `main.py` ingest + features (see §15 and [E2E Pipeline](e2e-pipeline.md))
+9. **E2E CLI** — root `main.py` ingest → detect → clean (see §15 and [E2E Pipeline](e2e-pipeline.md))
 
 ---
 
@@ -376,23 +376,28 @@ Requires `prophet>=1.1.5`, `xgboost>=2.0.0`, and `torch>=2.0.0`. Runtime ~1–2 
 
 ---
 
-## 15. E2E Pipeline (Week 8 Day 2)
+## 15. E2E Pipeline (Week 8 Days 2–3)
 
-Run the consolidating root CLI (ingest + feature engineering today; forecasting wired later):
+Run the consolidating root CLI (ingest → features → Isolation Forest → interpolate; forecasting wired on Day 4):
 
 ```bash
 python main.py
+python main.py --save_clean_data
 ```
 
 Expect INFO logs similar to:
 
 ```text
-INFO: E2E pipeline starting (model=naive, epochs=20, data_path=...)
+INFO: E2E pipeline starting (model=naive, epochs=20, data_path=..., save_clean_data=...)
 INFO: Raw data loaded: shape=(5000, 7)
 INFO: Feature matrix ready: shape=(5000, 15) (47 rows with rolling-window warm-up NaNs; ...)
+INFO: Anomalies detected: 248 of 4953 scored rows
+INFO: Clean in-memory dataset ready: shape=(5000, 15), consumption_NaNs=0
 ```
 
-Flags: `--data_path`, `--model` (`naive` / `prophet` / `xgboost` / `lstm`), `--epochs` (reserved for LSTM). Details: [E2E Pipeline](e2e-pipeline.md).
+With `--save_clean_data`, also expect a save line for `data/processed/clean_pipeline_output.csv`.
+
+Flags: `--data_path`, `--model` / `--epochs` (reserved for Day 4), `--save_clean_data`. Details: [E2E Pipeline](e2e-pipeline.md).
 
 ??? info "Technical deep dive"
 
@@ -406,6 +411,6 @@ Flags: `--data_path`, `--model` (`naive` / `prophet` / `xgboost` / `lstm`), `--e
 
     **Phase 3 (Week 7 LSTM + Week 8 comparison):** `verify_lstm_prep.py`, `compare_forecasts.py` · `create_sequences` in `build_features.py` · `EnergyLSTM` in `lstm_model.py` · `predict_lstm` in `train_forecast_models.py`
 
-    **Phase 3 (Week 8 Day 2 E2E):** `python main.py` — CLI + logging + `load_smart_meter_data` + `build_all_features`
+    **Phase 3 (Week 8 Days 2–3 E2E):** `python main.py` — ingest + features + `detect_anomalies` (IF) + `interpolate_anomalies`; optional `--save_clean_data`
 
     **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`

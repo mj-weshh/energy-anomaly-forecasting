@@ -5,7 +5,7 @@ Open-source machine learning project for **energy consumption anomaly detection*
 !!! success "Executive summary"
 
     - **What this project does:** Turns smart-meter readings into trustworthy timelines — flag unusual consumption, clean gaps, and forecast demand.
-    - **Where we are:** Phases 1–2 are complete; Phase 3 forecasting ladder is **implemented** — naive floor → Prophet → XGBoost → LSTM → unified comparison. Week 8 Day 2 adds root [`main.py`](e2e-pipeline.md) E2E CLI (ingest + features so far).
+    - **Where we are:** Phases 1–2 are complete; Phase 3 forecasting ladder is **implemented** — naive floor → Prophet → XGBoost → LSTM → unified comparison. Week 8 E2E [`main.py`](e2e-pipeline.md) runs ingest → features → Isolation Forest → in-memory clean (optional `--save_clean_data`); forecasting via `--model` is next.
     - **Research headline:** Tuned anomaly models score better on held-out future data (**F1 0.460** vs **0.331** production baseline), but the default clean file still uses the conservative legacy recipe until leadership reviews artifact differences.
     - **Forecasting floors (test set, reproducible):** Naive MAE ≈ **0.171** / RMSE ≈ **0.214**; Prophet ≈ **0.121** / **0.149**; XGBoost ≈ **0.125** / **0.154**; LSTM ≈ **0.122** / **0.151**. Unified table: [Forecast Model Comparison](forecast-model-comparison.md) · individual pages: [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [LSTM Forecasting](lstm-forecasting.md).
     - **Terms:** See the [Glossary](glossary.md) for F1, MAE/RMSE/MAPE, imputation, and related metrics.
@@ -44,7 +44,8 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | Phase 3 Week 7 Days 4–5 | LSTM architecture, training, inference | **Complete** |
 | Phase 3 Week 8 Day 1 | Unified forecast model comparison | **Complete** |
 | Phase 3 Week 8 Day 2 | E2E pipeline scaffold (`main.py` CLI + ingest + features) | **Complete** |
-| Phase 3 (next) | E2E Days 3–4 · research write-up · tutorial notebook | Planned |
+| Phase 3 Week 8 Day 3 | E2E anomaly detection + in-memory clean + optional save | **Complete** |
+| Phase 3 (next) | E2E Day 4 (forecast) · research write-up · tutorial notebook | Planned |
 
 ### Phase 1 Week 2 highlights
 
@@ -105,9 +106,10 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 
 ### Phase 3 Week 8 — E2E pipeline highlights
 
-- **Day 2:** Root `main.py` — argparse CLI (`--data_path`, `--model`, `--epochs`), INFO logging, Phase 1 ingest + Phase 2 features
-- Verified: raw `(5000, 7)` → engineered `(5000, 15)` with 47 rolling warm-up NaN rows (no drop)
-- `--model` / `--epochs` reserved for later E2E days · notes: [E2E Pipeline](e2e-pipeline.md)
+- **Day 2:** Root `main.py` — argparse CLI, INFO logging, Phase 1 ingest + Phase 2 features
+- **Day 3:** Isolation Forest via `detect_anomalies` → `interpolate_anomalies` in memory; optional `--save_clean_data` → `data/processed/clean_pipeline_output.csv`
+- Verified: raw `(5000, 7)` → engineered `(5000, 15)` → clean `(5000, 15)` with 0 consumption NaNs
+- `--model` / `--epochs` reserved for Day 4 forecasting · notes: [E2E Pipeline](e2e-pipeline.md)
 
 ## Documentation
 
@@ -130,7 +132,7 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 | [LSTM Prep](lstm-prep.md) | Phase 3 Week 7 Day 3 sliding-window sequence tensors for PyTorch |
 | [LSTM Forecasting](lstm-forecasting.md) | Phase 3 Week 7 Days 4–5 LSTM architecture, training, and inference |
 | [Forecast Model Comparison](forecast-model-comparison.md) | Phase 3 Week 8 Day 1 unified ladder scoring and visualization |
-| [E2E Pipeline](e2e-pipeline.md) | Phase 3 Week 8 Day 2 root `main.py` CLI scaffold (ingest + features) |
+| [E2E Pipeline](e2e-pipeline.md) | Phase 3 Week 8 Days 2–3 root `main.py` CLI (ingest → detect → clean) |
 | [Phase 3 Strategy](phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](glossary.md) | Plain-English and technical definitions for metrics and pipeline terms |
 
@@ -144,7 +146,7 @@ Expected outcome: schema summary with shape `(5000, 7)`, zero nulls, and a conti
 
 ??? info "Technical deep dive"
 
-    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting ladder complete via `compare_forecasts.py` (naive + Prophet + XGBoost + LSTM). Week 8 Day 2 adds root `main.py` E2E CLI through features; remaining E2E days, research write-up, and tutorial notebook remain planned.
+    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting ladder complete via `compare_forecasts.py` (naive + Prophet + XGBoost + LSTM). Week 8 E2E `main.py` runs through in-memory clean (Days 2–3); Day 4 forecasting, research write-up, and tutorial notebook remain planned.
 
     **Fair-comparison metrics** (991-row temporal test): legacy IF 0.340 (production params) / 0.389 (val threshold) / enhanced IF 0.460. Source: `src/models/anomaly_config.py`.
 

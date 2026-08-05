@@ -46,7 +46,15 @@ Plain-English definitions for terms used across this project. Each entry include
 
 **Business:** One command at the project root that walks the meter data through the full analysis pipeline — so contributors do not need to remember a dozen separate scripts.
 
-**Technical:** Repository-root `main.py` with argparse (`--data_path`, `--model`, `--epochs`) and INFO logging. Week 8 Day 2 wires `load_smart_meter_data` + `build_all_features` only; anomaly detection, cleaning, and forecasting are reserved for later E2E days. See [E2E Pipeline](e2e-pipeline.md).
+**Technical:** Repository-root `main.py` with argparse (`--data_path`, `--model`, `--epochs`, `--save_clean_data`) and INFO logging. Week 8 Days 2–3 wire `load_smart_meter_data` → `build_all_features` → `detect_anomalies` (Isolation Forest) → `interpolate_anomalies`. `--model` forecasting is reserved for Day 4. See [E2E Pipeline](e2e-pipeline.md).
+
+---
+
+## clean_pipeline_output
+
+**Business:** An optional “save what the pipeline cleaned” file so you can inspect the timeline without waiting for forecast training.
+
+**Technical:** Written only when `python main.py --save_clean_data` is set — path `data/processed/clean_pipeline_output.csv`. Uses the same `interpolate_anomalies` helper as production cleaning, but is **not** the Phase 3 baseline artifact (`clean_smart_meter_data.csv` from `generate_clean_data.py`). See [E2E Pipeline](e2e-pipeline.md) · [Clean Dataset](clean-data.md).
 
 ---
 
