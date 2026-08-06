@@ -306,6 +306,12 @@ def main() -> None:
         args.model,
         len(y_pred),
     )
+    preview = np.asarray(y_pred[:5], dtype=float)
+    logger.info(
+        "Prediction preview (first %s values): %s",
+        len(preview),
+        np.array2string(preview, precision=6, separator=", "),
+    )
 
 
 if __name__ == "__main__":
