@@ -19,6 +19,7 @@ from pathlib import Path
 
 from src.data.clean_data import interpolate_anomalies
 from src.data.ingest_data import load_smart_meter_data
+from src.data.make_forecast_dataset import time_series_split
 from src.features.build_features import build_all_features
 from src.models.train_anomaly_models import detect_anomalies
 
@@ -81,7 +82,8 @@ def main() -> None:
 
     Day 2 wires Phase 1 ingestion and Phase 2 feature engineering.
     Day 3 adds Isolation Forest detection, in-memory interpolation, and
-    optional ``--save_clean_data``. Later days wire forecasting.
+    optional ``--save_clean_data``. Day 4 Step 1 adds chronological
+    train/val/test splitting; model routing follows in later steps.
     """
     args = parse_args()
     logger.info(
@@ -131,7 +133,17 @@ def main() -> None:
         df_clean.to_csv(out_path, index=False)
         logger.info("Saved clean pipeline output to %s", out_path.resolve())
 
-    # Later days: --model forecasting.
+    logger.info("Chronological train/val/test split (70/15/15) ...")
+    train_df, val_df, test_df = time_series_split(df_clean)
+    for name, frame in (("train", train_df), ("val", val_df), ("test", test_df)):
+        logger.info(
+            "%s split: rows=%s, %s -> %s",
+            name,
+            len(frame),
+            frame["Timestamp"].iloc[0],
+            frame["Timestamp"].iloc[-1],
+        )
+    # Later steps: --model routing and training.
 
 
 if __name__ == "__main__":
