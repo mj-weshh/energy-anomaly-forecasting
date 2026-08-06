@@ -127,9 +127,16 @@ generate_clean_dataset(
 
 ---
 
+## E2E pipeline checkpoint (Week 8 Day 3)
+
+Root `main.py --save_clean_data` writes an optional in-pipeline checkpoint to `data/processed/clean_pipeline_output.csv` using the same `interpolate_anomalies` helper. That file is **not** the production Phase 3 baseline — forecast scripts still expect `clean_smart_meter_data.csv` from `generate_clean_data.py`. See [E2E Pipeline](e2e-pipeline.md).
+
+---
+
 ## What's Next
 
 - **Phase 3 foundation** — verify the clean artifact, chronological split, and naive seasonal floor: [Forecasting Baseline](forecasting-baseline.md)
+- **E2E consolidating CLI** — detect + interpolate in memory via `main.py`: [E2E Pipeline](e2e-pipeline.md)
 - **Notebook walkthrough** — Section 5 of [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb) demonstrates masking, interpolation, and a before/after consumption plot; see [Educational Notebook (Day 4)](anomaly-detection.md#educational-notebook-day-4)
 
 ??? info "Technical deep dive"
@@ -146,5 +153,6 @@ generate_clean_dataset(
 
 - [Anomaly Detection](anomaly-detection.md) — Isolation Forest baseline used for cleaning
 - [Feature Engineering](feature-engineering.md) — features included in the output CSV
+- [E2E Pipeline](e2e-pipeline.md) — optional `clean_pipeline_output.csv` from `main.py`
 - [Architecture](architecture.md) — where `src/data/clean_data.py` sits in the repo
 - [Anomaly Tuning Results](anomaly-tuning-results.md) — research IF configs (not adopted for cleaning)

@@ -171,7 +171,7 @@ Use individual scripts for quick single-model checks; use the comparison script 
 
 Per [Phase 3 Strategy](phase3-strategy.md):
 
-1. **E2E pipeline consolidation** — root `main.py` CLI (Day 2: ingest + features) → [E2E Pipeline](e2e-pipeline.md)
+1. **E2E pipeline consolidation** — root `main.py` (Days 2–3: ingest → detect → clean; Day 4: forecast) → [E2E Pipeline](e2e-pipeline.md)
 2. Research write-up (`docs/forecasting-research.md`) synthesizing ladder results
 3. Tutorial notebook (`notebooks/04_forecasting_tutorial.ipynb`)
 4. Hyperparameter tuning across models
@@ -218,7 +218,7 @@ mkdocs serve   # preview docs with embedded PNG
 - [XGBoost Forecasting](xgboost-forecasting.md) — tabular gradient-boosted model
 - [LSTM Prep](lstm-prep.md) — 3D sequence generation
 - [LSTM Forecasting](lstm-forecasting.md) — recurrent model training and inference
-- [E2E Pipeline](e2e-pipeline.md) — Week 8 Day 2 root CLI scaffold
+- [E2E Pipeline](e2e-pipeline.md) — Week 8 Days 2–3 root CLI (ingest → detect → clean)
 - [Phase 3 Strategy](phase3-strategy.md) — model ladder and evaluation protocol
 - [Architecture](architecture.md) — repository layout and script inventory
 - [Glossary](glossary.md) — MAE, RMSE, forecast model comparison

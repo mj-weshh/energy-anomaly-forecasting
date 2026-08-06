@@ -188,7 +188,7 @@ Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 
 - **Week 7 complete** — supervised lags (XGBoost) and LSTM sequences. See [XGBoost Prep](xgboost-prep.md) · [LSTM Prep](lstm-prep.md).
 - **Week 8 Day 1 complete** — unified model comparison. See [Forecast Model Comparison](forecast-model-comparison.md).
-- **Week 8 Day 2 complete** — root `main.py` calls `build_all_features` as the E2E entry path. See [E2E Pipeline](e2e-pipeline.md).
+- **Week 8 Days 2–3 complete** — root `main.py` calls `build_all_features`, then Isolation Forest + interpolate. See [E2E Pipeline](e2e-pipeline.md).
 - **Phase 3 research** — write-up and tutorial notebook; see [Phase 3 Strategy](phase3-strategy.md).
 
 ??? info "Technical deep dive"
@@ -205,7 +205,7 @@ Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 
     **LSTM prep:** `create_sequences()` — 24-step windows; `python scripts/verify_lstm_prep.py`
 
-    **E2E entry:** `python main.py` calls `build_all_features` after ingestion — see [E2E Pipeline](e2e-pipeline.md)
+    **E2E entry:** `python main.py` calls `build_all_features`, then detect + interpolate — see [E2E Pipeline](e2e-pipeline.md)
 
 ---
 
@@ -217,5 +217,5 @@ Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 - [Clean Dataset](clean-data.md) — Week 4 Day 3 imputation pipeline for Phase 3
 - [XGBoost Prep](xgboost-prep.md) — Phase 3 supervised lag features
 - [LSTM Prep](lstm-prep.md) — Phase 3 LSTM sequence tensors
-- [E2E Pipeline](e2e-pipeline.md) — Week 8 Day 2 root CLI using `build_all_features`
+- [E2E Pipeline](e2e-pipeline.md) — Week 8 Days 2–3 root CLI using `build_all_features`
 - [Architecture](architecture.md) — where `src/features/` sits in the repo

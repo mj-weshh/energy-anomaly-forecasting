@@ -8,6 +8,7 @@ Example:
     python main.py
     python main.py --model lstm --epochs 30
     python main.py --data_path path/to/smart_meter_data.csv
+    python main.py --save_clean_data
 """
 
 from __future__ import annotations
@@ -16,8 +17,10 @@ import argparse
 import logging
 from pathlib import Path
 
+from src.data.clean_data import interpolate_anomalies
 from src.data.ingest_data import load_smart_meter_data
 from src.features.build_features import build_all_features
+from src.models.train_anomaly_models import detect_anomalies
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -27,7 +30,8 @@ def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for the E2E pipeline.
 
     Returns:
-        Parsed namespace with ``data_path``, ``model``, and ``epochs``.
+        Parsed namespace with ``data_path``, ``model``, ``epochs``, and
+        ``save_clean_data``.
     """
     parser = argparse.ArgumentParser(
         description=(
@@ -61,6 +65,14 @@ def parse_args() -> argparse.Namespace:
         default=20,
         help="Number of training epochs when --model is lstm. Default: 20.",
     )
+    parser.add_argument(
+        "--save_clean_data",
+        action="store_true",
+        help=(
+            "Save interpolated clean dataframe to "
+            "data/processed/clean_pipeline_output.csv"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -68,14 +80,17 @@ def main() -> None:
     """Parse CLI arguments and run the E2E pipeline.
 
     Day 2 wires Phase 1 ingestion and Phase 2 feature engineering.
-    Later days add cleaning, anomaly detection, and forecasting.
+    Day 3 adds Isolation Forest detection, in-memory interpolation, and
+    optional ``--save_clean_data``. Later days wire forecasting.
     """
     args = parse_args()
     logger.info(
-        "E2E pipeline starting (model=%s, epochs=%s, data_path=%s)",
+        "E2E pipeline starting (model=%s, epochs=%s, data_path=%s, "
+        "save_clean_data=%s)",
         args.model,
         args.epochs,
         args.data_path,
+        args.save_clean_data,
     )
 
     data_path = Path(args.data_path)
@@ -92,7 +107,31 @@ def main() -> None:
         df_feat.shape,
         warmup_nans,
     )
-    # Later days: anomaly detection, cleaning, and --model forecasting.
+
+    logger.info("Running Isolation Forest anomaly detection ...")
+    _model, predictions = detect_anomalies(df_feat, model_type="isolation_forest")
+    n_anomalies = int(predictions.sum())
+    logger.info(
+        "Anomalies detected: %s of %s scored rows",
+        n_anomalies,
+        len(predictions),
+    )
+
+    logger.info("Masking anomalies and time-interpolating Electricity_Consumed ...")
+    df_clean = interpolate_anomalies(df_feat, predictions)
+    logger.info(
+        "Clean in-memory dataset ready: shape=%s, consumption_NaNs=%s",
+        df_clean.shape,
+        int(df_clean["Electricity_Consumed"].isna().sum()),
+    )
+
+    if args.save_clean_data:
+        out_path = Path("data/processed/clean_pipeline_output.csv")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        df_clean.to_csv(out_path, index=False)
+        logger.info("Saved clean pipeline output to %s", out_path.resolve())
+
+    # Later days: --model forecasting.
 
 
 if __name__ == "__main__":
