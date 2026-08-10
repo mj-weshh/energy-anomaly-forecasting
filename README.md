@@ -6,7 +6,7 @@
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built entirely on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
-**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.122** / **0.151**) on native test windows. Unified comparison: `python scripts/compare_forecasts.py`. Root E2E CLI: `python main.py --model naive` (ingest → detect → clean → split → forecast; `--save_clean_data` optional). **Production cleaning is unchanged** (~248 corrected intervals via `generate_clean_data.py`). Full docs: [docs site](docs/index.md) · [E2E Pipeline](docs/e2e-pipeline.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md) · [Glossary](docs/glossary.md).
+**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.122** / **0.151**) on native test windows. Unified comparison: `python scripts/compare_forecasts.py`. Root E2E CLI: `python main.py --model naive` (ingest → detect → clean → split → forecast → metrics → `final_predictions.csv`; `--output_path` / `--save_clean_data` optional). Tutorial: [`notebooks/04_forecasting_tutorial.ipynb`](notebooks/04_forecasting_tutorial.ipynb). **Production cleaning is unchanged** (~248 corrected intervals via `generate_clean_data.py`). Full docs: [docs site](docs/index.md) · [E2E Pipeline](docs/e2e-pipeline.md) · [Forecasting Tutorial](docs/forecasting-tutorial.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md) · [Glossary](docs/glossary.md).
 
 ---
 
@@ -30,7 +30,9 @@ This repository implements a phased ML pipeline:
 | **Phase 3 Week 8 Day 2** | E2E pipeline scaffold (`main.py`) | **Complete** |
 | **Phase 3 Week 8 Day 3** | E2E detect + interpolate + `--save_clean_data` | **Complete** |
 | **Phase 3 Week 8 Day 4** | E2E split + CLI model routing | **Complete** |
-| **Phase 3 (next)** | Research write-up · tutorial notebook | Planned |
+| **Phase 3 Week 8 Day 5** | E2E metrics + prediction CSV export | **Complete** |
+| **Phase 3 Week 9 Days 1–2** | Forecasting tutorial notebook | **Complete** |
+| **Phase 3 (next)** | Research write-up | Planned |
 
 All work uses publicly available data. No proprietary datasets or systems are referenced.
 
@@ -193,7 +195,8 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [LSTM Prep](docs/lstm-prep.md) | Phase 3 Week 7 Day 3 sliding-window sequence tensors |
 | [LSTM Forecasting](docs/lstm-forecasting.md) | Phase 3 Week 7 Days 4–5 LSTM training and inference |
 | [Forecast Model Comparison](docs/forecast-model-comparison.md) | Phase 3 Week 8 unified ladder scoring and visualization |
-| [E2E Pipeline](docs/e2e-pipeline.md) | Phase 3 Week 8 Days 2–4 root `main.py` CLI (ingest → detect → clean → forecast) |
+| [E2E Pipeline](docs/e2e-pipeline.md) | Phase 3 Week 8 Days 2–5 root `main.py` CLI (ingest → forecast → metrics → CSV) |
+| [Forecasting Tutorial](docs/forecasting-tutorial.md) | Phase 3 Week 9 CMU educational notebook (XGBoost path) |
 | [Phase 3 Strategy](docs/phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](docs/glossary.md) | Shared plain-English and technical term definitions |
 
@@ -211,12 +214,13 @@ mkdocs build    # output to site/
 
 ### CLI
 
-Root E2E entry (Days 2–4: ingest → detect → clean → split → `--model` forecast):
+Root E2E entry (Days 2–5: ingest → detect → clean → split → `--model` forecast → metrics → CSV):
 
 ```bash
 python main.py --model naive
 python main.py --model xgboost
 python main.py --save_clean_data
+python main.py --output_path data/processed/final_predictions.csv
 python main.py --help
 ```
 
@@ -405,6 +409,7 @@ Full methodology: [Anomaly Tuning Results](docs/anomaly-tuning-results.md) · me
 - [`notebooks/01_data_ingestion_and_schema_check.ipynb`](notebooks/01_data_ingestion_and_schema_check.ipynb) — ingestion and schema validation
 - [`notebooks/02_exploratory_data_analysis.ipynb`](notebooks/02_exploratory_data_analysis.ipynb) — Phase 1 Week 2 EDA
 - [`notebooks/03_anomaly_detection.ipynb`](notebooks/03_anomaly_detection.ipynb) — Phase 2 Week 4 CMU tutorial: unsupervised detection, benchmark evaluation, and consumption interpolation
+- [`notebooks/04_forecasting_tutorial.ipynb`](notebooks/04_forecasting_tutorial.ipynb) — Phase 3 Week 9 CMU tutorial: chronological split, lags, XGBoost, metrics, Actual vs Predicted ([docs](docs/forecasting-tutorial.md))
 
 ---
 

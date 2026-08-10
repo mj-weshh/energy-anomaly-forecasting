@@ -248,6 +248,7 @@ Writes `data/processed/clean_smart_meter_data.csv` by default (5000 rows, gitign
 | `src/data/ingest_data.py` | **Canonical source** — import in scripts, tests, and future modules |
 | `notebooks/01_data_ingestion_and_schema_check.ipynb` | **Portable copy** — inline functions for Colab/Kaggle where `src/` may not be on `PYTHONPATH` |
 | `notebooks/03_anomaly_detection.ipynb` | **Phase 2 tutorial** — imports `detect_anomalies`, `evaluate_anomaly_model`, and `interpolate_anomalies` from `src/`; educational mirror of the verification scripts |
+| `notebooks/04_forecasting_tutorial.ipynb` | **Phase 3 tutorial** — chronological split, lag demo, XGBoost train/score, Actual vs Predicted; see [Forecasting Tutorial](forecasting-tutorial.md) |
 | `src/visualization/visualize.py` | **Canonical EDA plots** — shared by notebook and export script |
 
 When ingestion or visualization logic changes, update the Python module first, then sync the notebook.
@@ -267,7 +268,7 @@ This prevents silent data quality issues from propagating into Phase 2 and Phase
 
 ### Root E2E entry point delegates to `src/`
 
-`main.py` is the consolidating CLI for Phase 1–3. It imports public helpers (`load_smart_meter_data`, `build_all_features`, `detect_anomalies`, `interpolate_anomalies`, `time_series_split`, and forecast trainers) rather than duplicating pipeline logic. Days 2–4 cover ingest → features → Isolation Forest → in-memory clean → chronological split → `--model` forecasting. See [E2E Pipeline](e2e-pipeline.md).
+`main.py` is the consolidating CLI for Phase 1–3. It imports public helpers (`load_smart_meter_data`, `build_all_features`, `detect_anomalies`, `interpolate_anomalies`, `time_series_split`, forecast trainers, and `evaluate_forecast` metrics) rather than duplicating pipeline logic. Days 2–5 cover ingest → features → Isolation Forest → in-memory clean → chronological split → `--model` forecasting → MAE/RMSE/MAPE → `final_predictions.csv`. See [E2E Pipeline](e2e-pipeline.md).
 
 ### Documentation figures from scripts
 
@@ -293,7 +294,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
 | **2 — Anomaly Detection** | Feature engineering, IF/DBSCAN, clean dataset, educational notebook | `src/features/build_features.py`, `src/models/train_anomaly_models.py`, `src/data/clean_data.py`, `notebooks/03_anomaly_detection.ipynb` |
-| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive baseline, Prophet, XGBoost, LSTM, unified comparison, E2E CLI through forecasting | `main.py`, `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`, `lstm_model.py`, `build_features.create_supervised_lags`, `build_features.create_sequences`, `compare_forecasts.py` |
+| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive baseline, Prophet, XGBoost, LSTM, unified comparison, E2E CLI through eval/export, forecasting tutorial | `main.py`, `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`, `lstm_model.py`, `build_features.create_supervised_lags`, `build_features.create_sequences`, `compare_forecasts.py`, `notebooks/04_forecasting_tutorial.ipynb` |
 
 ---
 
@@ -319,8 +320,8 @@ Phase 3 forecasting uses scikit-learn metrics, Prophet for the statistical basel
 
     **Module map:** `ingest_data` -> `build_features` -> `train_anomaly_models` -> `clean_data` / `clean_dataset` -> `make_forecast_dataset` / `train_forecast_models` / `lstm_model` / `evaluate_forecast` / `create_supervised_lags` / `create_sequences`.
 
-    **Script inventory:** Phase 3 includes `main.py` (E2E CLI through forecast routing), `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, and `compare_forecasts.py`.
+    **Script inventory:** Phase 3 includes `main.py` (E2E CLI through metrics + `final_predictions.csv`), `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, and `compare_forecasts.py`. Tutorial: `notebooks/04_forecasting_tutorial.ipynb`.
 
     **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink); `python scripts/compare_forecasts.py` (forecast comparison PNG).
 
-    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md) · [Forecast Model Comparison](forecast-model-comparison.md) · [E2E Pipeline](e2e-pipeline.md) · [Phase 3 Strategy](phase3-strategy.md).
+    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md) · [Forecast Model Comparison](forecast-model-comparison.md) · [E2E Pipeline](e2e-pipeline.md) · [Forecasting Tutorial](forecasting-tutorial.md) · [Phase 3 Strategy](phase3-strategy.md).

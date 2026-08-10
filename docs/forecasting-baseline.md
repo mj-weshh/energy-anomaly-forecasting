@@ -119,7 +119,8 @@ Per [Phase 3 Strategy](phase3-strategy.md):
 3. ~~LSTM sliding windows~~ — **done:** [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 4. ~~Unified model comparison~~ — **done:** [Forecast Model Comparison](forecast-model-comparison.md)
 5. ~~E2E CLI~~ — **done:** [E2E Pipeline](e2e-pipeline.md) uses `time_series_split` + naive (and other `--model` routes)
-6. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
+6. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
+7. Research write-up (`forecasting-research.md`) *(planned)*
 
 Each model must be scored with the same chronological cut and `evaluate_forecast` helpers.
 
@@ -149,6 +150,7 @@ python scripts/evaluate_naive_baseline.py
 
 - [Phase 3 Strategy](phase3-strategy.md) — full forecasting ladder and evaluation protocol
 - [E2E Pipeline](e2e-pipeline.md) — root CLI uses `time_series_split` + naive (and other `--model` routes)
+- [Forecasting Tutorial](forecasting-tutorial.md) — CMU educational notebook
 - [Clean Dataset](clean-data.md) — Phase 2 imputation artifact
 - [Architecture](architecture.md) — repository layout
 - [Glossary](glossary.md) — MAE, RMSE, MAPE, seasonal naive, forecast split

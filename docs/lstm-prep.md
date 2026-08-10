@@ -119,9 +119,10 @@ The clean artifact already includes temporal columns from production cleaning. L
 
 ## What's Next
 
-1. **LSTM architecture, training, and inference** — see [LSTM Forecasting](lstm-forecasting.md) (Week 7 Days 4–5 complete)
-2. **Unified model comparison** — see [Forecast Model Comparison](forecast-model-comparison.md) (Week 8 Day 1)
-3. Research write-up and tutorial notebook (deferred)
+1. ~~**LSTM architecture, training, and inference**~~ — **done:** [LSTM Forecasting](lstm-forecasting.md)
+2. ~~**Unified model comparison**~~ — **done:** [Forecast Model Comparison](forecast-model-comparison.md)
+3. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
+4. Research write-up (`forecasting-research.md`) *(planned)*
 
 ---
 

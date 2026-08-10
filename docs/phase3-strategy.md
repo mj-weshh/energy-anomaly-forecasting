@@ -13,10 +13,11 @@ Planning notes for the final technical phase: forecasting. Phase 1 (ingestion / 
     - **XGBoost shipped (Week 7):** Supervised lags + gradient-boosted regressor — see [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
     - **LSTM shipped (Week 7 Days 3–5):** PyTorch sequence prep + `EnergyLSTM` — see [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md).
     - **Unified comparison shipped (Week 8 Day 1):** All four models via `compare_forecasts.py` — see [Forecast Model Comparison](forecast-model-comparison.md).
-    - **E2E CLI shipped (Week 8 Days 2–4):** Root `main.py` wires ingest → detect → clean → split → `--model` forecast — see [E2E Pipeline](e2e-pipeline.md).
+    - **E2E CLI shipped (Week 8 Days 2–5):** Root `main.py` wires ingest → detect → clean → split → `--model` forecast → metrics → prediction CSV — see [E2E Pipeline](e2e-pipeline.md).
+    - **Tutorial shipped (Week 9):** [Forecasting Tutorial](forecasting-tutorial.md) · [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb).
     - **Terms:** [Glossary](glossary.md) — imputation, temporal split; forecasting metrics (MAE / RMSE / MAPE).
 
-**Status:** Week 6 Day 1–3, Week 7, and Week 8 Day 1–4 **complete**; research write-up and tutorial notebook planned next  
+**Status:** Week 6–8 and Week 9 tutorial **complete**; research write-up planned next  
 **Builds on:** [Clean Dataset](clean-data.md), [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md), [Architecture](architecture.md), [Forecasting Baseline](forecasting-baseline.md)
 
 ---
@@ -146,6 +147,7 @@ Auto-ARIMA remains deferred.
 | **Day 2 done** | argparse, INFO logging, `load_smart_meter_data` + `build_all_features` |
 | **Day 3 done** | `detect_anomalies` (Isolation Forest), `interpolate_anomalies`, optional `--save_clean_data` |
 | **Day 4 done** | `time_series_split` + `run_selected_forecast` (`naive` / `prophet` / `xgboost` / `lstm`) |
+| **Day 5 done** | MAE / RMSE / MAPE logs, `--output_path` → `final_predictions.csv`, LSTM cleanup, completion log |
 | **Code** | `main.py` — [E2E Pipeline](e2e-pipeline.md) |
 
 `main.py` trains **one** model per run. For the four-model MAE/RMSE table and PNG, use `compare_forecasts.py` — [Forecast Model Comparison](forecast-model-comparison.md).
@@ -158,6 +160,7 @@ flowchart LR
   detect --> cleanMem[interpolate_anomalies]
   cleanMem --> splitE2E[time_series_split]
   splitE2E --> route[run_selected_forecast]
+  route --> evalExport[evaluate_and_export_CSV]
   clean[CleanCSV_5000] --> split[Chronological_70_15_15]
   split --> naive[Naive_48lag]
   split --> stats[Prophet]
@@ -167,7 +170,7 @@ flowchart LR
   stats --> compare
   xgb --> compare
   lstm --> compare
-  compare --> docs[forecasting_research_and_tutorial]
+  compare --> research[forecasting_research_planned]
 ```
 
 ---
@@ -179,7 +182,7 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 | Deliverable | Purpose |
 |-------------|---------|
 | [`docs/forecasting-research.md`](forecasting-research.md) *(planned)* | Research write-up: how predictable the load profile is, which features mattered, model limits |
-| [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb) *(planned)* | Student-facing tutorial: chronological split and model progression |
+| [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb) · [Forecasting Tutorial](forecasting-tutorial.md) | Student-facing tutorial: chronological split, lags, XGBoost, metrics, plot |
 | README + `requirements.txt` polish | Final dependency list and Phase 3 quick-start |
 | Handover slide deck | Summary for the close-out meeting |
 
@@ -205,7 +208,11 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
 **Done (Week 8 Day 4):** `time_series_split` + `run_selected_forecast` for naive / Prophet / XGBoost / LSTM — see [E2E Pipeline](e2e-pipeline.md).
 
-**Model ladder complete. E2E consolidation complete.** Still deferred:
+**Done (Week 8 Day 5):** Test metrics, `--output_path` / `final_predictions.csv`, LSTM memory cleanup, completion log — see [E2E Pipeline](e2e-pipeline.md).
+
+**Done (Week 9 Days 1–2):** Forecasting tutorial notebook — see [Forecasting Tutorial](forecasting-tutorial.md).
+
+**Model ladder complete. E2E consolidation complete. Tutorial shipped.** Still deferred:
 
 - Whether weather stays in the exogenous set after ablation-style checks (Phase 2 already showed weak linear weather signal for *anomaly* detection; forecasting may differ)
 - Auto-ARIMA trainer
@@ -233,7 +240,7 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
     **Unified comparison:** `python scripts/compare_forecasts.py` — all four models, Markdown table, PNG asset.
 
-    **E2E CLI:** `python main.py --model naive` (or `prophet` / `xgboost` / `lstm`) — full path through forecast; `--save_clean_data` optional; `--epochs` for LSTM.
+    **E2E CLI:** `python main.py --model naive` (or `prophet` / `xgboost` / `lstm`) — full path through metrics and CSV export; `--save_clean_data` / `--output_path` optional; `--epochs` for LSTM.
 
     **Modularity:** Production forecast scripts load `clean_smart_meter_data.csv` from `generate_clean_data.py`. E2E `main.py` builds a clean frame in memory, splits chronologically, and trains one selected forecaster via `src/` helpers.
 
@@ -248,7 +255,8 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 - [LSTM Prep](lstm-prep.md) — Week 7 Day 3 sequence tensors
 - [LSTM Forecasting](lstm-forecasting.md) — Week 7 Days 4–5 LSTM trainer
 - [Forecast Model Comparison](forecast-model-comparison.md) — Week 8 Day 1 unified ladder
-- [E2E Pipeline](e2e-pipeline.md) — Week 8 Days 2–4 root CLI (ingest → detect → clean → forecast)
+- [E2E Pipeline](e2e-pipeline.md) — Week 8 Days 2–5 root CLI (ingest → forecast → metrics → CSV)
+- [Forecasting Tutorial](forecasting-tutorial.md) — Week 9 CMU educational notebook
 - [Clean Dataset](clean-data.md) — Phase 2 imputation artifact for Phase 3
 - [Anomaly Detection](anomaly-detection.md) — Isolation Forest production path used for cleaning
 - [Feature Engineering](feature-engineering.md) — temporal and rolling features to reuse / extend for lags

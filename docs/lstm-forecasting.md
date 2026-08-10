@@ -153,10 +153,11 @@ If LSTM-specific scaling is added later, apply `scaler.inverse_transform` to bot
 
 Per [Phase 3 Strategy](phase3-strategy.md):
 
-1. **Unified model comparison** — [Forecast Model Comparison](forecast-model-comparison.md) (Week 8 Day 1 complete)
-2. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
-3. Hyperparameter tuning (hidden size, epochs, learning rate)
-4. Early stopping and model checkpointing
+1. ~~**Unified model comparison**~~ — **done:** [Forecast Model Comparison](forecast-model-comparison.md)
+2. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
+3. Research write-up (`forecasting-research.md`) *(planned)*
+4. Hyperparameter tuning (hidden size, epochs, learning rate)
+5. Early stopping and model checkpointing
 
 ---
 
@@ -185,6 +186,7 @@ python scripts/compare_forecasts.py
 
 - [LSTM Prep](lstm-prep.md) — 3D sequence generation
 - [Forecast Model Comparison](forecast-model-comparison.md) — side-by-side ladder scoring
+- [Forecasting Tutorial](forecasting-tutorial.md) — CMU educational notebook
 - [XGBoost Forecasting](xgboost-forecasting.md) — tabular gradient-boosted baseline
 - [Prophet Baseline](prophet-baseline.md) — statistical floor
 - [Forecasting Baseline](forecasting-baseline.md) — gate, split, metrics
