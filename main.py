@@ -253,6 +253,9 @@ def run_selected_forecast(
         model = train_lstm_model(model, train_loader, val_loader, epochs=epochs)
         y_true = np.asarray(y_test, dtype=float).reshape(-1)
         y_pred = predict_lstm(model, test_loader)
+        # Drop heavy training artifacts before returning (helps if callers loop models).
+        del model, train_loader, val_loader, test_loader
+        del X, y, X_train, X_val, X_test, y_train, y_val, y_test, data
         return timestamps, y_true, np.asarray(y_pred, dtype=float)
 
     raise ValueError(f"Unsupported model: {model_name}")
@@ -263,7 +266,7 @@ def main() -> None:
 
     Days 2–3: ingest, features, Isolation Forest, interpolate, optional save.
     Day 4: chronological split and CLI-selected forecast training.
-    Day 5: test-set metrics and CSV export of final predictions.
+    Day 5: test-set metrics, CSV export, and memory cleanup after inference.
     """
     args = parse_args()
     logger.info(
@@ -371,6 +374,7 @@ def main() -> None:
         len(predictions_df),
         output_path.resolve(),
     )
+    logger.info("Pipeline execution completed successfully.")
 
 
 if __name__ == "__main__":
