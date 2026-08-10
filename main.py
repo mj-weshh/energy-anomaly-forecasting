@@ -28,6 +28,11 @@ from src.features.build_features import (
     create_sequences,
     create_supervised_lags,
 )
+from src.models.evaluate_forecast import (
+    mean_absolute_error_forecast,
+    mean_absolute_percentage_error_forecast,
+    root_mean_squared_error_forecast,
+)
 from src.models.lstm_model import EnergyLSTM
 from src.models.train_anomaly_models import detect_anomalies
 from src.models.train_forecast_models import (
@@ -76,8 +81,8 @@ def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for the E2E pipeline.
 
     Returns:
-        Parsed namespace with ``data_path``, ``model``, ``epochs``, and
-        ``save_clean_data``.
+        Parsed namespace with ``data_path``, ``model``, ``epochs``,
+        ``save_clean_data``, and ``output_path``.
     """
     parser = argparse.ArgumentParser(
         description=(
@@ -117,6 +122,15 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Save interpolated clean dataframe to "
             "data/processed/clean_pipeline_output.csv"
+        ),
+    )
+    parser.add_argument(
+        "--output_path",
+        type=Path,
+        default=Path("data/processed/final_predictions.csv"),
+        help=(
+            "Destination CSV for test timestamps with y_true and y_pred. "
+            "Default: data/processed/final_predictions.csv"
         ),
     )
     return parser.parse_args()
@@ -159,7 +173,7 @@ def run_selected_forecast(
     val_df: pd.DataFrame,
     test_df: pd.DataFrame,
     epochs: int,
-) -> np.ndarray:
+) -> tuple[pd.Series, np.ndarray, np.ndarray]:
     """Train/predict with the CLI-selected forecaster using native prep.
 
     Args:
@@ -171,23 +185,29 @@ def run_selected_forecast(
         epochs: LSTM training epochs from ``--epochs``.
 
     Returns:
-        1-D NumPy array of test-window predictions.
+        Tuple of ``(timestamps, y_true, y_pred)`` length-matched for the
+        model's native test window (XGBoost/LSTM may be shorter than the
+        raw chronological ``test_df`` after lag/sequence warm-up).
     """
     del val_df  # reserved for models that monitor validation during fit
 
     if model_name == "naive":
         logger.info("Training forecast model: naive (seasonal persistence) ...")
+        timestamps = test_df["Timestamp"].reset_index(drop=True)
+        y_true = np.asarray(test_df[TARGET_COLUMN], dtype=float)
         y_pred = naive_seasonal_forecast(
             train_df[TARGET_COLUMN],
             test_df[TARGET_COLUMN],
             seasonal_periods=SEASONAL_PERIODS,
         )
-        return np.asarray(y_pred, dtype=float)
+        return timestamps, y_true, np.asarray(y_pred, dtype=float)
 
     if model_name == "prophet":
         logger.info("Training forecast model: prophet ...")
+        timestamps = test_df["Timestamp"].reset_index(drop=True)
+        y_true = np.asarray(test_df[TARGET_COLUMN], dtype=float)
         y_pred = train_prophet_model(train_df, test_df)
-        return np.asarray(y_pred, dtype=float)
+        return timestamps, y_true, np.asarray(y_pred, dtype=float)
 
     if model_name == "xgboost":
         logger.info("Training forecast model: xgboost (supervised lags) ...")
@@ -199,8 +219,10 @@ def run_selected_forecast(
             x_val[XGBOOST_FEATURE_COLUMNS],
             x_val[TARGET_COLUMN],
         )
+        timestamps = x_test["Timestamp"].reset_index(drop=True)
+        y_true = np.asarray(x_test[TARGET_COLUMN], dtype=float)
         y_pred = model.predict(x_test[XGBOOST_FEATURE_COLUMNS])
-        return np.asarray(y_pred, dtype=float)
+        return timestamps, y_true, np.asarray(y_pred, dtype=float)
 
     if model_name == "lstm":
         logger.info(
@@ -210,7 +232,14 @@ def run_selected_forecast(
         )
         data = df_clean[LSTM_FEATURE_COLUMNS].to_numpy(dtype=np.float64)
         X, y = create_sequences(data, seq_length=SEQ_LENGTH)
+        # Target timestamp is the row immediately after each input window.
+        sequence_timestamps = df_clean["Timestamp"].iloc[SEQ_LENGTH:].reset_index(
+            drop=True
+        )
         X_train, X_val, X_test, y_train, y_val, y_test = _split_sequence_arrays(X, y)
+        n = len(X)
+        val_end = int(n * (TRAIN_PCT + VAL_PCT))
+        timestamps = sequence_timestamps.iloc[val_end:].reset_index(drop=True)
         train_loader = make_lstm_dataloader(
             X_train, y_train, batch_size=BATCH_SIZE, shuffle=False
         )
@@ -222,8 +251,12 @@ def run_selected_forecast(
         )
         model = EnergyLSTM(input_size=len(LSTM_FEATURE_COLUMNS))
         model = train_lstm_model(model, train_loader, val_loader, epochs=epochs)
+        y_true = np.asarray(y_test, dtype=float).reshape(-1)
         y_pred = predict_lstm(model, test_loader)
-        return np.asarray(y_pred, dtype=float)
+        # Drop heavy training artifacts before returning (helps if callers loop models).
+        del model, train_loader, val_loader, test_loader
+        del X, y, X_train, X_val, X_test, y_train, y_val, y_test, data
+        return timestamps, y_true, np.asarray(y_pred, dtype=float)
 
     raise ValueError(f"Unsupported model: {model_name}")
 
@@ -233,15 +266,17 @@ def main() -> None:
 
     Days 2–3: ingest, features, Isolation Forest, interpolate, optional save.
     Day 4: chronological split and CLI-selected forecast training.
+    Day 5: test-set metrics, CSV export, and memory cleanup after inference.
     """
     args = parse_args()
     logger.info(
         "E2E pipeline starting (model=%s, epochs=%s, data_path=%s, "
-        "save_clean_data=%s)",
+        "save_clean_data=%s, output_path=%s)",
         args.model,
         args.epochs,
         args.data_path,
         args.save_clean_data,
+        args.output_path,
     )
 
     data_path = Path(args.data_path)
@@ -293,7 +328,7 @@ def main() -> None:
             frame["Timestamp"].iloc[-1],
         )
 
-    y_pred = run_selected_forecast(
+    timestamps, y_true, y_pred = run_selected_forecast(
         args.model,
         df_clean,
         train_df,
@@ -312,6 +347,34 @@ def main() -> None:
         len(preview),
         np.array2string(preview, precision=6, separator=", "),
     )
+
+    mae = mean_absolute_error_forecast(y_true, y_pred)
+    rmse = root_mean_squared_error_forecast(y_true, y_pred)
+    mape = mean_absolute_percentage_error_forecast(y_true, y_pred)
+    logger.info("Final Model Evaluation - MAE: %s", mae)
+    logger.info("Final Model Evaluation - RMSE: %s", rmse)
+    logger.info("Final Model Evaluation - MAPE: %s%%", mape)
+
+    if len(timestamps) != len(y_pred):
+        raise ValueError(
+            f"Timestamp/prediction length mismatch: {len(timestamps)} vs {len(y_pred)}."
+        )
+    predictions_df = pd.DataFrame(
+        {
+            "Timestamp": timestamps,
+            "y_true": y_true,
+            "y_pred": y_pred,
+        }
+    )
+    output_path = Path(args.output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    predictions_df.to_csv(output_path, index=False)
+    logger.info(
+        "Saved final predictions (%s rows) to %s",
+        len(predictions_df),
+        output_path.resolve(),
+    )
+    logger.info("Pipeline execution completed successfully.")
 
 
 if __name__ == "__main__":
