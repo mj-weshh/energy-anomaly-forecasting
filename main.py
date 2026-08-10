@@ -28,6 +28,11 @@ from src.features.build_features import (
     create_sequences,
     create_supervised_lags,
 )
+from src.models.evaluate_forecast import (
+    mean_absolute_error_forecast,
+    mean_absolute_percentage_error_forecast,
+    root_mean_squared_error_forecast,
+)
 from src.models.lstm_model import EnergyLSTM
 from src.models.train_anomaly_models import detect_anomalies
 from src.models.train_forecast_models import (
@@ -159,7 +164,7 @@ def run_selected_forecast(
     val_df: pd.DataFrame,
     test_df: pd.DataFrame,
     epochs: int,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     """Train/predict with the CLI-selected forecaster using native prep.
 
     Args:
@@ -171,23 +176,27 @@ def run_selected_forecast(
         epochs: LSTM training epochs from ``--epochs``.
 
     Returns:
-        1-D NumPy array of test-window predictions.
+        Tuple of ``(y_true, y_pred)`` — length-matched 1-D float arrays for
+        the model's native test window (XGBoost/LSTM may be shorter than the
+        raw chronological ``test_df`` after lag/sequence warm-up).
     """
     del val_df  # reserved for models that monitor validation during fit
 
     if model_name == "naive":
         logger.info("Training forecast model: naive (seasonal persistence) ...")
+        y_true = np.asarray(test_df[TARGET_COLUMN], dtype=float)
         y_pred = naive_seasonal_forecast(
             train_df[TARGET_COLUMN],
             test_df[TARGET_COLUMN],
             seasonal_periods=SEASONAL_PERIODS,
         )
-        return np.asarray(y_pred, dtype=float)
+        return y_true, np.asarray(y_pred, dtype=float)
 
     if model_name == "prophet":
         logger.info("Training forecast model: prophet ...")
+        y_true = np.asarray(test_df[TARGET_COLUMN], dtype=float)
         y_pred = train_prophet_model(train_df, test_df)
-        return np.asarray(y_pred, dtype=float)
+        return y_true, np.asarray(y_pred, dtype=float)
 
     if model_name == "xgboost":
         logger.info("Training forecast model: xgboost (supervised lags) ...")
@@ -199,8 +208,9 @@ def run_selected_forecast(
             x_val[XGBOOST_FEATURE_COLUMNS],
             x_val[TARGET_COLUMN],
         )
+        y_true = np.asarray(x_test[TARGET_COLUMN], dtype=float)
         y_pred = model.predict(x_test[XGBOOST_FEATURE_COLUMNS])
-        return np.asarray(y_pred, dtype=float)
+        return y_true, np.asarray(y_pred, dtype=float)
 
     if model_name == "lstm":
         logger.info(
@@ -222,8 +232,9 @@ def run_selected_forecast(
         )
         model = EnergyLSTM(input_size=len(LSTM_FEATURE_COLUMNS))
         model = train_lstm_model(model, train_loader, val_loader, epochs=epochs)
+        y_true = np.asarray(y_test, dtype=float).reshape(-1)
         y_pred = predict_lstm(model, test_loader)
-        return np.asarray(y_pred, dtype=float)
+        return y_true, np.asarray(y_pred, dtype=float)
 
     raise ValueError(f"Unsupported model: {model_name}")
 
@@ -233,6 +244,7 @@ def main() -> None:
 
     Days 2–3: ingest, features, Isolation Forest, interpolate, optional save.
     Day 4: chronological split and CLI-selected forecast training.
+    Day 5: test-set MAE / RMSE / MAPE reporting for the selected model.
     """
     args = parse_args()
     logger.info(
@@ -293,7 +305,7 @@ def main() -> None:
             frame["Timestamp"].iloc[-1],
         )
 
-    y_pred = run_selected_forecast(
+    y_true, y_pred = run_selected_forecast(
         args.model,
         df_clean,
         train_df,
@@ -312,6 +324,13 @@ def main() -> None:
         len(preview),
         np.array2string(preview, precision=6, separator=", "),
     )
+
+    mae = mean_absolute_error_forecast(y_true, y_pred)
+    rmse = root_mean_squared_error_forecast(y_true, y_pred)
+    mape = mean_absolute_percentage_error_forecast(y_true, y_pred)
+    logger.info("Final Model Evaluation - MAE: %s", mae)
+    logger.info("Final Model Evaluation - RMSE: %s", rmse)
+    logger.info("Final Model Evaluation - MAPE: %s%%", mape)
 
 
 if __name__ == "__main__":
