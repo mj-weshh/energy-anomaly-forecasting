@@ -46,7 +46,7 @@ Plain-English definitions for terms used across this project. Each entry include
 
 **Business:** One command at the project root that walks the meter data through the full analysis pipeline — so contributors do not need to remember a dozen separate scripts.
 
-**Technical:** Repository-root `main.py` with argparse (`--data_path`, `--model`, `--epochs`, `--save_clean_data`) and INFO logging. Week 8 Days 2–3 wire `load_smart_meter_data` → `build_all_features` → `detect_anomalies` (Isolation Forest) → `interpolate_anomalies`. `--model` forecasting is reserved for Day 4. See [E2E Pipeline](e2e-pipeline.md).
+**Technical:** Repository-root `main.py` with argparse (`--data_path`, `--model`, `--epochs`, `--save_clean_data`) and INFO logging. Week 8 Days 2–4 wire `load_smart_meter_data` → `build_all_features` → `detect_anomalies` (Isolation Forest) → `interpolate_anomalies` → `time_series_split` → `run_selected_forecast` (`naive` / `prophet` / `xgboost` / `lstm`). One model per run; use `compare_forecasts.py` for the four-model metrics table. See [E2E Pipeline](e2e-pipeline.md).
 
 ---
 
