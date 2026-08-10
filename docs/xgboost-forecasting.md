@@ -127,8 +127,9 @@ Per [Phase 3 Strategy](phase3-strategy.md):
 1. ~~LSTM~~ sliding windows → [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 2. ~~Unified model comparison~~ → [Forecast Model Comparison](forecast-model-comparison.md)
 3. Hyperparameter tuning for XGBoost (`n_estimators`, `learning_rate`, feature ablation)
-4. Research write-up and tutorial notebook (`forecasting-research.md`, `04_forecasting_tutorial.ipynb`)
-5. Auto-ARIMA (deferred)
+4. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
+5. Research write-up (`forecasting-research.md`) *(planned)*
+6. Auto-ARIMA (deferred)
 
 Each model must use the same chronological cut and `evaluate_forecast` helpers.
 
@@ -167,6 +168,7 @@ python scripts/evaluate_xgboost.py
 - [XGBoost Prep](xgboost-prep.md) — supervised lag feature engineering
 - [LSTM Forecasting](lstm-forecasting.md) — recurrent baseline
 - [Forecast Model Comparison](forecast-model-comparison.md) — unified ladder scoring
+- [Forecasting Tutorial](forecasting-tutorial.md) — CMU educational XGBoost path
 - [Prophet Baseline](prophet-baseline.md) — statistical floor
 - [Forecasting Baseline](forecasting-baseline.md) — gate, split, metrics
 - [Feature Engineering](feature-engineering.md) — Phase 2 temporal columns reused here

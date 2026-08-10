@@ -46,7 +46,15 @@ Plain-English definitions for terms used across this project. Each entry include
 
 **Business:** One command at the project root that walks the meter data through the full analysis pipeline — so contributors do not need to remember a dozen separate scripts.
 
-**Technical:** Repository-root `main.py` with argparse (`--data_path`, `--model`, `--epochs`, `--save_clean_data`) and INFO logging. Week 8 Days 2–4 wire `load_smart_meter_data` → `build_all_features` → `detect_anomalies` (Isolation Forest) → `interpolate_anomalies` → `time_series_split` → `run_selected_forecast` (`naive` / `prophet` / `xgboost` / `lstm`). One model per run; use `compare_forecasts.py` for the four-model metrics table. See [E2E Pipeline](e2e-pipeline.md).
+**Technical:** Repository-root `main.py` with argparse (`--data_path`, `--model`, `--epochs`, `--save_clean_data`, `--output_path`) and INFO logging. Week 8 Days 2–5 wire `load_smart_meter_data` → `build_all_features` → `detect_anomalies` (Isolation Forest) → `interpolate_anomalies` → `time_series_split` → `run_selected_forecast` (`naive` / `prophet` / `xgboost` / `lstm`) → MAE/RMSE/MAPE logs → prediction CSV. One model per run; use `compare_forecasts.py` for the four-model metrics table. See [E2E Pipeline](e2e-pipeline.md).
+
+---
+
+## final_predictions
+
+**Business:** The file you can open after a pipeline run to see each test timestamp’s true consumption next to the model’s forecast.
+
+**Technical:** Written by `python main.py` to `--output_path` (default `data/processed/final_predictions.csv`) with columns `Timestamp`, `y_true`, `y_pred`. Length matches the selected model’s native test window (e.g. 750 for naive, 743 for XGBoost after lag warm-up). Path is under gitignored `data/processed/`. See [E2E Pipeline](e2e-pipeline.md).
 
 ---
 

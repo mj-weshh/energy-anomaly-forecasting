@@ -5,7 +5,7 @@ Open-source machine learning project for **energy consumption anomaly detection*
 !!! success "Executive summary"
 
     - **What this project does:** Turns smart-meter readings into trustworthy timelines — flag unusual consumption, clean gaps, and forecast demand.
-    - **Where we are:** Phases 1–2 are complete; Phase 3 forecasting ladder is **implemented** — naive floor → Prophet → XGBoost → LSTM → unified comparison. Week 8 E2E [`main.py`](e2e-pipeline.md) runs the full consolidating path through `--model` forecasting (Days 2–4 complete).
+    - **Where we are:** Phases 1–2 are complete; Phase 3 forecasting ladder is **implemented** — naive floor → Prophet → XGBoost → LSTM → unified comparison. Week 8 E2E [`main.py`](e2e-pipeline.md) runs the full consolidating path through metrics and CSV export (Days 2–5). Week 9 [Forecasting Tutorial](forecasting-tutorial.md) walks students through XGBoost on the clean timeline.
     - **Research headline:** Tuned anomaly models score better on held-out future data (**F1 0.460** vs **0.331** production baseline), but the default clean file still uses the conservative legacy recipe until leadership reviews artifact differences.
     - **Forecasting floors (test set, reproducible):** Naive MAE ≈ **0.171** / RMSE ≈ **0.214**; Prophet ≈ **0.121** / **0.149**; XGBoost ≈ **0.125** / **0.154**; LSTM ≈ **0.122** / **0.151**. Unified table: [Forecast Model Comparison](forecast-model-comparison.md) · individual pages: [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [LSTM Forecasting](lstm-forecasting.md).
     - **Terms:** See the [Glossary](glossary.md) for F1, MAE/RMSE/MAPE, imputation, and related metrics.
@@ -46,7 +46,9 @@ All work uses publicly available data only. No proprietary systems or datasets a
 | Phase 3 Week 8 Day 2 | E2E pipeline scaffold (`main.py` CLI + ingest + features) | **Complete** |
 | Phase 3 Week 8 Day 3 | E2E anomaly detection + in-memory clean + optional save | **Complete** |
 | Phase 3 Week 8 Day 4 | E2E chronological split + CLI model routing | **Complete** |
-| Phase 3 (next) | Research write-up · tutorial notebook | Planned |
+| Phase 3 Week 8 Day 5 | E2E metrics, prediction CSV export, completion log | **Complete** |
+| Phase 3 Week 9 Days 1–2 | Forecasting tutorial notebook (XGBoost path) | **Complete** |
+| Phase 3 (next) | Research write-up | Planned |
 
 ### Phase 1 Week 2 highlights
 
@@ -110,7 +112,13 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 - **Day 2:** Root `main.py` — argparse CLI, INFO logging, Phase 1 ingest + Phase 2 features
 - **Day 3:** Isolation Forest → `interpolate_anomalies` in memory; optional `--save_clean_data`
 - **Day 4:** `time_series_split` + `run_selected_forecast` for `naive` / `prophet` / `xgboost` / `lstm`
+- **Day 5:** MAE / RMSE / MAPE logs, `--output_path` → `final_predictions.csv`, completion message
 - Smoke-tested: `--model naive` → 750 preds; `--model xgboost` → 743 · notes: [E2E Pipeline](e2e-pipeline.md)
+
+### Phase 3 Week 9 — forecasting tutorial highlights
+
+- CMU-Africa notebook: chronological split, lag demo, XGBoost train/score, Actual vs Predicted (~3 days)
+- Notes: [Forecasting Tutorial](forecasting-tutorial.md) · [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb)
 
 ## Documentation
 
@@ -133,7 +141,8 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 | [LSTM Prep](lstm-prep.md) | Phase 3 Week 7 Day 3 sliding-window sequence tensors for PyTorch |
 | [LSTM Forecasting](lstm-forecasting.md) | Phase 3 Week 7 Days 4–5 LSTM architecture, training, and inference |
 | [Forecast Model Comparison](forecast-model-comparison.md) | Phase 3 Week 8 Day 1 unified ladder scoring and visualization |
-| [E2E Pipeline](e2e-pipeline.md) | Phase 3 Week 8 Days 2–4 root `main.py` CLI (ingest → detect → clean → forecast) |
+| [E2E Pipeline](e2e-pipeline.md) | Phase 3 Week 8 Days 2–5 root `main.py` CLI (ingest → forecast → metrics → CSV) |
+| [Forecasting Tutorial](forecasting-tutorial.md) | Phase 3 Week 9 CMU educational notebook (XGBoost path) |
 | [Phase 3 Strategy](phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](glossary.md) | Plain-English and technical definitions for metrics and pipeline terms |
 
@@ -147,7 +156,7 @@ Expected outcome: schema summary with shape `(5000, 7)`, zero nulls, and a conti
 
 ??? info "Technical deep dive"
 
-    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting ladder complete via `compare_forecasts.py` (naive + Prophet + XGBoost + LSTM). Week 8 E2E `main.py` consolidates ingest → detect → clean → single-model forecast (Days 2–4). Research write-up and tutorial notebook remain planned.
+    **Repository phases:** Phase 1 = ingest + EDA; Phase 2 = features + anomaly detection + clean artifact; Phase 3 = forecasting ladder complete via `compare_forecasts.py` (naive + Prophet + XGBoost + LSTM). Week 8 E2E `main.py` consolidates ingest → detect → clean → single-model forecast → metrics → CSV (Days 2–5). Week 9 forecasting tutorial notebook is shipped. Research write-up remains planned.
 
     **Fair-comparison metrics** (991-row temporal test): legacy IF 0.340 (production params) / 0.389 (val threshold) / enhanced IF 0.460. Source: `src/models/anomaly_config.py`.
 

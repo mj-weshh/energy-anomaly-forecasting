@@ -290,7 +290,8 @@ After ingestion and Phase 2 pass:
 6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see §9 and [Forecasting Baseline](forecasting-baseline.md))
 7. **Phase 3 Prophet + XGBoost** — statistical and tabular forecast baselines (see §10–11)
 8. **Phase 3 LSTM + comparison** — sequence prep, LSTM training, unified ladder (see §12–14)
-9. **E2E CLI** — root `main.py` ingest → detect → clean → forecast (see §15 and [E2E Pipeline](e2e-pipeline.md))
+9. **E2E CLI** — root `main.py` ingest → detect → clean → forecast → metrics → CSV (see §15 and [E2E Pipeline](e2e-pipeline.md))
+10. **Forecasting tutorial** — open `notebooks/04_forecasting_tutorial.ipynb` (see §16 and [Forecasting Tutorial](forecasting-tutorial.md))
 
 ---
 
@@ -376,20 +377,21 @@ Requires `prophet>=1.1.5`, `xgboost>=2.0.0`, and `torch>=2.0.0`. Runtime ~1–2 
 
 ---
 
-## 15. E2E Pipeline (Week 8 Days 2–4)
+## 15. E2E Pipeline (Week 8 Days 2–5)
 
-Run the consolidating root CLI (ingest → detect → clean → split → forecast):
+Run the consolidating root CLI (ingest → detect → clean → split → forecast → metrics → CSV):
 
 ```bash
 python main.py --model naive
 python main.py --model xgboost
 python main.py --save_clean_data
+python main.py --output_path data/processed/final_predictions.csv
 ```
 
 Expect INFO logs similar to:
 
 ```text
-INFO: E2E pipeline starting (model=naive, epochs=20, data_path=..., save_clean_data=...)
+INFO: E2E pipeline starting (model=naive, epochs=20, data_path=..., save_clean_data=..., output_path=...)
 INFO: Raw data loaded: shape=(5000, 7)
 INFO: Feature matrix ready: shape=(5000, 15) (47 rows with rolling-window warm-up NaNs; ...)
 INFO: Anomalies detected: 248 of 4953 scored rows
@@ -398,11 +400,27 @@ INFO: Chronological train/val/test split (70/15/15) ...
 INFO: train split: rows=3500, ...
 INFO: Forecast complete for model=naive: prediction_length=750
 INFO: Prediction preview (first 5 values): [...]
+INFO: Final Model Evaluation - MAE: ...
+INFO: Final Model Evaluation - RMSE: ...
+INFO: Final Model Evaluation - MAPE: ...%
+INFO: Saved final predictions (750 rows) to .../final_predictions.csv
+INFO: Pipeline execution completed successfully.
 ```
 
 With `--model xgboost`, expect `prediction_length=743` after lag warm-up. With `--save_clean_data`, also expect a save line for `data/processed/clean_pipeline_output.csv`.
 
-Flags: `--data_path`, `--model` (`naive` / `prophet` / `xgboost` / `lstm`), `--epochs` (LSTM), `--save_clean_data`. Details: [E2E Pipeline](e2e-pipeline.md).
+Flags: `--data_path`, `--model` (`naive` / `prophet` / `xgboost` / `lstm`), `--epochs` (LSTM), `--save_clean_data`, `--output_path`. Details: [E2E Pipeline](e2e-pipeline.md).
+
+## 16. Forecasting Tutorial (Week 9)
+
+After the clean CSV exists:
+
+```bash
+python scripts/generate_clean_data.py   # if needed
+jupyter notebook notebooks/04_forecasting_tutorial.ipynb
+```
+
+Walk through chronological split, lag features, XGBoost training, MAE/RMSE, and an Actual vs Predicted chart. Details: [Forecasting Tutorial](forecasting-tutorial.md).
 
 ??? info "Technical deep dive"
 
@@ -416,6 +434,8 @@ Flags: `--data_path`, `--model` (`naive` / `prophet` / `xgboost` / `lstm`), `--e
 
     **Phase 3 (Week 7 LSTM + Week 8 comparison):** `verify_lstm_prep.py`, `compare_forecasts.py` · `create_sequences` in `build_features.py` · `EnergyLSTM` in `lstm_model.py` · `predict_lstm` in `train_forecast_models.py`
 
-    **Phase 3 (Week 8 Days 2–4 E2E):** `python main.py --model naive` — ingest → detect → clean → `time_series_split` → `run_selected_forecast`; optional `--save_clean_data`
+    **Phase 3 (Week 8 Days 2–5 E2E):** `python main.py --model naive` — ingest → detect → clean → split → forecast → metrics → `final_predictions.csv`; optional `--save_clean_data` / `--output_path`
+
+    **Phase 3 (Week 9 tutorial):** `notebooks/04_forecasting_tutorial.ipynb` — [Forecasting Tutorial](forecasting-tutorial.md)
 
     **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`
