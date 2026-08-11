@@ -56,6 +56,48 @@ I'm treating Prophet as the **best default forecaster for this artifact and prot
 
 ---
 
+## Feature Importance: Weather vs. History
+
+Phase 1 EDA left a clear linear story: weather columns (`Temperature`, `Humidity`, `Wind_Speed`) had **near-zero Pearson correlation** with consumption, while history (`Avg_Past_Consumption`) was the strongest linear cue. Phase 2 anomaly tuning even saw a slight F1 *uplift* when weather was dropped. So the open forecasting question was honest: did XGBoost actually use temperature and humidity, or did lag / calendar features carry the model?
+
+I exported **gain** importance from the same default XGBoost path as [XGBoost Forecasting](xgboost-forecasting.md) — clean CSV → `create_supervised_lags` → chronological 70/15/15 → `train_xgboost_model` — via:
+
+```bash
+python scripts/export_xgboost_feature_importance.py
+```
+
+![XGBoost feature importance (gain) for the default forecast model](assets/xgboost_feature_importance.png)
+
+### What the chart actually says
+
+On this default run, **gain is spread thinly across almost every feature**. Approximate ordering (low → high gain):
+
+| Feature | Role | Gain (approx.) |
+|---------|------|----------------|
+| `is_weekend` | Calendar | **0** (unused) |
+| `Electricity_Consumed_lag_1` | History (t−1) | ~0.042 |
+| `day_of_week`, `hour` | Calendar | ~0.048–0.051 |
+| `Electricity_Consumed_lag_48` | History (t−48 / 24h) | ~0.052 |
+| `Temperature` | Weather | ~0.052 |
+| `Electricity_Consumed_lag_2` | History (t−2) | ~0.054 |
+| `month` | Calendar | ~0.054 |
+| `Humidity` | Weather | ~0.055 |
+
+A few takeaways I'm willing to stand behind:
+
+- **History did not monopolize the tree.** `lag_1` / `lag_2` / `lag_48` matter, but they are not a runaway top cluster. Daily lag (`lag_48`) sits mid-pack next to temperature — consistent with “yesterday same time” mattering, not with “only lags matter.”
+- **Weather is not dead for forecasting.** On this gain plot, `Humidity` and `Temperature` sit among the **highest** scores, even though Phase 1 linear correlation was tiny. That is not a contradiction: trees can use weak nonlinear / interaction structure that a Pearson matrix never sees. I will **not** copy the anomaly-detection “drop weather” conclusion into forecasting without a dedicated ablation.
+- **Calendar is mixed.** `hour`, `day_of_week`, and `month` contribute; `is_weekend` got zero gain on this fit (redundant with `day_of_week`, or unused under these hyperparameters).
+- **No single knob explains the model.** Gains from ~0.042–0.055 are close. Importance here is a diagnostic, not a license to strip the feature set to one lag column.
+
+### Bottom line for the weather vs. history debate
+
+For **anomaly detection**, weather looked optional. For **this XGBoost forecaster**, exogenous weather still shows up in gain alongside lag and calendar features. The predictive story looks more like “history + weak weather + calendar shared the work” than “lags carried everything.” That also helps explain why a univariate seasonal model (Prophet) can still win on MAE/RMSE: it encodes the dominant diurnal pattern without needing us to hand-craft which lag wins the importance chart.
+
+Reproducibility note: re-running the export script can shuffle ranks slightly when gains are this close; the qualitative pattern (shared importance, weather not zero, weekend unused) is what I'm documenting.
+
+---
+
 ## References
 
 - [Forecast Model Comparison](forecast-model-comparison.md) — reproducible ladder script and plot
@@ -63,5 +105,6 @@ I'm treating Prophet as the **best default forecaster for this artifact and prot
 - [Prophet Baseline](prophet-baseline.md) — statistical trainer
 - [XGBoost Forecasting](xgboost-forecasting.md) — tabular lag model
 - [LSTM Forecasting](lstm-forecasting.md) — sequence model
+- [EDA Insights](eda-insights.md) — Phase 1 weather vs history correlations
 - [Phase 3 Strategy](phase3-strategy.md) — model ladder plan
 - [Glossary](glossary.md) — MAE, RMSE, seasonal naive
