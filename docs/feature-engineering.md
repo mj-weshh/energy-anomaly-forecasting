@@ -190,7 +190,7 @@ Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 - **Week 8 Day 1 complete** — unified model comparison. See [Forecast Model Comparison](forecast-model-comparison.md).
 - **Week 8 Days 2–5 complete** — root `main.py` calls `build_all_features`, then Isolation Forest + interpolate + forecast routing + metrics/export. See [E2E Pipeline](e2e-pipeline.md).
 - **Week 9 tutorial complete** — [Forecasting Tutorial](forecasting-tutorial.md).
-- **Phase 3 research** — write-up still planned; see [Phase 3 Strategy](phase3-strategy.md).
+- **Phase 3 research** — write-up shipped: [Forecasting Research](forecasting-research.md).
 
 ??? info "Technical deep dive"
 

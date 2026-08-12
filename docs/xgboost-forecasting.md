@@ -128,7 +128,7 @@ Per [Phase 3 Strategy](phase3-strategy.md):
 2. ~~Unified model comparison~~ → [Forecast Model Comparison](forecast-model-comparison.md)
 3. Hyperparameter tuning for XGBoost (`n_estimators`, `learning_rate`, feature ablation)
 4. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-5. Research write-up (`forecasting-research.md`) *(planned)*
+5. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
 6. Auto-ARIMA (deferred)
 
 Each model must use the same chronological cut and `evaluate_forecast` helpers.

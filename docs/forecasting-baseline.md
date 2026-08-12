@@ -120,7 +120,7 @@ Per [Phase 3 Strategy](phase3-strategy.md):
 4. ~~Unified model comparison~~ — **done:** [Forecast Model Comparison](forecast-model-comparison.md)
 5. ~~E2E CLI~~ — **done:** [E2E Pipeline](e2e-pipeline.md) uses `time_series_split` + naive (and other `--model` routes)
 6. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-7. Research write-up (`forecasting-research.md`) *(planned)*
+7. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
 
 Each model must be scored with the same chronological cut and `evaluate_forecast` helpers.
 

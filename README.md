@@ -6,7 +6,7 @@
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built entirely on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
-**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.122** / **0.151**) on native test windows. Unified comparison: `python scripts/compare_forecasts.py`. Root E2E CLI: `python main.py --model naive` (ingest → detect → clean → split → forecast → metrics → `final_predictions.csv`; `--output_path` / `--save_clean_data` optional). Tutorial: [`notebooks/04_forecasting_tutorial.ipynb`](notebooks/04_forecasting_tutorial.ipynb). **Production cleaning is unchanged** (~248 corrected intervals via `generate_clean_data.py`). Full docs: [docs site](docs/index.md) · [E2E Pipeline](docs/e2e-pipeline.md) · [Forecasting Tutorial](docs/forecasting-tutorial.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md) · [Glossary](docs/glossary.md).
+**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.122** / **0.151**) on native test windows. Unified comparison: `python scripts/compare_forecasts.py`. Root E2E CLI: `python main.py --model naive` (ingest → detect → clean → split → forecast → metrics → `final_predictions.csv`; `--output_path` / `--save_clean_data` optional). Tutorial: [`notebooks/04_forecasting_tutorial.ipynb`](notebooks/04_forecasting_tutorial.ipynb). Research: [Forecasting Research](docs/forecasting-research.md) (Prophet leads default ladder). **Production cleaning is unchanged** (~248 corrected intervals via `generate_clean_data.py`). Full docs: [docs site](docs/index.md) · [E2E Pipeline](docs/e2e-pipeline.md) · [Forecasting Tutorial](docs/forecasting-tutorial.md) · [Forecasting Research](docs/forecasting-research.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md) · [Glossary](docs/glossary.md).
 
 ---
 
@@ -32,7 +32,7 @@ This repository implements a phased ML pipeline:
 | **Phase 3 Week 8 Day 4** | E2E split + CLI model routing | **Complete** |
 | **Phase 3 Week 8 Day 5** | E2E metrics + prediction CSV export | **Complete** |
 | **Phase 3 Week 9 Days 1–2** | Forecasting tutorial notebook | **Complete** |
-| **Phase 3 (next)** | Research write-up | Planned |
+| **Phase 3 Week 9 Days 3–4** | Forecasting research write-up | **Complete** |
 
 All work uses publicly available data. No proprietary datasets or systems are referenced.
 
@@ -197,6 +197,7 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Forecast Model Comparison](docs/forecast-model-comparison.md) | Phase 3 Week 8 unified ladder scoring and visualization |
 | [E2E Pipeline](docs/e2e-pipeline.md) | Phase 3 Week 8 Days 2–5 root `main.py` CLI (ingest → forecast → metrics → CSV) |
 | [Forecasting Tutorial](docs/forecasting-tutorial.md) | Phase 3 Week 9 CMU educational notebook (XGBoost path) |
+| [Forecasting Research](docs/forecasting-research.md) | Phase 3 Week 9 research write-up — ladder winner and weather vs history |
 | [Phase 3 Strategy](docs/phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](docs/glossary.md) | Shared plain-English and technical term definitions |
 

@@ -173,11 +173,11 @@ Per [Phase 3 Strategy](phase3-strategy.md):
 
 1. ~~**E2E pipeline consolidation**~~ — **done:** [E2E Pipeline](e2e-pipeline.md) (Days 2–5); `compare_forecasts.py` remains the side-by-side MAE/RMSE ladder aggregator
 2. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-3. Research write-up (`docs/forecasting-research.md`) synthesizing ladder results *(planned)*
+3. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
 4. Hyperparameter tuning across models
 5. Optional: aligned timestamp intersection for single-panel overlay plots
 
-The **model ladder**, **E2E CLI** (Week 8 Days 2–5), and **forecasting tutorial** (Week 9) are complete.
+The **model ladder**, **E2E CLI** (Week 8 Days 2–5), **forecasting tutorial**, and **research write-up** (Week 9) are complete.
 
 ---
 
@@ -220,6 +220,7 @@ mkdocs serve   # preview docs with embedded PNG
 - [LSTM Forecasting](lstm-forecasting.md) — recurrent model training and inference
 - [E2E Pipeline](e2e-pipeline.md) — Week 8 Days 2–5 root CLI (ingest → forecast → metrics → CSV)
 - [Forecasting Tutorial](forecasting-tutorial.md) — Week 9 CMU educational notebook
+- [Forecasting Research](forecasting-research.md) — Week 9 research write-up
 - [Phase 3 Strategy](phase3-strategy.md) — model ladder and evaluation protocol
 - [Architecture](architecture.md) — repository layout and script inventory
 - [Glossary](glossary.md) — MAE, RMSE, forecast model comparison

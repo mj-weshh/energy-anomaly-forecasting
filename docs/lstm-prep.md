@@ -122,7 +122,7 @@ The clean artifact already includes temporal columns from production cleaning. L
 1. ~~**LSTM architecture, training, and inference**~~ — **done:** [LSTM Forecasting](lstm-forecasting.md)
 2. ~~**Unified model comparison**~~ — **done:** [Forecast Model Comparison](forecast-model-comparison.md)
 3. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-4. Research write-up (`forecasting-research.md`) *(planned)*
+4. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
 
 ---
 

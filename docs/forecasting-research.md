@@ -9,7 +9,7 @@ Research notes on what Phase 3 actually taught us about forecasting half-hour sm
     - **Headline:** **Prophet** leads MAE and RMSE on the Week 8 default run; LSTM is close; all advanced models beat the naive seasonal floor.
     - **Terms:** [Glossary](glossary.md) — MAE, RMSE, seasonal naive, forecast model comparison.
 
-**Status:** Week 9 Days 3–4 — research write-up in progress  
+**Status:** Week 9 Days 3–4 complete — research write-up published  
 **Builds on:** [Forecast Model Comparison](forecast-model-comparison.md), [Forecasting Baseline](forecasting-baseline.md), [Phase 3 Strategy](phase3-strategy.md), [Clean Dataset](clean-data.md)
 
 ---
@@ -40,6 +40,10 @@ Example test metrics from the Week 8 default hyperparameter run:
 | LSTM | 0.122156 | 0.151200 | 747 |
 
 Lower MAE and RMSE are better. Test row counts differ because XGBoost and LSTM re-split after lag / sequence warm-up — so this is **not** one shared timestamp panel; it is a fair per-model native evaluation.
+
+![Forecast model comparison — actual vs predicted (~3-day window per model)](assets/forecast_comparison.png)
+
+The 2×2 figure above is the Week 8 presentation asset from `compare_forecasts.py` — Actual vs Predicted for each ladder model over a short test window. Use it to sanity-check the table: naive looks lagged; Prophet/LSTM look smoother; XGBoost sits in between.
 
 ### Who won — and why I'm not surprised
 
