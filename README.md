@@ -90,7 +90,7 @@ Key findings from exploratory analysis on the same dataset:
 
 Full report with all figures: [EDA Insights](docs/eda-insights.md)
 
-Regenerate doc figures: `python scripts/export_eda_assets.py` (EDA) · `python scripts/generate_mermaid_assets.py` (architecture PNGs)
+Regenerate doc figures: `python scripts/export_eda_assets.py` (EDA) · `python scripts/generate_mermaid_assets.py` (architecture PNGs) · `python scripts/compare_forecasts.py` (forecast comparison PNG) · `python scripts/export_xgboost_feature_importance.py` (importance PNG)
 
 ---
 
@@ -98,20 +98,23 @@ Regenerate doc figures: `python scripts/export_eda_assets.py` (EDA) · `python s
 
 ```
 energy-anomaly-forecasting/
-├── main.py                         # E2E CLI entry point (Week 8 Day 2+)
+├── main.py                         # E2E CLI (Week 8 Days 2–5: ingest → forecast → metrics → CSV)
 ├── data/
 │   ├── raw/                        # Canonical raw data location (optional)
 │   └── processed/                  # Generated clean CSV (gitignored)
 ├── docs/                           # Documentation (MkDocs source)
-│   └── assets/                     # Verification screenshots and EDA figures
+│   └── assets/                     # Verification screenshots and figures
 │       ├── eda/                    # Exported Phase 1 Week 2 plots (PNG)
-│       └── forecast_comparison.png # Phase 3 Week 8 model comparison plot
+│       ├── forecast_comparison.png # Phase 3 Week 8 model comparison plot
+│       └── xgboost_feature_importance.png  # Phase 3 Week 9 research importance chart
 ├── notebooks/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
 │   ├── 02_exploratory_data_analysis.ipynb
-│   └── 03_anomaly_detection.ipynb
+│   ├── 03_anomaly_detection.ipynb
+│   └── 04_forecasting_tutorial.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py        # Regenerate EDA doc figures
+│   ├── export_xgboost_feature_importance.py  # Regenerate XGBoost gain importance PNG
 │   ├── generate_mermaid_assets.py  # Regenerate architecture PNGs (mermaid.ink)
 │   ├── verify_features.py          # Sanity-check engineered features
 │   ├── test_isolation_forest.py    # Isolation Forest baseline + evaluation
@@ -129,6 +132,7 @@ energy-anomaly-forecasting/
 │   ├── verify_xgboost_prep.py      # Verify supervised lag tabular frame
 │   ├── evaluate_xgboost.py         # Train and score XGBoost regressor on test set
 │   ├── verify_lstm_prep.py         # Verify 3D LSTM sequence tensors
+│   ├── evaluate_lstm.py            # Train and score LSTM on test set
 │   └── compare_forecasts.py        # Run all four models; metrics table + PNG
 ├── src/
 │   ├── data/
@@ -250,7 +254,9 @@ python scripts/evaluate_prophet.py
 python scripts/verify_xgboost_prep.py
 python scripts/evaluate_xgboost.py
 python scripts/verify_lstm_prep.py
+python scripts/evaluate_lstm.py
 python scripts/compare_forecasts.py
+python scripts/export_xgboost_feature_importance.py
 ```
 
 ### Python API

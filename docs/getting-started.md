@@ -292,6 +292,7 @@ After ingestion and Phase 2 pass:
 8. **Phase 3 LSTM + comparison** — sequence prep, LSTM training, unified ladder (see §12–14)
 9. **E2E CLI** — root `main.py` ingest → detect → clean → forecast → metrics → CSV (see §15 and [E2E Pipeline](e2e-pipeline.md))
 10. **Forecasting tutorial** — open `notebooks/04_forecasting_tutorial.ipynb` (see §16 and [Forecasting Tutorial](forecasting-tutorial.md))
+11. **Forecasting research** — read [Forecasting Research](forecasting-research.md); optionally regenerate the importance chart (see §17)
 
 ---
 
@@ -422,6 +423,17 @@ jupyter notebook notebooks/04_forecasting_tutorial.ipynb
 
 Walk through chronological split, lag features, XGBoost training, MAE/RMSE, and an Actual vs Predicted chart. Details: [Forecasting Tutorial](forecasting-tutorial.md).
 
+## 17. Forecasting Research (Week 9)
+
+Read the Phase 3 findings write-up (Prophet ladder winner; weather vs history importance):
+
+```bash
+python scripts/compare_forecasts.py
+python scripts/export_xgboost_feature_importance.py
+```
+
+The first command refreshes `docs/assets/forecast_comparison.png`. The second refreshes `docs/assets/xgboost_feature_importance.png` used in [Forecasting Research](forecasting-research.md).
+
 ??? info "Technical deep dive"
 
     **Phase 1:** `python -m src.data.ingest_data` · `notebooks/01_*` · `notebooks/02_*`
@@ -437,5 +449,7 @@ Walk through chronological split, lag features, XGBoost training, MAE/RMSE, and 
     **Phase 3 (Week 8 Days 2–5 E2E):** `python main.py --model naive` — ingest → detect → clean → split → forecast → metrics → `final_predictions.csv`; optional `--save_clean_data` / `--output_path`
 
     **Phase 3 (Week 9 tutorial):** `notebooks/04_forecasting_tutorial.ipynb` — [Forecasting Tutorial](forecasting-tutorial.md)
+
+    **Phase 3 (Week 9 research):** [Forecasting Research](forecasting-research.md) · `python scripts/export_xgboost_feature_importance.py`
 
     **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`

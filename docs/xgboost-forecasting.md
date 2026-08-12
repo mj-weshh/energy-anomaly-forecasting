@@ -120,6 +120,18 @@ Re-run after regenerating the clean artifact or changing features; numbers may s
 
 ---
 
+## Feature importance export
+
+For the research write-up we export **gain** importance from the same default trainer path (clean CSV → `create_supervised_lags` → chronological split → `train_xgboost_model`):
+
+```bash
+python scripts/export_xgboost_feature_importance.py
+```
+
+Output: [`docs/assets/xgboost_feature_importance.png`](assets/xgboost_feature_importance.png). Analysis (weather vs history — gains shared; weather not zero on this run) lives in [Forecasting Research](forecasting-research.md).
+
+---
+
 ## What's Next
 
 Per [Phase 3 Strategy](phase3-strategy.md):
@@ -155,6 +167,7 @@ Each model must use the same chronological cut and `evaluate_forecast` helpers.
 ```bash
 python scripts/verify_xgboost_prep.py
 python scripts/evaluate_xgboost.py
+python scripts/export_xgboost_feature_importance.py
 ```
 
 **Modularity:** Loads clean CSV only; does not retrain anomaly models unless you run `generate_clean_data.py` explicitly.
@@ -169,6 +182,7 @@ python scripts/evaluate_xgboost.py
 - [LSTM Forecasting](lstm-forecasting.md) — recurrent baseline
 - [Forecast Model Comparison](forecast-model-comparison.md) — unified ladder scoring
 - [Forecasting Tutorial](forecasting-tutorial.md) — CMU educational XGBoost path
+- [Forecasting Research](forecasting-research.md) — ladder winner and weather vs history importance
 - [Prophet Baseline](prophet-baseline.md) — statistical floor
 - [Forecasting Baseline](forecasting-baseline.md) — gate, split, metrics
 - [Feature Engineering](feature-engineering.md) — Phase 2 temporal columns reused here

@@ -150,6 +150,7 @@ Regenerate after code or data changes:
 
 ```bash
 python scripts/compare_forecasts.py
+python scripts/export_xgboost_feature_importance.py   # research importance PNG
 ```
 
 ---
@@ -204,7 +205,8 @@ Copy the printed block directly into MkDocs pages or research documents.
 
 ```bash
 python scripts/compare_forecasts.py
-mkdocs serve   # preview docs with embedded PNG
+python scripts/export_xgboost_feature_importance.py
+mkdocs serve   # preview docs with embedded PNGs
 ```
 
 </details>

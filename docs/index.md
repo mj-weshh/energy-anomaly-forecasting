@@ -115,10 +115,12 @@ Full reports: [Anomaly Detection](anomaly-detection.md) · [Clean Dataset](clean
 - **Day 5:** MAE / RMSE / MAPE logs, `--output_path` → `final_predictions.csv`, completion message
 - Smoke-tested: `--model naive` → 750 preds; `--model xgboost` → 743 · notes: [E2E Pipeline](e2e-pipeline.md)
 
-### Phase 3 Week 9 — forecasting tutorial highlights
+### Phase 3 Week 9 — tutorial and research highlights
 
-- CMU-Africa notebook: chronological split, lag demo, XGBoost train/score, Actual vs Predicted (~3 days)
+- **Tutorial:** CMU-Africa notebook — chronological split, lag demo, XGBoost train/score, Actual vs Predicted (~3 days)
 - Notes: [Forecasting Tutorial](forecasting-tutorial.md) · [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb)
+- **Research:** Prophet leads the default MAE/RMSE ladder; XGBoost gain importance shows weather and lags sharing weight (not “lags only”)
+- Asset: `docs/assets/xgboost_feature_importance.png` · notes: [Forecasting Research](forecasting-research.md)
 
 ## Documentation
 
