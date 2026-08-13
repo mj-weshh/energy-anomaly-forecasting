@@ -208,6 +208,9 @@ def main() -> None:
     time-series continuity. Intended as the CLI entry point::
 
         python -m src.data.ingest_data
+
+    Returns:
+        None.
     """
     root = get_project_root()
     csv_path = find_dataset_csv(root)

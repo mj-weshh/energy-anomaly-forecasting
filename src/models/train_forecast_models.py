@@ -6,8 +6,18 @@ must beat the naive floor on the same held-out test window to be useful.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
+
+if TYPE_CHECKING:
+    import torch
+    from torch.nn import Module
+    from torch.utils.data import DataLoader
+    from xgboost import XGBRegressor
+
+    from src.models.lstm_model import EnergyLSTM
 
 
 def naive_seasonal_forecast(
@@ -72,7 +82,17 @@ def naive_seasonal_forecast(
 
 
 def _prophet_train_frame(df: pd.DataFrame) -> pd.DataFrame:
-    """Copy ``Timestamp`` / ``Electricity_Consumed`` and rename to Prophet ``ds`` / ``y``."""
+    """Copy ``Timestamp`` / ``Electricity_Consumed`` and rename to Prophet ``ds`` / ``y``.
+
+    Args:
+        df: Split DataFrame with ``Timestamp`` and ``Electricity_Consumed``.
+
+    Returns:
+        New DataFrame with columns ``ds`` (datetime) and ``y`` (float target).
+
+    Raises:
+        KeyError: If required columns are missing.
+    """
     if "Timestamp" not in df.columns:
         raise KeyError("Column 'Timestamp' is required for Prophet formatting.")
     if "Electricity_Consumed" not in df.columns:
@@ -89,7 +109,17 @@ def _prophet_train_frame(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _prophet_future_frame(test_df: pd.DataFrame) -> pd.DataFrame:
-    """Build a Prophet future frame from test ``Timestamp`` values."""
+    """Build a Prophet future frame from test ``Timestamp`` values.
+
+    Args:
+        test_df: Chronological test split containing ``Timestamp``.
+
+    Returns:
+        DataFrame with a single ``ds`` datetime column for ``Prophet.predict``.
+
+    Raises:
+        KeyError: If ``Timestamp`` is missing.
+    """
     if "Timestamp" not in test_df.columns:
         raise KeyError("Column 'Timestamp' is required for Prophet forecasting.")
 
@@ -145,7 +175,7 @@ def train_xgboost_model(
     y_train: pd.Series,
     X_val: pd.DataFrame,
     y_val: pd.Series,
-):
+) -> XGBRegressor:
     """Fit an XGBoost regressor with validation monitoring.
 
     Uses ``eval_set`` on the chronological validation split so training loss
@@ -189,13 +219,13 @@ def train_xgboost_model(
 
 
 def make_lstm_dataloader(
-    X: np.ndarray | "torch.Tensor",
-    y: np.ndarray | "torch.Tensor",
+    X: np.ndarray | torch.Tensor,
+    y: np.ndarray | torch.Tensor,
     *,
     batch_size: int = 32,
     consumption_index: int = 0,
     shuffle: bool = False,
-):
+) -> DataLoader:
     """Wrap LSTM sequence arrays in a PyTorch ``DataLoader``.
 
     Converts ``X`` and ``y`` to ``float32`` tensors and batches them for
@@ -244,12 +274,12 @@ def make_lstm_dataloader(
 
 
 def train_lstm_model(
-    model,
-    train_loader,
-    val_loader,
+    model: EnergyLSTM | Module,
+    train_loader: DataLoader,
+    val_loader: DataLoader,
     epochs: int = 20,
     learning_rate: float = 1e-3,
-):
+) -> EnergyLSTM | Module:
     """Train an ``EnergyLSTM`` with Adam and MSE loss.
 
     Runs a standard PyTorch epoch loop: zero gradients, forward pass, loss,
@@ -326,7 +356,10 @@ def train_lstm_model(
     return model
 
 
-def predict_lstm(model, test_loader) -> np.ndarray:
+def predict_lstm(
+    model: EnergyLSTM | Module,
+    test_loader: DataLoader,
+) -> np.ndarray:
     """Run inference on a test ``DataLoader`` and return flat NumPy predictions.
 
     Sets ``model.eval()`` and runs under ``torch.no_grad()``. Outputs are

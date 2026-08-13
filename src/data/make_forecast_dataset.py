@@ -82,7 +82,15 @@ def time_series_split(
 
 
 def _print_split_summary(name: str, split_df: pd.DataFrame) -> None:
-    """Print row count and timestamp bounds for one split."""
+    """Print row count and timestamp bounds for one split.
+
+    Args:
+        name: Split label printed to stdout (e.g. ``train``).
+        split_df: Chronological split containing a ``Timestamp`` column.
+
+    Returns:
+        None. Writes a short summary to stdout.
+    """
     start = split_df["Timestamp"].min()
     end = split_df["Timestamp"].max()
     print(f"{name}:")
@@ -92,7 +100,11 @@ def _print_split_summary(name: str, split_df: pd.DataFrame) -> None:
 
 
 def _main() -> None:
-    """Load the Phase 2 clean CSV, split chronologically, verify boundaries."""
+    """Load the Phase 2 clean CSV, split chronologically, verify boundaries.
+
+    Returns:
+        None. Exits with status ``1`` if the clean artifact is missing.
+    """
     repo_root = Path(__file__).resolve().parents[2]
     clean_path = repo_root / "data" / "processed" / "clean_smart_meter_data.csv"
 

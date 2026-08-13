@@ -12,7 +12,18 @@ def confusion_by_hour(
     y_pred: np.ndarray,
     test_idx: np.ndarray,
 ) -> pd.DataFrame:
-    """Count TP, FP, FN, TN per hour on the temporal test slice."""
+    """Count TP, FP, FN, TN per hour on the temporal test slice.
+
+    Args:
+        hours: Hour-of-day values for the full evaluation frame.
+        y_true: Ground-truth labels (0/1) for all rows.
+        y_pred: Model predictions (0/1) for all rows.
+        test_idx: Indices selecting the temporal test slice.
+
+    Returns:
+        DataFrame with columns ``hour``, ``tn``, ``fp``, ``fn``, ``tp``,
+        and ``n``, sorted by hour.
+    """
     hour_values = np.asarray(hours, dtype=int)[test_idx]
     yt = y_true[test_idx]
     yp = y_pred[test_idx]
@@ -44,7 +55,19 @@ def summarize_false_positives(
     y_pred: np.ndarray,
     test_idx: np.ndarray,
 ) -> pd.DataFrame:
-    """Hourly false-positive counts and rates vs normal rows in that hour."""
+    """Hourly false-positive counts and rates vs normal rows in that hour.
+
+    Args:
+        hours: Hour-of-day values for the full evaluation frame.
+        y_true: Ground-truth labels (0/1) for all rows.
+        y_pred: Model predictions (0/1) for all rows.
+        test_idx: Indices selecting the temporal test slice.
+
+    Returns:
+        DataFrame with ``hour``, ``fp``, ``normal_rows``, ``fp_rate``,
+        ``fn``, ``tp``, and ``n``. Empty if the hourly confusion table is
+        empty.
+    """
     hourly = confusion_by_hour(hours, y_true, y_pred, test_idx)
     if hourly.empty:
         return hourly
@@ -55,7 +78,12 @@ def summarize_false_positives(
 
 
 def fair_comparison_table() -> pd.DataFrame:
-    """Return documented fair-comparison F1 scores from anomaly_config."""
+    """Return documented fair-comparison F1 scores from anomaly_config.
+
+    Returns:
+        Two-column DataFrame (``model``, ``test_f1``) of documented fair-
+        comparison scores from ``TUNING_METRICS``.
+    """
     from src.models.anomaly_config import TUNING_METRICS
 
     rows = [

@@ -34,6 +34,14 @@ class EnergyLSTM(nn.Module):
         dropout: float = 0.2,
         num_layers: int = 1,
     ) -> None:
+        """Initialize LSTM backbone and linear prediction head.
+
+        Args:
+            input_size: Number of features per timestep.
+            hidden_size: LSTM hidden state width.
+            dropout: Dropout between stacked LSTM layers.
+            num_layers: Number of recurrent layers.
+        """
         super().__init__()
         self.lstm = nn.LSTM(
             input_size=input_size,
