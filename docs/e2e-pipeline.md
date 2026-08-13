@@ -180,7 +180,7 @@ For side-by-side ladder metrics across all four models, keep using `compare_fore
 ## What's Next
 
 1. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md) · [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb)
-2. Research write-up (`docs/forecasting-research.md`) synthesizing ladder + E2E results *(planned)*
+2. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
 3. Side-by-side metrics remain via `python scripts/compare_forecasts.py` — [Forecast Model Comparison](forecast-model-comparison.md)
 
 The **Week 8 E2E consolidation** (scaffold → detect/clean → forecast routing → eval/export) is complete.

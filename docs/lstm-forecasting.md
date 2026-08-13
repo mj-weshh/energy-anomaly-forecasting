@@ -155,7 +155,7 @@ Per [Phase 3 Strategy](phase3-strategy.md):
 
 1. ~~**Unified model comparison**~~ — **done:** [Forecast Model Comparison](forecast-model-comparison.md)
 2. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-3. Research write-up (`forecasting-research.md`) *(planned)*
+3. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
 4. Hyperparameter tuning (hidden size, epochs, learning rate)
 5. Early stopping and model checkpointing
 

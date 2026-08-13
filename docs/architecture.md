@@ -25,20 +25,23 @@ The ingestion layer is the **single gate** between raw CSV files and all downstr
 
 ```
 energy-anomaly-forecasting/
-├── main.py                           # E2E CLI entry point (Week 8 Day 2+)
+├── main.py                           # E2E CLI (Week 8 Days 2–5: ingest → forecast → metrics → CSV)
 ├── data/
 │   ├── raw/                          # Canonical location for raw CSV (optional)
 │   └── processed/                    # Generated clean CSV (gitignored)
 ├── docs/                             # Project documentation (MkDocs source)
 │   └── assets/                       # Screenshots and static assets
 │       ├── eda/                      # Phase 1 Week 2 EDA figures (PNG)
-│       └── forecast_comparison.png   # Phase 3 Week 8 model comparison plot
+│       ├── forecast_comparison.png   # Phase 3 Week 8 model comparison plot
+│       └── xgboost_feature_importance.png  # Phase 3 Week 9 research importance chart
 ├── notebooks/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
 │   ├── 02_exploratory_data_analysis.ipynb
-│   └── 03_anomaly_detection.ipynb
+│   ├── 03_anomaly_detection.ipynb
+│   └── 04_forecasting_tutorial.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py          # Regenerate EDA doc figures
+│   ├── export_xgboost_feature_importance.py  # Regenerate XGBoost gain importance PNG
 │   ├── generate_mermaid_assets.py    # Regenerate architecture PNGs via mermaid.ink (network)
 │   ├── verify_features.py            # Sanity-check engineered features
 │   ├── test_isolation_forest.py      # Isolation Forest baseline + evaluation
@@ -56,6 +59,7 @@ energy-anomaly-forecasting/
 │   ├── verify_xgboost_prep.py        # Verify supervised lag tabular frame
 │   ├── evaluate_xgboost.py           # Train and score XGBoost regressor on test set
 │   ├── verify_lstm_prep.py           # Verify 3D LSTM sequence tensors
+│   ├── evaluate_lstm.py              # Train and score LSTM on test set
 │   └── compare_forecasts.py          # Run all four models; metrics table + PNG
 ├── src/
 │   ├── __init__.py
@@ -294,7 +298,7 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 |-------|-------------|-------------|
 | **1 — Setup & EDA** | Ingestion, schema validation, EDA, documentation | `src/data/ingest_data.py`, `src/visualization/visualize.py` |
 | **2 — Anomaly Detection** | Feature engineering, IF/DBSCAN, clean dataset, educational notebook | `src/features/build_features.py`, `src/models/train_anomaly_models.py`, `src/data/clean_data.py`, `notebooks/03_anomaly_detection.ipynb` |
-| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive baseline, Prophet, XGBoost, LSTM, unified comparison, E2E CLI through eval/export, forecasting tutorial | `main.py`, `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`, `lstm_model.py`, `build_features.create_supervised_lags`, `build_features.create_sequences`, `compare_forecasts.py`, `notebooks/04_forecasting_tutorial.ipynb` |
+| **3 — Forecasting** | Clean-state gate, chronological split, metrics, naive → Prophet → XGBoost → LSTM, unified comparison, E2E CLI through eval/export, tutorial + research write-up | `main.py`, `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`, `lstm_model.py`, `build_features.create_supervised_lags`, `build_features.create_sequences`, `compare_forecasts.py`, `export_xgboost_feature_importance.py`, `notebooks/04_forecasting_tutorial.ipynb` |
 
 ---
 
@@ -320,8 +324,8 @@ Phase 3 forecasting uses scikit-learn metrics, Prophet for the statistical basel
 
     **Module map:** `ingest_data` -> `build_features` -> `train_anomaly_models` -> `clean_data` / `clean_dataset` -> `make_forecast_dataset` / `train_forecast_models` / `lstm_model` / `evaluate_forecast` / `create_supervised_lags` / `create_sequences`.
 
-    **Script inventory:** Phase 3 includes `main.py` (E2E CLI through metrics + `final_predictions.csv`), `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, and `compare_forecasts.py`. Tutorial: `notebooks/04_forecasting_tutorial.ipynb`.
+    **Script inventory:** Phase 3 includes `main.py` (E2E CLI through metrics + `final_predictions.csv`), `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, `evaluate_lstm.py`, `compare_forecasts.py`, and `export_xgboost_feature_importance.py`. Tutorial: `notebooks/04_forecasting_tutorial.ipynb`. Research: [Forecasting Research](forecasting-research.md).
 
-    **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink); `python scripts/compare_forecasts.py` (forecast comparison PNG).
+    **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink); `python scripts/compare_forecasts.py` (forecast comparison PNG); `python scripts/export_xgboost_feature_importance.py` (importance PNG).
 
-    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md) · [Forecast Model Comparison](forecast-model-comparison.md) · [E2E Pipeline](e2e-pipeline.md) · [Forecasting Tutorial](forecasting-tutorial.md) · [Phase 3 Strategy](phase3-strategy.md).
+    **Forecasting notes:** [Forecasting Baseline](forecasting-baseline.md) · [Prophet Baseline](prophet-baseline.md) · [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md) · [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md) · [Forecast Model Comparison](forecast-model-comparison.md) · [E2E Pipeline](e2e-pipeline.md) · [Forecasting Tutorial](forecasting-tutorial.md) · [Forecasting Research](forecasting-research.md) · [Phase 3 Strategy](phase3-strategy.md).

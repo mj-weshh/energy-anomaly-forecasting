@@ -47,6 +47,7 @@ nav:
       - Phase 2 Strategy: phase2-strategy.md
       - Phase 3 Strategy: phase3-strategy.md
       - Anomaly Tuning Results: anomaly-tuning-results.md
+      - Forecasting Research: forecasting-research.md
       - Glossary: glossary.md
 
 docs_dir: docs

@@ -6,7 +6,7 @@ Plain-English definitions for terms used across this project. Each entry include
 
     - **Purpose:** One place to decode jargon used in executive summaries and technical reports.
     - **How to use:** Skim the **Business** line for decisions; read **Technical** for implementation and reproducibility.
-    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, Prophet, XGBoost, LSTM, PyTorch, E2E pipeline / main.py, and supervised lag features.
+    - **Linked from:** Every docs page executive summary block points here for terms like F1, contamination, Jaccard, MAE / RMSE / MAPE, seasonal naive, Prophet, XGBoost, LSTM, PyTorch, E2E pipeline / main.py, supervised lag features, and feature importance (gain).
 
 ---
 
@@ -95,6 +95,14 @@ Plain-English definitions for terms used across this project. Each entry include
 **Business:** A single number that balances “did we catch real problems?” with “how many false alarms did we raise?” Higher is better; 1.0 is perfect.
 
 **Technical:** Harmonic mean of precision and recall with **Abnormal = positive class**. Primary metric in `evaluate_anomaly_model`. A model predicting all Normal would score high on accuracy but F1 ≈ 0.
+
+---
+
+## Feature importance (gain)
+
+**Business:** A ranking of which input columns the XGBoost forecaster relied on most — useful for the weather-vs-history debate, not a substitute for test MAE/RMSE.
+
+**Technical:** XGBoost booster `get_score(importance_type="gain")` exported by `scripts/export_xgboost_feature_importance.py` to `docs/assets/xgboost_feature_importance.png`. Not the same as Phase 1 Pearson correlations. See [Forecasting Research](forecasting-research.md) · [XGBoost Forecasting](xgboost-forecasting.md).
 
 ---
 

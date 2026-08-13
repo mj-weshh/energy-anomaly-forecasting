@@ -15,9 +15,11 @@ Planning notes for the final technical phase: forecasting. Phase 1 (ingestion / 
     - **Unified comparison shipped (Week 8 Day 1):** All four models via `compare_forecasts.py` — see [Forecast Model Comparison](forecast-model-comparison.md).
     - **E2E CLI shipped (Week 8 Days 2–5):** Root `main.py` wires ingest → detect → clean → split → `--model` forecast → metrics → prediction CSV — see [E2E Pipeline](e2e-pipeline.md).
     - **Tutorial shipped (Week 9):** [Forecasting Tutorial](forecasting-tutorial.md) · [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb).
+    - **Research write-up shipped (Week 9):** [Forecasting Research](forecasting-research.md) — Prophet leads; weather vs history importance.
     - **Terms:** [Glossary](glossary.md) — imputation, temporal split; forecasting metrics (MAE / RMSE / MAPE).
 
-**Status:** Week 6–8 and Week 9 tutorial **complete**; research write-up planned next  
+**Status:** Week 6–9 **complete** — model ladder, E2E CLI, tutorial, and [Forecasting Research](forecasting-research.md) write-up shipped  
+
 **Builds on:** [Clean Dataset](clean-data.md), [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md), [Architecture](architecture.md), [Forecasting Baseline](forecasting-baseline.md)
 
 ---
@@ -170,7 +172,7 @@ flowchart LR
   stats --> compare
   xgb --> compare
   lstm --> compare
-  compare --> research[forecasting_research_planned]
+  compare --> research[forecasting_research]
 ```
 
 ---
@@ -181,7 +183,7 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
 | Deliverable | Purpose |
 |-------------|---------|
-| [`docs/forecasting-research.md`](forecasting-research.md) *(planned)* | Research write-up: how predictable the load profile is, which features mattered, model limits |
+| [`docs/forecasting-research.md`](forecasting-research.md) | Research write-up: ladder winner (Prophet), weather vs history importance |
 | [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb) · [Forecasting Tutorial](forecasting-tutorial.md) | Student-facing tutorial: chronological split, lags, XGBoost, metrics, plot |
 | README + `requirements.txt` polish | Final dependency list and Phase 3 quick-start |
 | Handover slide deck | Summary for the close-out meeting |
@@ -212,7 +214,9 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 
 **Done (Week 9 Days 1–2):** Forecasting tutorial notebook — see [Forecasting Tutorial](forecasting-tutorial.md).
 
-**Model ladder complete. E2E consolidation complete. Tutorial shipped.** Still deferred:
+**Done (Week 9 Days 3–4):** Forecasting research write-up — see [Forecasting Research](forecasting-research.md).
+
+**Model ladder complete. E2E consolidation complete. Tutorial and research write-up shipped.** Still deferred:
 
 - Whether weather stays in the exogenous set after ablation-style checks (Phase 2 already showed weak linear weather signal for *anomaly* detection; forecasting may differ)
 - Auto-ARIMA trainer
@@ -257,6 +261,7 @@ Once models are evaluated, technical iteration pauses and grant-facing documenta
 - [Forecast Model Comparison](forecast-model-comparison.md) — Week 8 Day 1 unified ladder
 - [E2E Pipeline](e2e-pipeline.md) — Week 8 Days 2–5 root CLI (ingest → forecast → metrics → CSV)
 - [Forecasting Tutorial](forecasting-tutorial.md) — Week 9 CMU educational notebook
+- [Forecasting Research](forecasting-research.md) — Week 9 research write-up
 - [Clean Dataset](clean-data.md) — Phase 2 imputation artifact for Phase 3
 - [Anomaly Detection](anomaly-detection.md) — Isolation Forest production path used for cleaning
 - [Feature Engineering](feature-engineering.md) — temporal and rolling features to reuse / extend for lags

@@ -46,7 +46,7 @@ Or open the file in VS Code / Cursor with a Jupyter kernel that has the project 
 | **5. Scoring (MAE & RMSE)** | Plain-English metrics; score held-out test predictions |
 | **6. What This Notebook Achieved** | Summary + pointers to `compare_forecasts.py` and `main.py` |
 
-The notebook intentionally focuses on **XGBoost** as the tabular teaching model. For the four-model research ladder (naive / Prophet / XGBoost / LSTM), use [Forecast Model Comparison](forecast-model-comparison.md). For the consolidating CLI (ingest → detect → clean → forecast → export), use [E2E Pipeline](e2e-pipeline.md).
+The notebook intentionally focuses on **XGBoost** as the tabular teaching model. For the four-model research ladder (naive / Prophet / XGBoost / LSTM), use [Forecast Model Comparison](forecast-model-comparison.md). For the consolidating CLI (ingest → detect → clean → forecast → export), use [E2E Pipeline](e2e-pipeline.md). For the grant-facing findings narrative (Prophet winner; weather vs history), continue to [Forecasting Research](forecasting-research.md).
 
 ---
 
@@ -67,8 +67,9 @@ The notebook intentionally focuses on **XGBoost** as the tabular teaching model.
 
 - [E2E Pipeline](e2e-pipeline.md) — root `main.py` consolidating CLI
 - [XGBoost Forecasting](xgboost-forecasting.md) — research trainer and scores
+- [Forecasting Research](forecasting-research.md) — Phase 3 findings write-up
 - [Forecasting Baseline](forecasting-baseline.md) — chronological split protocol
 - [Forecast Model Comparison](forecast-model-comparison.md) — four-model ladder
 - [Phase 3 Strategy](phase3-strategy.md) — educational deliverables
 - [Getting Started](getting-started.md) — environment setup
-- [Glossary](glossary.md) — MAE, RMSE, supervised lag features
+- [Glossary](glossary.md) — MAE, RMSE, supervised lag features, feature importance (gain)

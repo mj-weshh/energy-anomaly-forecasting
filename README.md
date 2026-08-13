@@ -6,7 +6,7 @@
 
 Open-source machine learning project for **energy consumption anomaly detection** and **time-series forecasting**, built entirely on the public [Kaggle Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
 
-**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.122** / **0.151**) on native test windows. Unified comparison: `python scripts/compare_forecasts.py`. Root E2E CLI: `python main.py --model naive` (ingest → detect → clean → split → forecast → metrics → `final_predictions.csv`; `--output_path` / `--save_clean_data` optional). Tutorial: [`notebooks/04_forecasting_tutorial.ipynb`](notebooks/04_forecasting_tutorial.ipynb). **Production cleaning is unchanged** (~248 corrected intervals via `generate_clean_data.py`). Full docs: [docs site](docs/index.md) · [E2E Pipeline](docs/e2e-pipeline.md) · [Forecasting Tutorial](docs/forecasting-tutorial.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md) · [Glossary](docs/glossary.md).
+**Executive summary:** This project turns smart-meter data into a reliable timeline for analysis and forecasting. Phases 1–2 are complete (detect + clean). Phase 3 adds a forecasting ladder: naive floor (MAE ≈ **0.171**, RMSE ≈ **0.214**), Prophet (≈ **0.121** / **0.149**), XGBoost (≈ **0.125** / **0.154**), and LSTM (≈ **0.122** / **0.151**) on native test windows. Unified comparison: `python scripts/compare_forecasts.py`. Root E2E CLI: `python main.py --model naive` (ingest → detect → clean → split → forecast → metrics → `final_predictions.csv`; `--output_path` / `--save_clean_data` optional). Tutorial: [`notebooks/04_forecasting_tutorial.ipynb`](notebooks/04_forecasting_tutorial.ipynb). Research: [Forecasting Research](docs/forecasting-research.md) (Prophet leads default ladder). **Production cleaning is unchanged** (~248 corrected intervals via `generate_clean_data.py`). Full docs: [docs site](docs/index.md) · [E2E Pipeline](docs/e2e-pipeline.md) · [Forecasting Tutorial](docs/forecasting-tutorial.md) · [Forecasting Research](docs/forecasting-research.md) · [Forecast Model Comparison](docs/forecast-model-comparison.md) · [Glossary](docs/glossary.md).
 
 ---
 
@@ -32,7 +32,7 @@ This repository implements a phased ML pipeline:
 | **Phase 3 Week 8 Day 4** | E2E split + CLI model routing | **Complete** |
 | **Phase 3 Week 8 Day 5** | E2E metrics + prediction CSV export | **Complete** |
 | **Phase 3 Week 9 Days 1–2** | Forecasting tutorial notebook | **Complete** |
-| **Phase 3 (next)** | Research write-up | Planned |
+| **Phase 3 Week 9 Days 3–4** | Forecasting research write-up | **Complete** |
 
 All work uses publicly available data. No proprietary datasets or systems are referenced.
 
@@ -90,7 +90,7 @@ Key findings from exploratory analysis on the same dataset:
 
 Full report with all figures: [EDA Insights](docs/eda-insights.md)
 
-Regenerate doc figures: `python scripts/export_eda_assets.py` (EDA) · `python scripts/generate_mermaid_assets.py` (architecture PNGs)
+Regenerate doc figures: `python scripts/export_eda_assets.py` (EDA) · `python scripts/generate_mermaid_assets.py` (architecture PNGs) · `python scripts/compare_forecasts.py` (forecast comparison PNG) · `python scripts/export_xgboost_feature_importance.py` (importance PNG)
 
 ---
 
@@ -98,20 +98,23 @@ Regenerate doc figures: `python scripts/export_eda_assets.py` (EDA) · `python s
 
 ```
 energy-anomaly-forecasting/
-├── main.py                         # E2E CLI entry point (Week 8 Day 2+)
+├── main.py                         # E2E CLI (Week 8 Days 2–5: ingest → forecast → metrics → CSV)
 ├── data/
 │   ├── raw/                        # Canonical raw data location (optional)
 │   └── processed/                  # Generated clean CSV (gitignored)
 ├── docs/                           # Documentation (MkDocs source)
-│   └── assets/                     # Verification screenshots and EDA figures
+│   └── assets/                     # Verification screenshots and figures
 │       ├── eda/                    # Exported Phase 1 Week 2 plots (PNG)
-│       └── forecast_comparison.png # Phase 3 Week 8 model comparison plot
+│       ├── forecast_comparison.png # Phase 3 Week 8 model comparison plot
+│       └── xgboost_feature_importance.png  # Phase 3 Week 9 research importance chart
 ├── notebooks/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
 │   ├── 02_exploratory_data_analysis.ipynb
-│   └── 03_anomaly_detection.ipynb
+│   ├── 03_anomaly_detection.ipynb
+│   └── 04_forecasting_tutorial.ipynb
 ├── scripts/
 │   ├── export_eda_assets.py        # Regenerate EDA doc figures
+│   ├── export_xgboost_feature_importance.py  # Regenerate XGBoost gain importance PNG
 │   ├── generate_mermaid_assets.py  # Regenerate architecture PNGs (mermaid.ink)
 │   ├── verify_features.py          # Sanity-check engineered features
 │   ├── test_isolation_forest.py    # Isolation Forest baseline + evaluation
@@ -129,6 +132,7 @@ energy-anomaly-forecasting/
 │   ├── verify_xgboost_prep.py      # Verify supervised lag tabular frame
 │   ├── evaluate_xgboost.py         # Train and score XGBoost regressor on test set
 │   ├── verify_lstm_prep.py         # Verify 3D LSTM sequence tensors
+│   ├── evaluate_lstm.py            # Train and score LSTM on test set
 │   └── compare_forecasts.py        # Run all four models; metrics table + PNG
 ├── src/
 │   ├── data/
@@ -197,6 +201,7 @@ Schema reference: [Data Schema](docs/data-schema.md)
 | [Forecast Model Comparison](docs/forecast-model-comparison.md) | Phase 3 Week 8 unified ladder scoring and visualization |
 | [E2E Pipeline](docs/e2e-pipeline.md) | Phase 3 Week 8 Days 2–5 root `main.py` CLI (ingest → forecast → metrics → CSV) |
 | [Forecasting Tutorial](docs/forecasting-tutorial.md) | Phase 3 Week 9 CMU educational notebook (XGBoost path) |
+| [Forecasting Research](docs/forecasting-research.md) | Phase 3 Week 9 research write-up — ladder winner and weather vs history |
 | [Phase 3 Strategy](docs/phase3-strategy.md) | Forecasting planning — model ladder and evaluation protocol |
 | [Glossary](docs/glossary.md) | Shared plain-English and technical term definitions |
 
@@ -249,7 +254,9 @@ python scripts/evaluate_prophet.py
 python scripts/verify_xgboost_prep.py
 python scripts/evaluate_xgboost.py
 python scripts/verify_lstm_prep.py
+python scripts/evaluate_lstm.py
 python scripts/compare_forecasts.py
+python scripts/export_xgboost_feature_importance.py
 ```
 
 ### Python API
