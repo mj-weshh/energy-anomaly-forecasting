@@ -69,7 +69,19 @@ def evaluate_on_splits(
     val_idx: np.ndarray,
     test_idx: np.ndarray,
 ) -> dict[str, dict[str, Any]]:
-    """Return train/val/test metric dicts for temporal evaluation."""
+    """Return train/val/test metric dicts for temporal evaluation.
+
+    Args:
+        y_true: Ground-truth labels for the full frame (0/1).
+        y_pred: Model predictions for the full frame (0/1).
+        train_idx: Chronological training indices.
+        val_idx: Chronological validation indices.
+        test_idx: Chronological test indices.
+
+    Returns:
+        Dict with keys ``train``, ``val``, and ``test``, each mapping to an
+        ``evaluate_anomaly_model`` metrics dictionary.
+    """
     return {
         "train": evaluate_anomaly_model(y_true[train_idx], y_pred[train_idx]),
         "val": evaluate_anomaly_model(y_true[val_idx], y_pred[val_idx]),

@@ -15,7 +15,15 @@ from sklearn.preprocessing import StandardScaler
 
 @dataclass
 class AnomalyPreprocessor:
-    """Scale features and append train-fitted hourly consumption z-scores."""
+    """Scale features and append train-fitted hourly consumption z-scores.
+
+    Attributes:
+        add_hour_zscore: If True, append a per-hour consumption z-score column.
+        scaler: ``StandardScaler`` fitted on training feature rows.
+        hour_stats: Map of hour → ``(mean, std)`` from the training split.
+        feature_columns_: Column order captured at fit time.
+        fitted_: Whether ``fit`` has been called successfully.
+    """
 
     add_hour_zscore: bool = True
     scaler: StandardScaler = field(default_factory=StandardScaler)
@@ -30,7 +38,21 @@ class AnomalyPreprocessor:
         consumption: pd.Series,
         train_mask: np.ndarray,
     ) -> AnomalyPreprocessor:
-        """Fit scaler and hourly stats on training rows only."""
+        """Fit scaler and hourly stats on training rows only.
+
+        Args:
+            feature_matrix: Numeric feature DataFrame for all rows.
+            hours: Hour-of-day series aligned to ``feature_matrix`` rows.
+            consumption: Electricity consumption series aligned to rows.
+            train_mask: Boolean mask selecting training rows for fitting.
+
+        Returns:
+            ``self``, fitted in place.
+
+        Raises:
+            ValueError: If ``train_mask`` length does not match
+                ``feature_matrix`` rows.
+        """
         if train_mask.shape[0] != len(feature_matrix):
             raise ValueError("train_mask length must match feature_matrix rows.")
 
@@ -59,7 +81,20 @@ class AnomalyPreprocessor:
         hours: pd.Series,
         consumption: pd.Series,
     ) -> np.ndarray:
-        """Return scaled feature matrix with optional hourly z-score column."""
+        """Return scaled feature matrix with optional hourly z-score column.
+
+        Args:
+            feature_matrix: Numeric feature DataFrame to transform.
+            hours: Hour-of-day series aligned to ``feature_matrix`` rows.
+            consumption: Electricity consumption series aligned to rows.
+
+        Returns:
+            Float NumPy array of scaled features, optionally with an extra
+            hourly z-score column appended.
+
+        Raises:
+            ValueError: If ``fit`` has not been called yet.
+        """
         if not self.fitted_:
             raise ValueError("AnomalyPreprocessor must be fitted before transform.")
 

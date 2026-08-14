@@ -16,7 +16,16 @@ def apply_feature_ablation(
     feature_matrix: pd.DataFrame,
     drop_weather: bool = True,
 ) -> pd.DataFrame:
-    """Drop weather columns for ablation experiments."""
+    """Drop weather columns for ablation experiments.
+
+    Args:
+        feature_matrix: Numeric feature DataFrame.
+        drop_weather: If True, remove Temperature/Humidity/Wind_Speed when
+            present. If False, return ``feature_matrix`` unchanged.
+
+    Returns:
+        Feature matrix with weather columns dropped when requested.
+    """
     if not drop_weather:
         return feature_matrix
     drop_cols = [c for c in WEATHER_COLUMNS if c in feature_matrix.columns]
@@ -48,7 +57,19 @@ def prepare_feature_matrix(df: pd.DataFrame) -> pd.DataFrame:
 def aligned_context(
     df: pd.DataFrame, feature_matrix: pd.DataFrame
 ) -> tuple[pd.Series, pd.Series]:
-    """Return hour and consumption series aligned to ``feature_matrix`` rows."""
+    """Return hour and consumption series aligned to ``feature_matrix`` rows.
+
+    Args:
+        df: Source DataFrame containing ``hour`` and ``Electricity_Consumed``.
+        feature_matrix: Feature rows whose index selects the aligned subset.
+
+    Returns:
+        Tuple of ``(hours, consumption)`` Series aligned to
+        ``feature_matrix.index``.
+
+    Raises:
+        KeyError: If required context columns are missing from ``df``.
+    """
     missing = REQUIRED_CONTEXT_COLUMNS - set(df.columns)
     if missing:
         raise KeyError(
@@ -69,7 +90,20 @@ def prepare_model_matrix(
     fit_indices: np.ndarray | None,
     preprocessor: AnomalyPreprocessor | None,
 ) -> tuple[pd.DataFrame, np.ndarray, AnomalyPreprocessor | None]:
-    """Build numeric matrix with optional train-fitted scaling."""
+    """Build numeric matrix with optional train-fitted scaling.
+
+    Args:
+        df: Feature-engineered DataFrame including context columns.
+        scale: If True, fit/transform via ``AnomalyPreprocessor``.
+        drop_weather: If True, drop weather columns before modeling.
+        fit_indices: Row indices used to fit the preprocessor. Defaults to
+            all rows when ``scale`` is True and this is ``None``.
+        preprocessor: Optional existing preprocessor; created when needed.
+
+    Returns:
+        Tuple of ``(feature_matrix, X, preprocessor)`` where ``X`` is the
+        float NumPy matrix passed to unsupervised models.
+    """
     feature_matrix = apply_feature_ablation(prepare_feature_matrix(df.copy()), drop_weather)
     hours, consumption = aligned_context(df, feature_matrix)
 

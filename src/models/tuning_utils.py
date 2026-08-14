@@ -17,7 +17,18 @@ from src.models.feature_matrix import apply_feature_ablation, prepare_feature_ma
 
 @dataclass(frozen=True)
 class TemporalTuningData:
-    """Prepared arrays and indices for temporal anomaly tuning."""
+    """Prepared arrays and indices for temporal anomaly tuning.
+
+    Attributes:
+        feature_matrix: Numeric feature frame after ablation / NaN drop.
+        X: Model matrix (scaled when a preprocessor is used).
+        y_true: Benchmark labels (0 = Normal, 1 = Abnormal).
+        train_idx: Chronological training row indices.
+        val_idx: Chronological validation row indices.
+        test_idx: Chronological test row indices.
+        preprocessor: Fitted ``AnomalyPreprocessor`` when ``scale=True``, else
+            ``None``.
+    """
 
     feature_matrix: pd.DataFrame
     X: np.ndarray
@@ -32,7 +43,19 @@ LABEL_MAP = {"Normal": 0, "Abnormal": 1}
 
 
 def align_labels(df: pd.DataFrame, index: pd.Index) -> np.ndarray:
-    """Map benchmark ``Anomaly_Label`` values to 0/1 for aligned rows."""
+    """Map benchmark ``Anomaly_Label`` values to 0/1 for aligned rows.
+
+    Args:
+        df: DataFrame containing the ``Anomaly_Label`` column.
+        index: Row index subset to align (typically the feature matrix index).
+
+    Returns:
+        1-D int array of mapped labels (0 = Normal, 1 = Abnormal).
+
+    Raises:
+        KeyError: If ``Anomaly_Label`` is missing.
+        ValueError: If any label value is not in ``LABEL_MAP``.
+    """
     if "Anomaly_Label" not in df.columns:
         raise KeyError("Anomaly_Label column not found in DataFrame.")
 
@@ -50,7 +73,22 @@ def temporal_train_val_test_split(
     train_ratio: float | None = None,
     val_ratio: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Chronological index arrays for train, validation, and test."""
+    """Chronological index arrays for train, validation, and test.
+
+    Args:
+        n: Total number of rows to split.
+        train_ratio: Fraction for training. Defaults to
+            ``TEMPORAL_SPLIT_RATIOS['train']``.
+        val_ratio: Fraction for validation. Defaults to
+            ``TEMPORAL_SPLIT_RATIOS['val']``. The remainder is test.
+
+    Returns:
+        Tuple of ``(train_idx, val_idx, test_idx)`` as 1-D int arrays.
+
+    Raises:
+        ValueError: If ``n`` is not positive or
+            ``train_ratio + val_ratio >= 1``.
+    """
     if train_ratio is None:
         train_ratio = float(TEMPORAL_SPLIT_RATIOS["train"])
     if val_ratio is None:
@@ -74,7 +112,16 @@ def prepare_temporal_tuning_data(
     scale: bool = True,
     drop_weather: bool = False,
 ) -> TemporalTuningData:
-    """Build scaled matrix, labels, and chronological splits for tuning scripts."""
+    """Build scaled matrix, labels, and chronological splits for tuning scripts.
+
+    Args:
+        df: Feature-engineered DataFrame with labels and context columns.
+        scale: If True, fit ``AnomalyPreprocessor`` on the train slice only.
+        drop_weather: If True, drop weather columns before modeling.
+
+    Returns:
+        ``TemporalTuningData`` bundle ready for threshold / model sweeps.
+    """
     feature_matrix = apply_feature_ablation(prepare_feature_matrix(df), drop_weather)
     y_true = align_labels(df, feature_matrix.index)
     train_idx, val_idx, test_idx = temporal_train_val_test_split(len(feature_matrix))
@@ -103,12 +150,28 @@ def prepare_temporal_tuning_data(
 
 
 def isolation_forest_scores(model: IsolationForest, X: np.ndarray) -> np.ndarray:
-    """Return anomaly scores where higher values indicate more anomalous."""
+    """Return anomaly scores where higher values indicate more anomalous.
+
+    Args:
+        model: Fitted ``IsolationForest``.
+        X: Feature matrix scored by ``model.decision_function``.
+
+    Returns:
+        1-D float array of inverted decision scores (higher = more anomalous).
+    """
     return -model.decision_function(X)
 
 
 def predict_from_scores(scores: np.ndarray, threshold: float) -> np.ndarray:
-    """Binary predictions from score threshold."""
+    """Binary predictions from score threshold.
+
+    Args:
+        scores: Anomaly scores (higher = more anomalous).
+        threshold: Cutoff; scores at or above the threshold become Abnormal.
+
+    Returns:
+        1-D int array (0 = Normal, 1 = Abnormal).
+    """
     return (scores >= threshold).astype(int)
 
 
@@ -117,7 +180,20 @@ def find_best_threshold(
     y_true: np.ndarray,
     n_thresholds: int = 100,
 ) -> tuple[float, dict[str, Any]]:
-    """Sweep score quantiles on validation labels; return best-F1 threshold."""
+    """Sweep score quantiles on validation labels; return best-F1 threshold.
+
+    Args:
+        scores: Validation anomaly scores aligned with ``y_true``.
+        y_true: Ground-truth labels (0/1) for the validation slice.
+        n_thresholds: Maximum candidate thresholds when sampling quantiles.
+
+    Returns:
+        Tuple of ``(best_threshold, best_metrics)`` where ``best_metrics`` is
+        the ``evaluate_anomaly_model`` dict for that threshold.
+
+    Raises:
+        ValueError: If ``scores`` is empty.
+    """
     if scores.size == 0:
         raise ValueError("scores must be non-empty.")
 
@@ -144,7 +220,14 @@ def find_best_threshold(
 
 
 def normalize_scores(scores: np.ndarray) -> np.ndarray:
-    """Min-max normalize scores to [0, 1]."""
+    """Min-max normalize scores to [0, 1].
+
+    Args:
+        scores: Raw anomaly scores.
+
+    Returns:
+        Scores scaled to ``[0, 1]``. Returns zeros if all scores are equal.
+    """
     min_score = float(scores.min())
     max_score = float(scores.max())
     if max_score - min_score == 0:

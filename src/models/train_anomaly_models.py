@@ -52,6 +52,28 @@ def train_isolation_forest(
 
     When ``fit_indices`` is set, the model fits on that chronological subset
     only (for temporal tuning). Legacy callers omit it and train on all rows.
+
+    Args:
+        df: Feature-engineered DataFrame (or raw frame if callers engineer
+            upstream). Must include columns required by
+            ``prepare_model_matrix``.
+        contamination: Expected fraction of anomalies for Isolation Forest.
+        random_state: Random seed for reproducibility.
+        n_estimators: Number of trees in the forest.
+        max_features: Features drawn per tree (float fraction or int count).
+        scale: If True, apply train-fitted ``AnomalyPreprocessor`` scaling.
+        score_threshold: Optional decision threshold on inverted IF scores.
+            When set, predictions use ``predict_from_scores`` instead of the
+            model's native ``predict``.
+        preprocessor: Optional fitted or unfitted ``AnomalyPreprocessor``.
+        fit_indices: Optional row indices used only for fitting (and scaler
+            fit when ``scale`` is True). Predictions still cover all rows.
+        drop_weather: If True, drop Temperature/Humidity/Wind_Speed columns.
+
+    Returns:
+        Tuple of ``(fitted IsolationForest, predictions)`` where predictions
+        are a 1-D int array (0 = Normal, 1 = Abnormal) aligned to the
+        prepared feature matrix row order.
     """
     _, X, _ = prepare_model_matrix(
         df,
@@ -91,7 +113,23 @@ def train_dbscan(
     fit_indices: np.ndarray | None = None,
     drop_weather: bool = False,
 ) -> tuple[DBSCAN, np.ndarray]:
-    """Train DBSCAN on engineered smart meter features."""
+    """Train DBSCAN on engineered smart meter features.
+
+    Args:
+        df: Feature-engineered DataFrame for unsupervised clustering.
+        eps: Maximum neighborhood distance for DBSCAN.
+        min_samples: Minimum samples in a neighborhood to form a core point.
+        metric: Distance metric passed to ``sklearn.cluster.DBSCAN``.
+        scale: If True, apply train-fitted ``AnomalyPreprocessor`` scaling.
+        preprocessor: Optional fitted or unfitted ``AnomalyPreprocessor``.
+        fit_indices: Optional indices used when fitting the preprocessor.
+        drop_weather: If True, drop weather columns before clustering.
+
+    Returns:
+        Tuple of ``(fitted DBSCAN, predictions)`` where predictions map
+        cluster label ``-1`` (noise) to Abnormal (1) and all other labels
+        to Normal (0).
+    """
     _, X, _ = prepare_model_matrix(
         df,
         scale=scale,
@@ -116,7 +154,30 @@ def train_ensemble(
     fit_indices: np.ndarray | None = None,
     drop_weather: bool = False,
 ) -> tuple[dict[str, Any], np.ndarray]:
-    """Combine Isolation Forest and DBSCAN predictions."""
+    """Combine Isolation Forest and DBSCAN predictions.
+
+    Args:
+        df: Feature-engineered DataFrame for both base models.
+        if_kwargs: Keyword overrides forwarded to ``train_isolation_forest``
+            (excluding shared keys set here).
+        dbscan_kwargs: Keyword overrides forwarded to ``train_dbscan``.
+        strategy: Ensemble rule — ``'intersection'``, ``'union'``, or
+            ``'weighted'``.
+        alpha: IF weight for the ``weighted`` strategy
+            (``alpha * if_scores + (1 - alpha) * db_preds``).
+        score_threshold: Optional IF score threshold forwarded to
+            ``train_isolation_forest``.
+        fit_indices: Chronological fit subset shared by both models.
+        drop_weather: Shared weather ablation flag.
+
+    Returns:
+        Tuple of ``(bundle, ensemble_preds)`` where ``bundle`` maps
+        ``isolation_forest``, ``dbscan``, and ``strategy``, and
+        ``ensemble_preds`` is a 1-D int array (0/1).
+
+    Raises:
+        ValueError: If ``strategy`` is not one of the supported values.
+    """
     if_kwargs = dict(if_kwargs or {})
     dbscan_kwargs = dict(dbscan_kwargs or {})
 
@@ -164,7 +225,23 @@ def detect_anomalies(
     feature_builder: Callable[[pd.DataFrame], pd.DataFrame] | None = None,
     **kwargs: object,
 ) -> tuple[Any, np.ndarray]:
-    """Route feature-engineered data to an unsupervised anomaly detector."""
+    """Route feature-engineered data to an unsupervised anomaly detector.
+
+    Args:
+        df: Input DataFrame. If ``feature_builder`` is None and ``hour`` is
+            missing, ``build_all_features`` is applied first.
+        model_type: Detector key — ``'isolation_forest'``, ``'dbscan'``, or
+            ``'ensemble'``.
+        feature_builder: Optional callable that maps ``df`` to an engineered
+            frame before training.
+        **kwargs: Forwarded to the selected trainer.
+
+    Returns:
+        Trainer return value: ``(model_or_bundle, predictions)``.
+
+    Raises:
+        ValueError: If ``model_type`` is unsupported.
+    """
     if feature_builder is not None:
         df = feature_builder(df)
     elif "hour" not in df.columns:
