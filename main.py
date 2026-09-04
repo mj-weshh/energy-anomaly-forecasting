@@ -1,8 +1,8 @@
 """End-to-end CLI entry point for the energy anomaly + forecasting pipeline.
 
 This module is the single user-facing command for running the Phase 1–3
-workflow from the repository root. Later steps wire ingestion, feature
-engineering, cleaning, and model training via ``src/`` packages.
+workflow from the repository root: ingest → features → Isolation Forest →
+interpolation → chronological split → selected forecast → metrics → CSV export.
 
 Example:
     python main.py
@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from src.data.clean_data import interpolate_anomalies
-from src.data.ingest_data import load_smart_meter_data
+from src.data.ingest_data import check_time_continuity, load_smart_meter_data
 from src.data.make_forecast_dataset import time_series_split
 from src.features.build_features import (
     build_all_features,
@@ -142,7 +142,20 @@ def _split_sequence_arrays(
     train_pct: float = TRAIN_PCT,
     val_pct: float = VAL_PCT,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Chronologically split sequence arrays using 70/15/15 fraction math."""
+    """Chronologically split sequence arrays using 70/15/15 fraction math.
+
+    Args:
+        X: Sequence feature array of shape ``(n_samples, seq_len, n_features)``.
+        y: Target array aligned with ``X``.
+        train_pct: Fraction of samples for training.
+        val_pct: Fraction of samples for validation.
+
+    Returns:
+        Tuple ``(X_train, X_val, X_test, y_train, y_val, y_test)``.
+
+    Raises:
+        ValueError: If arrays are empty, lengths mismatch, or a split is empty.
+    """
     n = len(X)
     if n == 0:
         raise ValueError("Cannot split empty sequence arrays.")
@@ -180,7 +193,7 @@ def run_selected_forecast(
         model_name: One of ``naive``, ``prophet``, ``xgboost``, ``lstm``.
         df_clean: Full cleaned timeline (needed for XGBoost/LSTM warm-up).
         train_df: Chronological train split of ``df_clean``.
-        val_df: Chronological validation split (unused by naive/Prophet).
+        val_df: Chronological validation split (used by XGBoost and LSTM).
         test_df: Chronological test split of ``df_clean``.
         epochs: LSTM training epochs from ``--epochs``.
 
@@ -188,9 +201,11 @@ def run_selected_forecast(
         Tuple of ``(timestamps, y_true, y_pred)`` length-matched for the
         model's native test window (XGBoost/LSTM may be shorter than the
         raw chronological ``test_df`` after lag/sequence warm-up).
-    """
-    del val_df  # reserved for models that monitor validation during fit
 
+    Raises:
+        ValueError: If ``model_name`` is unsupported, or LSTM per-split
+            sequences are empty.
+    """
     if model_name == "naive":
         logger.info("Training forecast model: naive (seasonal persistence) ...")
         timestamps = test_df["Timestamp"].reset_index(drop=True)
@@ -230,16 +245,26 @@ def run_selected_forecast(
             SEQ_LENGTH,
             epochs,
         )
-        data = df_clean[LSTM_FEATURE_COLUMNS].to_numpy(dtype=np.float64)
-        X, y = create_sequences(data, seq_length=SEQ_LENGTH)
-        # Target timestamp is the row immediately after each input window.
-        sequence_timestamps = df_clean["Timestamp"].iloc[SEQ_LENGTH:].reset_index(
-            drop=True
+        # Split rows first, then window within each split so sequences never
+        # cross train/val/test boundaries.
+        X_train, y_train = create_sequences(
+            train_df[LSTM_FEATURE_COLUMNS].to_numpy(dtype=np.float64),
+            seq_length=SEQ_LENGTH,
         )
-        X_train, X_val, X_test, y_train, y_val, y_test = _split_sequence_arrays(X, y)
-        n = len(X)
-        val_end = int(n * (TRAIN_PCT + VAL_PCT))
-        timestamps = sequence_timestamps.iloc[val_end:].reset_index(drop=True)
+        X_val, y_val = create_sequences(
+            val_df[LSTM_FEATURE_COLUMNS].to_numpy(dtype=np.float64),
+            seq_length=SEQ_LENGTH,
+        )
+        X_test, y_test = create_sequences(
+            test_df[LSTM_FEATURE_COLUMNS].to_numpy(dtype=np.float64),
+            seq_length=SEQ_LENGTH,
+        )
+        if len(X_train) == 0 or len(X_val) == 0 or len(X_test) == 0:
+            raise ValueError(
+                "LSTM sequence arrays are empty after per-split windowing; "
+                f"train={len(X_train)}, val={len(X_val)}, test={len(X_test)}."
+            )
+        timestamps = test_df["Timestamp"].iloc[SEQ_LENGTH:].reset_index(drop=True)
         train_loader = make_lstm_dataloader(
             X_train, y_train, batch_size=BATCH_SIZE, shuffle=False
         )
@@ -251,11 +276,15 @@ def run_selected_forecast(
         )
         model = EnergyLSTM(input_size=len(LSTM_FEATURE_COLUMNS))
         model = train_lstm_model(model, train_loader, val_loader, epochs=epochs)
-        y_true = np.asarray(y_test, dtype=float).reshape(-1)
+        y_true = np.asarray(y_test, dtype=float)
+        if y_true.ndim == 2:
+            y_true = y_true[:, 0]
+        else:
+            y_true = y_true.reshape(-1)
         y_pred = predict_lstm(model, test_loader)
         # Drop heavy training artifacts before returning (helps if callers loop models).
         del model, train_loader, val_loader, test_loader
-        del X, y, X_train, X_val, X_test, y_train, y_val, y_test, data
+        del X_train, X_val, X_test, y_train, y_val, y_test
         return timestamps, y_true, np.asarray(y_pred, dtype=float)
 
     raise ValueError(f"Unsupported model: {model_name}")
@@ -267,6 +296,10 @@ def main() -> None:
     Days 2–3: ingest, features, Isolation Forest, interpolate, optional save.
     Day 4: chronological split and CLI-selected forecast training.
     Day 5: test-set metrics, CSV export, and memory cleanup after inference.
+
+    Raises:
+        ValueError: If cleaned consumption still has NaNs, timestamp/prediction
+            lengths mismatch, or the selected forecast path fails validation.
     """
     args = parse_args()
     logger.info(
@@ -283,6 +316,8 @@ def main() -> None:
     logger.info("Starting data ingestion from %s ...", data_path)
     df = load_smart_meter_data(data_path)
     logger.info("Raw data loaded: shape=%s", df.shape)
+    logger.info("Checking 30-minute time-series continuity ...")
+    check_time_continuity(df)
 
     logger.info("Building temporal and rolling features ...")
     df_feat = build_all_features(df)
@@ -305,11 +340,17 @@ def main() -> None:
 
     logger.info("Masking anomalies and time-interpolating Electricity_Consumed ...")
     df_clean = interpolate_anomalies(df_feat, predictions)
+    consumption_nans = int(df_clean["Electricity_Consumed"].isna().sum())
     logger.info(
         "Clean in-memory dataset ready: shape=%s, consumption_NaNs=%s",
         df_clean.shape,
-        int(df_clean["Electricity_Consumed"].isna().sum()),
+        consumption_nans,
     )
+    if consumption_nans != 0:
+        raise ValueError(
+            f"Electricity_Consumed still has {consumption_nans} NaNs after "
+            "interpolation; Phase 3 requires a continuous target series."
+        )
 
     if args.save_clean_data:
         out_path = Path("data/processed/clean_pipeline_output.csv")

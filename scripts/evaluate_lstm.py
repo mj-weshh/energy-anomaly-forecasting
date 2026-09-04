@@ -1,8 +1,9 @@
 """Score the Phase 3 LSTM regressor on the chronological test set.
 
-Loads the Phase 2 clean CSV, builds sliding-window sequences, splits 70/15/15
-in time order, trains ``EnergyLSTM``, and prints MAE, RMSE, and MAPE. Compares
-against documented naive, Prophet, and XGBoost baseline floors.
+Loads the Phase 2 clean CSV, splits chronologically 70/15/15, builds
+sliding-window sequences **within each split** (no cross-boundary windows),
+trains ``EnergyLSTM``, and prints MAE, RMSE, and MAPE. Compares against
+documented naive, Prophet, and XGBoost baseline floors.
 
 Metrics are computed on **normalized** consumption (0–1 scale from the Kaggle
 artifact). No ``StandardScaler`` is applied in this LSTM path, so there is no
@@ -33,6 +34,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.data.ingest_data import get_project_root  # noqa: E402
+from src.data.make_forecast_dataset import time_series_split  # noqa: E402
 from src.features.build_features import create_sequences  # noqa: E402
 from src.models.evaluate_forecast import evaluate_forecast  # noqa: E402
 from src.models.lstm_model import EnergyLSTM  # noqa: E402
@@ -168,13 +170,27 @@ def main() -> None:
     if missing_features:
         _fail(f"Missing feature columns: {missing_features}")
 
-    data = df[FEATURE_COLUMNS].to_numpy(dtype=np.float64)
-    X, y = create_sequences(data, seq_length=SEQ_LENGTH)
-
-    X_train, X_val, X_test, y_train, y_val, y_test = split_sequence_arrays(X, y)
+    train_df, val_df, test_df = time_series_split(df)
+    X_train, y_train = create_sequences(
+        train_df[FEATURE_COLUMNS].to_numpy(dtype=np.float64),
+        seq_length=SEQ_LENGTH,
+    )
+    X_val, y_val = create_sequences(
+        val_df[FEATURE_COLUMNS].to_numpy(dtype=np.float64),
+        seq_length=SEQ_LENGTH,
+    )
+    X_test, y_test = create_sequences(
+        test_df[FEATURE_COLUMNS].to_numpy(dtype=np.float64),
+        seq_length=SEQ_LENGTH,
+    )
+    if len(X_train) == 0 or len(X_val) == 0 or len(X_test) == 0:
+        _fail(
+            "LSTM sequence arrays are empty after per-split windowing; "
+            f"train={len(X_train)}, val={len(X_val)}, test={len(X_test)}."
+        )
 
     print()
-    print("Chronological split sizes (after sequence warm-up):")
+    print("Chronological split sizes (row split, then per-split sequences):")
     print(f"  train: {len(X_train)} sequences")
     print(f"  val:   {len(X_val)} sequences")
     print(f"  test:  {len(X_test)} sequences")

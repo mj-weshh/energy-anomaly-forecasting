@@ -28,8 +28,9 @@ def interpolate_anomalies(
     """Mask predicted anomalies and time-interpolate ``Electricity_Consumed``.
 
     Where ``predictions == 1`` (Abnormal), sets ``Electricity_Consumed`` to
-    ``NaN`` then fills gaps via ``interpolate(method="time")`` on a temporary
-    DatetimeIndex. Row count and all other columns are preserved.
+    ``NaN`` then fills gaps via ``interpolate(method="time")`` followed by
+    ``ffill`` / ``bfill`` on a temporary DatetimeIndex so edge-masked rows
+    cannot remain NaN. Row count and all other columns are preserved.
 
     Predictions may be shorter than ``df`` when they come from
     ``detect_anomalies`` (4953 scored rows after rolling warm-up). In that
@@ -49,7 +50,9 @@ def interpolate_anomalies(
     Raises:
         KeyError: If required columns are missing.
         ValueError: If ``predictions`` length does not match ``df`` or the
-            evaluable row count, or contains values other than 0/1.
+            evaluable row count, contains values other than 0/1, or if
+            ``Electricity_Consumed`` still has NaNs after interpolation and
+            edge fill.
     """
     for column in ("Timestamp", "Electricity_Consumed"):
         if column not in df.columns:
@@ -85,8 +88,14 @@ def interpolate_anomalies(
     consumption = (
         result.set_index("Timestamp")["Electricity_Consumed"]
         .interpolate(method="time")
-        .to_numpy()
+        .ffill()
+        .bfill()
     )
-    result["Electricity_Consumed"] = consumption
+    if consumption.isna().any():
+        raise ValueError(
+            "Electricity_Consumed still contains NaNs after time interpolation "
+            "and forward/back fill; cannot guarantee a continuous target series."
+        )
+    result["Electricity_Consumed"] = consumption.to_numpy()
 
     return result

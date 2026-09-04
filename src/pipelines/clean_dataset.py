@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import IsolationForest
 
 from src.data.ingest_data import load_smart_meter_data
@@ -29,7 +30,7 @@ DEFAULT_OUTPUTS: dict[CleanProfile, str] = {
 }
 
 
-def _legacy_threshold_predictions(df_feat) -> np.ndarray:
+def _legacy_threshold_predictions(df_feat: pd.DataFrame) -> np.ndarray:
     """Train legacy IF on 60% train; threshold on 20% val; score all eval rows."""
     from src.models.tuning_utils import align_labels
 
@@ -50,7 +51,7 @@ def _legacy_threshold_predictions(df_feat) -> np.ndarray:
     return predict_from_scores(isolation_forest_scores(model, X), threshold)
 
 
-def _enhanced_predictions(df_feat) -> np.ndarray:
+def _enhanced_predictions(df_feat: pd.DataFrame) -> np.ndarray:
     """Enhanced IF on all eval rows with tuned config and score threshold."""
     _, predictions = train_isolation_forest(
         df_feat,

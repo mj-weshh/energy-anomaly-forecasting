@@ -33,6 +33,17 @@ DATASET_FOLDER_NAME: str = "Smart Meter Electricity Consumption Dataset"
 EXPECTED_FILENAME: str = "smart_meter_data.csv"
 """Expected CSV filename containing 30-minute interval smart meter readings."""
 
+REQUIRED_COLUMNS: tuple[str, ...] = (
+    "Timestamp",
+    "Electricity_Consumed",
+    "Temperature",
+    "Humidity",
+    "Wind_Speed",
+    "Avg_Past_Consumption",
+    "Anomaly_Label",
+)
+"""Canonical columns required by the anomaly + forecasting pipeline."""
+
 
 def get_project_root() -> Path:
     """Return the repository root directory.
@@ -109,11 +120,11 @@ def load_smart_meter_data(csv_path: Path | str) -> pd.DataFrame:
 
     Returns:
         DataFrame with parsed ``Timestamp`` column, sorted ascending.
-        Expected shape after loading: ``(5000, 7)``.
+        Expected shape after loading the bundled Kaggle file: ``(5000, 7)``.
 
     Raises:
         FileNotFoundError: If ``csv_path`` does not exist.
-        ValueError: If the ``Timestamp`` column is missing from the CSV.
+        ValueError: If any :data:`REQUIRED_COLUMNS` are missing from the CSV.
         pd.errors.ParserError: If timestamp values cannot be parsed.
     """
     csv_path = Path(csv_path)
@@ -122,9 +133,10 @@ def load_smart_meter_data(csv_path: Path | str) -> pd.DataFrame:
 
     df = pd.read_csv(csv_path)
 
-    if "Timestamp" not in df.columns:
+    missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
+    if missing:
         raise ValueError(
-            f"Required column 'Timestamp' not found. Got columns: {list(df.columns)}"
+            f"Missing required columns: {missing}. Got columns: {list(df.columns)}"
         )
 
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], format="%Y-%m-%d %H:%M:%S")
