@@ -1,10 +1,10 @@
 # Architecture
 
-Repository layout, data flow, and design decisions for Phases 1–2 (ingestion, EDA, feature engineering, anomaly detection, and clean-data pipeline).
+Repository layout, data flow, and design decisions across Phases 1–3: ingestion and EDA, anomaly detection and cleaning, then forecasting.
 
 !!! success "Executive summary"
 
-    - **Story:** Raw smart-meter CSV → validate → explore → engineer features → detect anomalies → impute gaps → clean file for forecasting.
+    - **Story:** Raw smart-meter CSV → validate → explore → engineer features → detect anomalies → impute gaps → clean file → forecast and evaluate.
     - **Single front door:** All scripts load data through `src.data.ingest_data` — one place to enforce schema rules.
     - **Research vs production:** Default `generate_clean_data.py` unchanged; optional `--profile` and `scripts/tune_*.py` live alongside for experiments.
     - **Terms:** [Glossary](glossary.md) — profile, imputation, temporal split.
@@ -19,62 +19,47 @@ Repository layout, data flow, and design decisions for Phases 1–2 (ingestion, 
 
 The ingestion layer is the **single gate** between raw CSV files and all downstream work. Every notebook and script in later phases should import from `src.data.ingest_data` rather than reading CSVs directly.
 
+**Phase flow (plain):**
+
+| Phase | What happens |
+|-------|----------------|
+| **1** | Discover CSV, validate schema and 30-minute continuity, explore with EDA plots |
+| **2** | Engineer temporal/rolling features, detect anomalies (Isolation Forest / DBSCAN), impute flagged consumption, write a continuous clean CSV |
+| **3** | Chronological split, train forecast models (naive → Prophet → XGBoost → LSTM), score MAE/RMSE/MAPE, optional E2E CLI via `main.py` |
+
+For install and day-to-day run commands, see [Getting Started](getting-started.md). For the consolidating CLI, see [E2E Pipeline](e2e-pipeline.md).
+
 ---
 
 ## Repository Layout
 
 ```
 energy-anomaly-forecasting/
-├── main.py                           # E2E CLI (Week 8 Days 2–5: ingest → forecast → metrics → CSV)
+├── main.py                           # E2E CLI: ingest → forecast → metrics → CSV
 ├── data/
 │   ├── raw/                          # Canonical location for raw CSV (optional)
 │   └── processed/                    # Generated clean CSV (gitignored)
 ├── docs/                             # Project documentation (MkDocs source)
 │   └── assets/                       # Screenshots and static assets
-│       ├── eda/                      # Phase 1 Week 2 EDA figures (PNG)
-│       ├── forecast_comparison.png   # Phase 3 Week 8 model comparison plot
-│       └── xgboost_feature_importance.png  # Phase 3 Week 9 research importance chart
+│       ├── eda/                      # Phase 1 EDA figures (PNG)
+│       ├── forecast_comparison.png   # Phase 3 model comparison plot
+│       └── xgboost_feature_importance.png  # Phase 3 research importance chart
 ├── notebooks/
 │   ├── 01_data_ingestion_and_schema_check.ipynb
 │   ├── 02_exploratory_data_analysis.ipynb
 │   ├── 03_anomaly_detection.ipynb
 │   └── 04_forecasting_tutorial.ipynb
-├── scripts/
-│   ├── export_eda_assets.py          # Regenerate EDA doc figures
-│   ├── export_xgboost_feature_importance.py  # Regenerate XGBoost gain importance PNG
-│   ├── generate_mermaid_assets.py    # Regenerate architecture PNGs via mermaid.ink (network)
-│   ├── verify_features.py            # Sanity-check engineered features
-│   ├── test_isolation_forest.py      # Isolation Forest baseline + evaluation
-│   ├── tune_isolation_forest.py      # Enhanced IF hyperparameter + threshold tuning
-│   ├── tune_dbscan.py                # DBSCAN hyperparameter grid search
-│   ├── tune_ensemble.py              # IF + DBSCAN ensemble comparison
-│   ├── compare_anomaly_models.py     # Legacy vs enhanced research dashboard
-│   ├── analyze_detection_errors.py   # Legacy IF hourly FP analysis
-│   ├── compare_clean_artifacts.py    # Diff clean-data profile artifacts
-│   ├── tune_isolation_forest_by_segment.py  # Per-segment enhanced IF test F1
-│   ├── generate_clean_data.py        # Generate Phase 3 clean dataset artifact (--profile)
-│   ├── verify_phase2_state.py        # Phase 3 gate: clean CSV continuity / NaNs
-│   ├── evaluate_naive_baseline.py    # Score naive seasonal forecast on test set
-│   ├── evaluate_prophet.py           # Score Prophet statistical baseline on test set
-│   ├── verify_xgboost_prep.py        # Verify supervised lag tabular frame
-│   ├── evaluate_xgboost.py           # Train and score XGBoost regressor on test set
-│   ├── verify_lstm_prep.py           # Verify 3D LSTM sequence tensors
-│   ├── evaluate_lstm.py              # Train and score LSTM on test set
-│   └── compare_forecasts.py          # Run all four models; metrics table + PNG
+├── scripts/                          # CLI utilities (EDA export, anomaly tuning, forecast eval, clean artifact)
 ├── src/
-│   ├── __init__.py
 │   ├── data/
-│   │   ├── __init__.py
 │   │   ├── ingest_data.py            # Canonical ingestion module
 │   │   ├── clean_data.py             # Anomaly masking and interpolation
 │   │   └── make_forecast_dataset.py  # Chronological train/val/test split
 │   ├── pipelines/
 │   │   └── clean_dataset.py          # End-to-end clean artifact orchestration
 │   ├── features/
-│   │   ├── __init__.py
 │   │   └── build_features.py         # Phase 2 features + Phase 3 lags and LSTM sequences
 │   ├── models/
-│   │   ├── __init__.py
 │   │   ├── evaluate_models.py        # Imbalance-aware anomaly evaluation
 │   │   ├── evaluate_forecast.py      # Forecast MAE / RMSE / MAPE
 │   │   ├── train_anomaly_models.py   # Unsupervised anomaly training
@@ -85,7 +70,6 @@ energy-anomaly-forecasting/
 │   │   ├── tuning_utils.py           # Temporal splits and threshold search
 │   │   └── anomaly_config.py         # Research-tuned hyperparameters
 │   └── visualization/
-│       ├── __init__.py
 │       └── visualize.py              # EDA plotting functions
 ├── Smart Meter Electricity Consumption Dataset/
 │   └── smart_meter_data.csv          # Current raw data location
@@ -95,6 +79,8 @@ energy-anomaly-forecasting/
 ├── README.md
 └── requirements.txt
 ```
+
+Common scripts (full inventory in deep dive below): `export_eda_assets.py`, `generate_clean_data.py`, `compare_forecasts.py`, `test_isolation_forest.py`, `tune_*.py`, and the per-model `evaluate_*.py` forecast helpers.
 
 ### Directory rationale
 
@@ -107,7 +93,7 @@ energy-anomaly-forecasting/
 | `docs/assets/eda/` | Exported EDA plots for MkDocs |
 | `src/features/` | Model-ready feature engineering (Phase 2 temporal/rolling + Phase 3 lags and LSTM sequences) |
 | `src/models/` | Anomaly detection (Phase 2) and forecast metrics / baselines (Phase 3) |
-| `scripts/` | CLI utilities (EDA export, feature verification, model testing, forecast baseline) |
+| `scripts/` | CLI utilities (EDA export, feature verification, model testing, forecast baselines) |
 | `Smart Meter Electricity Consumption Dataset/` | Legacy download location; supported by dynamic discovery |
 
 ---
@@ -272,7 +258,7 @@ This prevents silent data quality issues from propagating into Phase 2 and Phase
 
 ### Root E2E entry point delegates to `src/`
 
-`main.py` is the consolidating CLI for Phase 1–3. It imports public helpers (`load_smart_meter_data`, `build_all_features`, `detect_anomalies`, `interpolate_anomalies`, `time_series_split`, forecast trainers, and `evaluate_forecast` metrics) rather than duplicating pipeline logic. Days 2–5 cover ingest → features → Isolation Forest → in-memory clean → chronological split → `--model` forecasting → MAE/RMSE/MAPE → `final_predictions.csv`. See [E2E Pipeline](e2e-pipeline.md).
+`main.py` is the consolidating CLI for Phases 1–3. It imports public helpers (`load_smart_meter_data`, `check_time_continuity`, `build_all_features`, `detect_anomalies`, `interpolate_anomalies`, `time_series_split`, forecast trainers, and `evaluate_forecast` metrics) rather than duplicating pipeline logic. The path covers ingest → features → Isolation Forest → in-memory clean → chronological split → `--model` forecasting → MAE/RMSE/MAPE → `final_predictions.csv`. See [E2E Pipeline](e2e-pipeline.md).
 
 ### Documentation figures from scripts
 
@@ -304,27 +290,28 @@ The `.githooks/` directory is listed in `.gitignore` for optional local use only
 
 ## Technology Stack
 
+Aligned with `requirements.txt`:
+
 | Component | Library | Version constraint |
 |-----------|---------|-------------------|
 | Data manipulation | pandas | >= 2.0.0 |
 | Numerical computing | numpy | >= 1.24.0 |
-| Environment config | python-dotenv | >= 1.0.0 |
 | Notebooks | jupyter, ipykernel | >= 1.0.0, >= 6.0.0 |
 | Visualization | matplotlib, seaborn | >= 3.7.0, >= 0.13.0 |
-| Statistics | scipy, statsmodels | >= 1.11.0, >= 0.14.0 |
 | Anomaly detection | scikit-learn | >= 1.3.0 |
 | Statistical forecasting | prophet | >= 1.1.5 |
 | Gradient boosting | xgboost | >= 2.0.0 |
 | Deep learning | torch (PyTorch) | >= 2.0.0 |
 | Documentation | mkdocs, mkdocs-material | >= 1.6.0, >= 9.5.0 |
+| Testing | pytest | >= 7.0.0 |
 
-Phase 3 forecasting uses scikit-learn metrics, Prophet for the statistical baseline, XGBoost for tabular lag-based forecasting, and PyTorch LSTM for sequence-based forecasting. Unified comparison via `compare_forecasts.py`.
+Phase 3 forecasting uses scikit-learn metrics, Prophet for the statistical baseline, XGBoost for tabular lag-based forecasting, and PyTorch LSTM for sequence-based forecasting. Unified comparison via `compare_forecasts.py`. Auto-ARIMA remains deferred.
 
 ??? info "Technical deep dive"
 
     **Module map:** `ingest_data` -> `build_features` -> `train_anomaly_models` -> `clean_data` / `clean_dataset` -> `make_forecast_dataset` / `train_forecast_models` / `lstm_model` / `evaluate_forecast` / `create_supervised_lags` / `create_sequences`.
 
-    **Script inventory:** Phase 3 includes `main.py` (E2E CLI through metrics + `final_predictions.csv`), `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, `evaluate_lstm.py`, `compare_forecasts.py`, and `export_xgboost_feature_importance.py`. Tutorial: `notebooks/04_forecasting_tutorial.ipynb`. Research: [Forecasting Research](forecasting-research.md).
+    **Script inventory:** Phase 1–2 helpers include `export_eda_assets.py`, `generate_mermaid_assets.py`, `verify_features.py`, `test_isolation_forest.py`, `tune_isolation_forest.py`, `tune_dbscan.py`, `tune_ensemble.py`, `compare_anomaly_models.py`, `analyze_detection_errors.py`, `compare_clean_artifacts.py`, `tune_isolation_forest_by_segment.py`, `generate_clean_data.py`. Phase 3 includes `main.py` (E2E CLI through metrics + `final_predictions.csv`), `verify_phase2_state.py`, `evaluate_naive_baseline.py`, `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, `evaluate_lstm.py`, `compare_forecasts.py`, and `export_xgboost_feature_importance.py`. Tutorial: `notebooks/04_forecasting_tutorial.ipynb`. Research: [Forecasting Research](forecasting-research.md).
 
     **Regenerate figures:** `python scripts/export_eda_assets.py` (EDA PNGs); `python scripts/generate_mermaid_assets.py` (architecture PNGs via mermaid.ink); `python scripts/compare_forecasts.py` (forecast comparison PNG); `python scripts/export_xgboost_feature_importance.py` (importance PNG).
 

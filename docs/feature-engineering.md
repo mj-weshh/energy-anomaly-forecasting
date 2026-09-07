@@ -1,4 +1,4 @@
-# Feature Engineering — Phase 2, Week 3
+# Feature Engineering
 
 Working notes on the feature engineering module. This is the first coding step of Phase 2 — turning raw timestamps into the temporal context our anomaly detectors need, plus rolling statistics that give the models short-term and daily memory.
 
@@ -9,7 +9,7 @@ Working notes on the feature engineering module. This is the first coding step o
     - **Trade-off:** Rolling windows create a short warm-up period (~47 rows) dropped before scoring — documented and consistent across scripts.
     - **Terms:** [Glossary](glossary.md) — feature profile, warm-up NaNs.
 
-**Status:** Temporal and rolling features complete; Week 4 anomaly detection done — see [Anomaly Detection](anomaly-detection.md)  
+**Status:** Implementation notes — temporal and rolling features; see [Anomaly Detection](anomaly-detection.md)  
 **Module:** `src/features/build_features.py`  
 **Strategy background:** [Phase 2 Strategy](phase2-strategy.md)
 
@@ -67,7 +67,7 @@ Why two windows: the **3-hour** window reacts fast and catches sudden deviations
 Design details:
 
 - **Chronological safety sort.** Rolling windows are garbage on out-of-order data, so the function does `df.sort_values("Timestamp").copy()` before any window math. Same copy semantics as the temporal function — the caller's frame is never touched.
-- **NaN warm-up.** The first `window - 1` rows of each metric are NaN until the window fills (5 rows for 3h, 47 for 24h). That's expected pandas behavior. Week 4 drops those rows before training — see [Anomaly Detection](anomaly-detection.md).
+- **NaN warm-up.** The first `window - 1` rows of each metric are NaN until the window fills (5 rows for 3h, 47 for 24h). That's expected pandas behavior. Downstream anomaly training drops those rows — see [Anomaly Detection](anomaly-detection.md).
 - **Fail fast.** Missing `Timestamp` or `Electricity_Consumed` raises `KeyError` immediately.
 
 ---
@@ -156,7 +156,7 @@ Same idea, two audiences. When the two drift, the `src/features/` version is the
 
 ---
 
-## Phase 3 Supervised Lags (Week 7 Day 1)
+## Phase 3 Supervised Lags
 
 For XGBoost and other tabular forecasters, consumption history must appear as explicit columns on each row.
 
@@ -170,7 +170,7 @@ Full notes: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-for
 
 ---
 
-## Phase 3 LSTM Sequences (Week 7 Day 3)
+## Phase 3 LSTM Sequences
 
 For LSTM and other recurrent forecasters, consumption history must appear as contiguous sliding windows in a 3D tensor.
 
@@ -184,13 +184,13 @@ Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 
 ---
 
-## What's Next
+## Related
 
-- **Week 7 complete** — supervised lags (XGBoost) and LSTM sequences. See [XGBoost Prep](xgboost-prep.md) · [LSTM Prep](lstm-prep.md).
-- **Week 8 Day 1 complete** — unified model comparison. See [Forecast Model Comparison](forecast-model-comparison.md).
-- **Week 8 Days 2–5 complete** — root `main.py` calls `build_all_features`, then Isolation Forest + interpolate + forecast routing + metrics/export. See [E2E Pipeline](e2e-pipeline.md).
-- **Week 9 tutorial complete** — [Forecasting Tutorial](forecasting-tutorial.md).
-- **Phase 3 research** — write-up shipped: [Forecasting Research](forecasting-research.md).
+- [Anomaly Detection](anomaly-detection.md)
+- [XGBoost Prep](xgboost-prep.md)
+- [LSTM Prep](lstm-prep.md)
+- [E2E Pipeline](e2e-pipeline.md)
+- [Forecast Model Comparison](forecast-model-comparison.md)
 
 ??? info "Technical deep dive"
 
@@ -214,10 +214,10 @@ Full notes: [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
 
 - [Phase 2 Strategy](phase2-strategy.md) — why context-aware features matter
 - [EDA Insights](eda-insights.md) — the 02:00 peak and weekday/weekend findings
-- [Anomaly Detection](anomaly-detection.md) — Week 4 IF + DBSCAN baselines and model comparison
-- [Clean Dataset](clean-data.md) — Week 4 Day 3 imputation pipeline for Phase 3
+- [Anomaly Detection](anomaly-detection.md) — IF + DBSCAN baselines and model comparison
+- [Clean Dataset](clean-data.md) — imputation pipeline for Phase 3
 - [XGBoost Prep](xgboost-prep.md) — Phase 3 supervised lag features
 - [LSTM Prep](lstm-prep.md) — Phase 3 LSTM sequence tensors
-- [E2E Pipeline](e2e-pipeline.md) — Week 8 Days 2–5 root CLI using `build_all_features`
-- [Forecasting Tutorial](forecasting-tutorial.md) — Week 9 educational notebook
+- [E2E Pipeline](e2e-pipeline.md) — root CLI using `build_all_features`
+- [Forecasting Tutorial](forecasting-tutorial.md) — educational notebook
 - [Architecture](architecture.md) — where `src/features/` sits in the repo

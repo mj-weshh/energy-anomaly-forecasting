@@ -1,6 +1,6 @@
-# Clean Dataset — Phase 2, Week 4 Day 3
+# Clean Dataset
 
-Working notes on the clean-data pipeline. Week 4 Days 1–2 gave us anomaly detectors; Day 3 turns those predictions into a **continuity-safe** dataset for Phase 3 forecasting.
+Continuity-safe cleaning: flagged consumption readings are masked and time-interpolated so Phase 3 forecasters see an unbroken 30-minute timeline.
 
 !!! success "Executive summary"
 
@@ -10,7 +10,6 @@ Working notes on the clean-data pipeline. Week 4 Days 1–2 gave us anomaly dete
     - **Risk if switching blindly:** Enhanced cleaning changes **80% fewer** intervals than legacy but agrees on only **~15%** of imputation choices (Jaccard 0.154).
     - **Terms:** [Glossary](glossary.md) — imputation, profile, Jaccard.
 
-**Status:** Week 4 Day 3–4 complete — clean dataset pipeline, artifact generation, and notebook Section 5 walkthrough  
 **Modules:** `src/data/clean_data.py`, `src/pipelines/clean_dataset.py`, `scripts/generate_clean_data.py`  
 **Builds on:** [Anomaly Detection](anomaly-detection.md), [Feature Engineering](feature-engineering.md)
 
@@ -18,7 +17,7 @@ Working notes on the clean-data pipeline. Week 4 Days 1–2 gave us anomaly dete
 
 ## Why Impute, Not Drop
 
-Phase 3 forecasters (ARIMA, LSTM, XGBoost) assume a **continuous** 30-minute timeline. If we `.drop()` rows flagged as anomalous, we create gaps — irregular intervals that break time-series models and rolling features.
+Phase 3 forecasters (Prophet, LSTM, XGBoost) assume a **continuous** 30-minute timeline. If we `.drop()` rows flagged as anomalous, we create gaps — irregular intervals that break time-series models and rolling features.
 
 The fix: treat bad consumption readings as missing values, then **time-interpolate** them. Row count stays at **5000**; only `Electricity_Consumed` values change at flagged intervals.
 
@@ -66,7 +65,7 @@ python scripts/generate_clean_data.py --profile enhanced
 python scripts/compare_clean_artifacts.py
 ```
 
-Research profiles are **not** used for production Phase 3 baseline until artifact diffs are reviewed. See [Anomaly Tuning Results](anomaly-tuning-results.md).
+Research profiles are **not** used for production Phase 3 baseline until artifact diffs are reviewed. Detector tuning details: [Anomaly Tuning Results](anomaly-tuning-results.md).
 
 ---
 
@@ -127,17 +126,17 @@ generate_clean_dataset(
 
 ---
 
-## E2E pipeline checkpoint (Week 8 Day 3)
+## E2E pipeline checkpoint
 
 Root `main.py --save_clean_data` writes an optional in-pipeline checkpoint to `data/processed/clean_pipeline_output.csv` using the same `interpolate_anomalies` helper. That file is **not** the production Phase 3 baseline — forecast scripts still expect `clean_smart_meter_data.csv` from `generate_clean_data.py`. See [E2E Pipeline](e2e-pipeline.md).
 
 ---
 
-## What's Next
+## Related
 
-- **Phase 3 foundation** — verify the clean artifact, chronological split, and naive seasonal floor: [Forecasting Baseline](forecasting-baseline.md)
-- **E2E consolidating CLI** — detect + interpolate in memory via `main.py`: [E2E Pipeline](e2e-pipeline.md)
-- **Notebook walkthrough** — Section 5 of [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb) demonstrates masking, interpolation, and a before/after consumption plot; see [Educational Notebook (Day 4)](anomaly-detection.md#educational-notebook-day-4)
+- [Forecasting Baseline](forecasting-baseline.md) — verify the clean artifact, chronological split, and naive seasonal floor
+- [E2E Pipeline](e2e-pipeline.md) — detect + interpolate in memory via `main.py`
+- [Educational Notebook](anomaly-detection.md#educational-notebook) — Section 5 of [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb) demonstrates masking, interpolation, and a before/after plot
 
 ??? info "Technical deep dive"
 

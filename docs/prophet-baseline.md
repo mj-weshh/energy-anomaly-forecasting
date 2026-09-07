@@ -1,4 +1,4 @@
-# Prophet Baseline — Phase 3, Week 6 (Day 3)
+# Prophet Baseline
 
 Working notes for the first **statistical** forecast baseline: Facebook Prophet on univariate consumption, scored on the same chronological test window as the naive seasonal floor.
 
@@ -13,7 +13,7 @@ Working notes for the first **statistical** forecast baseline: Facebook Prophet 
 
 </div>
 
-**Status:** Week 6 Day 3 complete — Prophet trainer and evaluation script  
+**Status:** Implementation notes — Prophet trainer and evaluation script  
 **Modules:** `src/models/train_forecast_models.py`, `src/models/evaluate_forecast.py`, `src/data/make_forecast_dataset.py`  
 **Scripts:** `scripts/evaluate_prophet.py`  
 **Builds on:** [Forecasting Baseline](forecasting-baseline.md), [Phase 3 Strategy](phase3-strategy.md)
@@ -89,15 +89,13 @@ Re-run after regenerating the clean artifact; numbers may shift slightly if clea
 
 ---
 
-## What's Next
+## Related
 
-1. ~~XGBoost prep~~ — supervised lag features → [XGBoost Prep](xgboost-prep.md)
-2. ~~XGBoost training~~ — gradient-boosted trees → [XGBoost Forecasting](xgboost-forecasting.md)
-3. ~~LSTM~~ sliding windows → [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
-4. **Unified comparison** — all four models → [Forecast Model Comparison](forecast-model-comparison.md)
-5. Auto-ARIMA remains deferred
-
----
+- [Forecasting Baseline](forecasting-baseline.md)
+- [XGBoost Prep](xgboost-prep.md)
+- [Forecast Model Comparison](forecast-model-comparison.md)
+- [Phase 3 Strategy](phase3-strategy.md)
+- [E2E Pipeline](e2e-pipeline.md)
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>

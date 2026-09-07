@@ -1,16 +1,15 @@
-# Anomaly Detection — Phase 2, Week 4
+# Anomaly Detection
 
-Working notes on the unsupervised anomaly detection engine. Week 3 gave us a 15-column feature matrix; Week 4 wires that into two detectors with proper imbalance-aware evaluation and a unified routing API.
+Unsupervised detectors that flag unusual half-hour readings on the engineered feature matrix, with imbalance-aware evaluation against the dataset’s Abnormal benchmark.
 
 !!! success "Executive summary"
 
     - **What we built:** Two automatic ways to spot unusual electricity readings — Isolation Forest (primary) and DBSCAN (comparison).
     - **Production today:** Default cleaning uses Isolation Forest with standard settings; catches about **one third** of benchmark problems (F1 0.331) but keeps the pipeline simple and stable.
-    - **Research path:** Tuned models on future-held-out data score **0.460 F1** — materially better, but not yet wired into the default clean file.
-    - **False alarms:** Early-morning hours (00–01) drive most legacy false positives; see [Anomaly Tuning Results — Error analysis](anomaly-tuning-results.md#legacy-if-error-analysis-hourly-fp).
+    - **Research path:** Tuned models on future-held-out data score **0.460 F1** — materially better, but not yet wired into the default clean file. Full tables and grids: [Anomaly Tuning Results](anomaly-tuning-results.md) (appendix).
+    - **False alarms:** Early-morning hours (00–01) drive most legacy false positives; see [Error analysis](anomaly-tuning-results.md#legacy-if-error-analysis-hourly-fp).
     - **Terms:** [Glossary](glossary.md) — F1, contamination, temporal split.
 
-**Status:** Week 4 complete (Days 1–4) — detectors, comparison, clean dataset pipeline, and educational notebook  
 **Modules:** `src/models/evaluate_models.py`, `src/models/train_anomaly_models.py`  
 **Builds on:** [Phase 2 Strategy](phase2-strategy.md), [Feature Engineering](feature-engineering.md)
 
@@ -20,7 +19,7 @@ Working notes on the unsupervised anomaly detection engine. Week 3 gave us a 15-
 
 The strategy doc describes what we need: a detector that flags readings that don't fit the local pattern, not a dumb threshold on raw consumption. Isolation Forest fits that story — it scores **multivariate weirdness** across all 12 engineered features (consumption, weather, temporal context, rolling memory) without needing balanced labels.
 
-I started here before DBSCAN because IF is fast, interpretable at the pipeline level, and gives us a baseline F1 to beat. DBSCAN is the second opinion with different geometry assumptions.
+Isolation Forest is the first detector because it is fast, interpretable at the pipeline level, and gives a baseline F1 to beat. DBSCAN is the second opinion with different geometry assumptions.
 
 ---
 
@@ -55,7 +54,7 @@ Density-based second detector on the same feature matrix. Same label-exclusion r
 | **Noise = anomaly** | DBSCAN returns `-1` for sparse points; cluster members (`>= 0`) are normal baseline density |
 | **Predictions mapped to 0/1** | `-1` → **1 = Abnormal**, `>= 0` → **0 = Normal** |
 
-DBSCAN is sensitive to `eps` and `min_samples` on multivariate 0–1 features — Day 2 includes a coarse grid search to find the best F1 on our benchmark.
+DBSCAN is sensitive to `eps` and `min_samples` on multivariate 0–1 features — a coarse grid search finds the best F1 on our benchmark.
 
 ### Unified router — `detect_anomalies(df, model_type='isolation_forest', **kwargs)`
 
@@ -81,7 +80,7 @@ Both scripts: load → features → extract benchmark labels (aligned to `dropna
 
 ---
 
-## Baseline Results — Isolation Forest (Day 1)
+## Baseline Results — Isolation Forest
 
 Output from `python scripts/test_isolation_forest.py` on the real dataset:
 
@@ -110,7 +109,7 @@ Honest read: IF catches roughly **one third** of benchmark anomalies at default 
 
 ---
 
-## Baseline Results — DBSCAN (Day 2)
+## Baseline Results — DBSCAN
 
 Output from `python scripts/tune_dbscan.py` — grid over `eps` ∈ {0.1, 0.3, 0.5, 0.7} and `min_samples` ∈ {5, 10, 20}:
 
@@ -152,7 +151,7 @@ Same 4,953 evaluation rows, labels excluded from all training:
 
 ---
 
-## Educational Notebook (Day 4)
+## Educational Notebook
 
 CMU-Africa deliverable: an interactive tutorial that walks through the full Phase 2 workflow — unsupervised detection, benchmark evaluation, and consumption interpolation for Phase 3 forecasting.
 
@@ -194,7 +193,7 @@ Interpolation details: [Clean Dataset](clean-data.md).
 
 Production cleaning still uses **legacy** 15-column features and default IF (`contamination=0.05`). Research scripts opt into enhanced features (`build_enhanced_anomaly_features`, 21 columns), train-only scaling, chronological 60/20/20 splits, and hyperparameter grids.
 
-**Status:** Tuning complete — full report: [Anomaly Tuning Results](anomaly-tuning-results.md)
+**Full methodology, confusion matrices, search spaces, and fair head-to-head tables:** [Anomaly Tuning Results](anomaly-tuning-results.md) (treat as the appendix for this page).
 
 **Modules:** `src/models/anomaly_preprocessing.py`, `src/models/tuning_utils.py`, `src/models/anomaly_config.py`
 
@@ -219,8 +218,6 @@ Production cleaning still uses **legacy** 15-column features and default IF (`co
 | **Enhanced IF** | **0.460** | +0.071 F1 (~18% relative) vs val-threshold legacy (0.389) |
 | **Enhanced DBSCAN** | **0.297** | below IF |
 | **Ensemble (union)** | **0.400** | below enhanced IF alone |
-
-See [Anomaly Tuning Results](anomaly-tuning-results.md) for methodology, confusion matrices, search spaces, and fair head-to-head tables.
 
 Configs are stored in `src/models/anomaly_config.py`. Production `generate_clean_dataset` uses the **default `legacy` profile only**; research profiles are opt-in via `--profile` — see [Clean Dataset — Research profiles](clean-data.md#research-profiles).
 
@@ -275,11 +272,11 @@ _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 
 ---
 
-## What's Next
+## Related
 
-- **Phase 3 forecasting** — train on the clean artifact; see [Clean Dataset](clean-data.md)
-- **E2E CLI** — `main.py` calls `detect_anomalies` (Isolation Forest) then interpolates in memory; see [E2E Pipeline](e2e-pipeline.md)
-- Optional: adopt tuned IF config for production cleaning (currently legacy by design)
+- [Clean Dataset](clean-data.md) — imputation for Phase 3 forecasting
+- [E2E Pipeline](e2e-pipeline.md) — `main.py` uses Isolation Forest then interpolates in memory
+- Optional: adopt tuned IF for production cleaning (currently legacy by design)
 
 ---
 
@@ -287,7 +284,7 @@ _, preds = detect_anomalies(df, model_type="dbscan", eps=0.5, min_samples=5)
 
 - [Phase 2 Strategy](phase2-strategy.md) — why context-aware detection and imbalance-aware metrics matter
 - [Feature Engineering](feature-engineering.md) — the 12 features fed into the model
-- [Clean Dataset](clean-data.md) — Day 3 imputation pipeline for Phase 3
-- [E2E Pipeline](e2e-pipeline.md) — Week 8 consolidating CLI using Isolation Forest
+- [Clean Dataset](clean-data.md) — imputation pipeline for Phase 3
+- [E2E Pipeline](e2e-pipeline.md) — consolidating CLI using Isolation Forest
 - [Architecture](architecture.md) — where `src/models/` sits in the repo
 - [Anomaly Tuning Results](anomaly-tuning-results.md) — enhanced features, temporal splits, fair head-to-head comparison

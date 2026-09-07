@@ -268,21 +268,32 @@ def run_xgboost_forecast(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def run_lstm_forecast(df: pd.DataFrame) -> pd.DataFrame:
-    """LSTM predictions after sequence generation and chronological split."""
+    """LSTM predictions after chronological row split, then per-split sequences."""
     missing_features = [
         col for col in LSTM_FEATURE_COLUMNS if col not in df.columns
     ]
     if missing_features:
         raise ValueError(f"Missing LSTM feature columns: {missing_features}")
 
-    data = df[LSTM_FEATURE_COLUMNS].to_numpy(dtype=np.float64)
-    X, y = create_sequences(data, seq_length=SEQ_LENGTH)
-    sequence_timestamps = df["Timestamp"].iloc[SEQ_LENGTH:].reset_index(drop=True)
-
-    X_train, X_val, X_test, y_train, y_val, y_test = split_sequence_arrays(X, y)
-    n = len(X)
-    val_end = int(n * (TRAIN_PCT + VAL_PCT))
-    test_timestamps = sequence_timestamps.iloc[val_end:].reset_index(drop=True)
+    train_df, val_df, test_df = time_series_split(df)
+    X_train, y_train = create_sequences(
+        train_df[LSTM_FEATURE_COLUMNS].to_numpy(dtype=np.float64),
+        seq_length=SEQ_LENGTH,
+    )
+    X_val, y_val = create_sequences(
+        val_df[LSTM_FEATURE_COLUMNS].to_numpy(dtype=np.float64),
+        seq_length=SEQ_LENGTH,
+    )
+    X_test, y_test = create_sequences(
+        test_df[LSTM_FEATURE_COLUMNS].to_numpy(dtype=np.float64),
+        seq_length=SEQ_LENGTH,
+    )
+    if len(X_train) == 0 or len(X_val) == 0 or len(X_test) == 0:
+        raise ValueError(
+            "LSTM sequence arrays are empty after per-split windowing; "
+            f"train={len(X_train)}, val={len(X_val)}, test={len(X_test)}."
+        )
+    test_timestamps = test_df["Timestamp"].iloc[SEQ_LENGTH:].reset_index(drop=True)
 
     train_loader = make_lstm_dataloader(
         X_train, y_train, batch_size=BATCH_SIZE, shuffle=False
@@ -299,7 +310,9 @@ def run_lstm_forecast(df: pd.DataFrame) -> pd.DataFrame:
     model = EnergyLSTM(input_size=len(LSTM_FEATURE_COLUMNS))
     model = train_lstm_model(model, train_loader, val_loader, epochs=LSTM_EPOCHS)
     y_pred = predict_lstm(model, test_loader)
-    y_true = y_test[:, 0]
+    y_true = np.asarray(y_test, dtype=float).reshape(-1)
+    if y_true.ndim > 1:
+        y_true = y_true[:, 0]
 
     return _forecast_frame(test_timestamps, y_true, y_pred)
 

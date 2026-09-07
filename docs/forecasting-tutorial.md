@@ -1,4 +1,4 @@
-# Forecasting Tutorial — Phase 3, Week 9
+# Forecasting Tutorial
 
 CMU-Africa Techskills educational notebook that walks students from the **cleaned** smart-meter timeline through chronological splits, lag features, XGBoost training, test metrics, and an Actual vs Predicted chart.
 
@@ -12,7 +12,7 @@ CMU-Africa Techskills educational notebook that walks students from the **cleane
 
 </div>
 
-**Status:** Week 9 Days 1–2 complete  
+**Status:** Implementation notes  
 **Builds on:** [Clean Dataset](clean-data.md), [Forecasting Baseline](forecasting-baseline.md), [XGBoost Forecasting](xgboost-forecasting.md), [E2E Pipeline](e2e-pipeline.md)
 
 ---
@@ -49,6 +49,14 @@ Or open the file in VS Code / Cursor with a Jupyter kernel that has the project 
 The notebook intentionally focuses on **XGBoost** as the tabular teaching model. For the four-model research ladder (naive / Prophet / XGBoost / LSTM), use [Forecast Model Comparison](forecast-model-comparison.md). For the consolidating CLI (ingest → detect → clean → forecast → export), use [E2E Pipeline](e2e-pipeline.md). For the grant-facing findings narrative (Prophet winner; weather vs history), continue to [Forecasting Research](forecasting-research.md).
 
 ---
+
+## Related
+
+- [Forecast Model Comparison](forecast-model-comparison.md)
+- [E2E Pipeline](e2e-pipeline.md)
+- [XGBoost Forecasting](xgboost-forecasting.md)
+- [Forecasting Research](forecasting-research.md)
+- [Forecasting Baseline](forecasting-baseline.md)
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>

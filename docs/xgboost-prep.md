@@ -1,4 +1,4 @@
-# XGBoost Prep — Phase 3, Week 7 (Day 1)
+# XGBoost Prep
 
 Working notes for converting the continuous clean timeline into a **supervised tabular** frame before XGBoost training.
 
@@ -13,7 +13,7 @@ Working notes for converting the continuous clean timeline into a **supervised t
 
 </div>
 
-**Status:** Week 7 Day 1 complete — supervised lag function and verification script  
+**Status:** Implementation notes — supervised lag function and verification script  
 **Module:** `src/features/build_features.py` — `create_supervised_lags`  
 **Script:** `scripts/verify_xgboost_prep.py`  
 **Builds on:** [Forecasting Baseline](forecasting-baseline.md), [Prophet Baseline](prophet-baseline.md), [Feature Engineering](feature-engineering.md)
@@ -70,18 +70,17 @@ Expect printed confirmation of:
 
 The clean artifact already includes temporal and rolling columns from production cleaning (`hour`, `day_of_week`, `month`, `is_weekend`, etc.). Lag prep adds consumption history columns; those temporal features are reused as XGBoost inputs in [XGBoost Forecasting](xgboost-forecasting.md).
 
-**Module map:** `create_supervised_lags` lives alongside Phase 2 helpers in `build_features.py`. Day 1 verify uses the clean CSV directly; full XGBoost training chains `create_supervised_lags` → `time_series_split` → `train_xgboost_model`.
+**Module map:** `create_supervised_lags` lives alongside Phase 2 helpers in `build_features.py`. Verify uses the clean CSV directly; full XGBoost training chains `create_supervised_lags` → `time_series_split` → `train_xgboost_model`.
 
 ---
 
-## What's Next
+## Related
 
-1. ~~XGBoost training and evaluation~~ — see [XGBoost Forecasting](xgboost-forecasting.md) (Week 7 Day 2 complete)
-2. ~~Compare MAE / RMSE against naive and Prophet floors~~ — see [Forecast Model Comparison](forecast-model-comparison.md)
-3. ~~LSTM~~ sliding windows → [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
-4. Hyperparameter tuning and feature ablation (deferred)
-
----
+- [XGBoost Forecasting](xgboost-forecasting.md)
+- [Forecast Model Comparison](forecast-model-comparison.md)
+- [LSTM Prep](lstm-prep.md)
+- [Feature Engineering](feature-engineering.md)
+- [Forecasting Baseline](forecasting-baseline.md)
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>

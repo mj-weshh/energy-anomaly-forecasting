@@ -1,4 +1,6 @@
-# Verification Report — Phase 1, Week 1
+# Verification Report
+
+Evidence that ingestion acceptance criteria are met for the bundled smart-meter CSV.
 
 Evidence-based quality assurance for data ingestion and schema validation.
 

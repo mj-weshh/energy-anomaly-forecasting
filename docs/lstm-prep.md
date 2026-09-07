@@ -1,4 +1,4 @@
-# LSTM Prep — Phase 3, Week 7 (Day 3)
+# LSTM Prep
 
 Working notes for converting the clean timeline into **3D sequence tensors** before LSTM training with PyTorch.
 
@@ -14,7 +14,7 @@ Working notes for converting the clean timeline into **3D sequence tensors** bef
 
 </div>
 
-**Status:** Week 7 Day 3 complete — sliding-window sequences and verification script  
+**Status:** Implementation notes — sliding-window sequences and verification script  
 **Module:** `src/features/build_features.py` — `create_sequences`  
 **Script:** `scripts/verify_lstm_prep.py`  
 **Builds on:** [Forecasting Baseline](forecasting-baseline.md), [Feature Engineering](feature-engineering.md), [XGBoost Forecasting](xgboost-forecasting.md)
@@ -117,14 +117,13 @@ The clean artifact already includes temporal columns from production cleaning. L
 
 ---
 
-## What's Next
+## Related
 
-1. ~~**LSTM architecture, training, and inference**~~ — **done:** [LSTM Forecasting](lstm-forecasting.md)
-2. ~~**Unified model comparison**~~ — **done:** [Forecast Model Comparison](forecast-model-comparison.md)
-3. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-4. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
-
----
+- [LSTM Forecasting](lstm-forecasting.md)
+- [Forecast Model Comparison](forecast-model-comparison.md)
+- [XGBoost Prep](xgboost-prep.md)
+- [Forecasting Baseline](forecasting-baseline.md)
+- [E2E Pipeline](e2e-pipeline.md)
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>
