@@ -1,4 +1,4 @@
-# XGBoost Forecasting — Phase 3, Week 7 (Day 2)
+# XGBoost Forecasting
 
 Working notes for training and scoring a gradient-boosted **XGBRegressor** on tabular lag and context features, compared against naive and Prophet floors.
 
@@ -13,7 +13,7 @@ Working notes for training and scoring a gradient-boosted **XGBRegressor** on ta
 
 </div>
 
-**Status:** Week 7 Day 2 complete — XGBoost trainer and evaluation script  
+**Status:** Implementation notes — XGBoost trainer and evaluation script  
 **Modules:** `src/models/train_forecast_models.py`, `src/features/build_features.py`, `src/models/evaluate_forecast.py`  
 **Scripts:** `scripts/evaluate_xgboost.py`  
 **Builds on:** [XGBoost Prep](xgboost-prep.md), [Prophet Baseline](prophet-baseline.md), [Forecasting Baseline](forecasting-baseline.md)
@@ -108,13 +108,9 @@ Chronological split sizes **after lag warm-up**:
 
 Test window: `2024-03-29 16:30:00` → `2024-04-14 03:30:00`
 
-| Metric | XGBoost | Naive floor | Prophet floor | LSTM floor |
-|--------|---------|-------------|---------------|------------|
-| MAE | **0.125274** | 0.171150 | 0.121071 | 0.122156 |
-| RMSE | **0.153876** | 0.214034 | 0.148670 | 0.151200 |
-| MAPE | Unstable on near-zero true values — use MAE/RMSE | — | — | — |
+**XGBoost result:** MAE **0.125274**, RMSE **0.153876** (beats naive; slightly above Prophet on this default run).
 
-**Interpretation:** XGBoost beats the naive floor on MAE and RMSE but is slightly above Prophet on this default hyperparameter run — reasonable for a first-pass trainer without tuning.
+Canonical ladder: [Forecast Model Comparison](forecast-model-comparison.md).
 
 Re-run after regenerating the clean artifact or changing features; numbers may shift.
 
@@ -132,20 +128,13 @@ Output: [`docs/assets/xgboost_feature_importance.png`](assets/xgboost_feature_im
 
 ---
 
-## What's Next
+## Related
 
-Per [Phase 3 Strategy](phase3-strategy.md):
-
-1. ~~LSTM~~ sliding windows → [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
-2. ~~Unified model comparison~~ → [Forecast Model Comparison](forecast-model-comparison.md)
-3. Hyperparameter tuning for XGBoost (`n_estimators`, `learning_rate`, feature ablation)
-4. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-5. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
-6. Auto-ARIMA (deferred)
-
-Each model must use the same chronological cut and `evaluate_forecast` helpers.
-
----
+- [XGBoost Prep](xgboost-prep.md)
+- [Forecast Model Comparison](forecast-model-comparison.md)
+- [LSTM Forecasting](lstm-forecasting.md)
+- [E2E Pipeline](e2e-pipeline.md)
+- [Forecasting Research](forecasting-research.md)
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>
@@ -187,7 +176,6 @@ python scripts/export_xgboost_feature_importance.py
 - [Forecasting Baseline](forecasting-baseline.md) — gate, split, metrics
 - [Feature Engineering](feature-engineering.md) — Phase 2 temporal columns reused here
 - [Phase 3 Strategy](phase3-strategy.md) — model ladder
-- [LSTM Forecasting](lstm-forecasting.md) — sequence-based deep learning baseline
 - [Architecture](architecture.md) — repository layout
 - [Glossary](glossary.md) — XGBoost, eval_set, supervised lags
 - [Getting Started](getting-started.md) — install and Phase 3 commands

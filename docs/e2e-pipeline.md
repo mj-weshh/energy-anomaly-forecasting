@@ -1,30 +1,26 @@
-# E2E Pipeline — Phase 3, Week 8 (Days 2–5)
+# End-to-End Pipeline
 
-Working notes for the root **`main.py`** entry point that consolidates the Phase 1–3 workflow into a single CLI command. Days 2–3 wire ingest, features, Isolation Forest, and in-memory cleaning. Day 4 adds chronological splitting and CLI-selected forecast training. Day 5 scores the held-out test window, writes predictions to CSV, and exits cleanly.
+Root **`main.py`** consolidates Phases 1–3 into one CLI: ingest and continuity check, features, Isolation Forest, in-memory cleaning, chronological split, a selected forecaster, test metrics, and a prediction CSV.
 
-<div class="admonition success" markdown="1">
-<p class="admonition-title">Executive summary</p>
+!!! success "Executive summary"
 
-- **One command:** `python main.py` runs ingest → features → Isolation Forest → interpolate → chronological split → selected forecaster → metrics → prediction CSV.
-- **Days 2–5 scope:** Full consolidating path through evaluation and export; optional `--save_clean_data` checkpoint.
-- **Active flags:** `--model` (`naive` / `prophet` / `xgboost` / `lstm`), `--epochs` (LSTM), `--output_path` (prediction CSV); default model is **naive**.
-- **Smoke-tested:** `python main.py --model naive` → 750 predictions; `--model xgboost` → 743 (lag warm-up).
-- **Terms:** [Glossary](glossary.md) — E2E pipeline / main.py, clean_pipeline_output, final_predictions, seasonal naive, supervised lag features.
+    - **One command:** `python main.py` runs ingest → continuity check → features → Isolation Forest → interpolate → chronological split → selected forecaster → metrics → prediction CSV.
+    - **Active flags:** `--model` (`naive` / `prophet` / `xgboost` / `lstm`), `--epochs` (LSTM), `--output_path` (prediction CSV), optional `--save_clean_data`; default model is **naive**.
+    - **Smoke-tested:** `python main.py --model naive` → 750 predictions; `--model xgboost` → 743 (lag warm-up).
+    - **Terms:** [Glossary](glossary.md) — E2E pipeline / main.py, clean_pipeline_output, final_predictions, seasonal naive, supervised lag features.
 
-</div>
-
-**Status:** Week 8 Days 2–5 complete — E2E consolidation through metrics, CSV export, and clean shutdown  
 **Entry point:** `main.py` (repository root)  
 **Modules:** `src.data.ingest_data`, `src.features.build_features`, `src.models.train_anomaly_models`, `src.data.clean_data`, `src.data.make_forecast_dataset`, `src.models.train_forecast_models`, `src.models.lstm_model`, `src.models.evaluate_forecast`  
 **Builds on:** [Getting Started](getting-started.md), [Anomaly Detection](anomaly-detection.md), [Clean Dataset](clean-data.md), [Forecasting Baseline](forecasting-baseline.md), [Forecast Model Comparison](forecast-model-comparison.md), [Forecasting Tutorial](forecasting-tutorial.md)
 
 ---
 
-## End-to-End Pipeline
+## Pipeline Steps
 
 ```text
 python main.py [--data_path ...] [--model ...] [--epochs ...] [--save_clean_data] [--output_path ...]
   → load_smart_meter_data(data_path)     # Phase 1 — raw (5000, 7)
+  → check_time_continuity(df)            # 30-minute cadence gate
   → build_all_features(df)               # Phase 2 early — (5000, 15)
   → detect_anomalies(..., isolation_forest)
   → interpolate_anomalies(df_feat, predictions)   # clean in memory
@@ -38,7 +34,8 @@ python main.py [--data_path ...] [--model ...] [--epochs ...] [--save_clean_data
 ```mermaid
 flowchart LR
   cli[main.py_CLI] --> ingest[load_smart_meter_data]
-  ingest --> feats[build_all_features]
+  ingest --> continuity[check_time_continuity]
+  continuity --> feats[build_all_features]
   feats --> detect[detect_anomalies_IF]
   detect --> clean[interpolate_anomalies]
   clean --> split[time_series_split]
@@ -95,6 +92,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 ```text
 INFO: E2E pipeline starting (model=naive, epochs=20, data_path=..., save_clean_data=False, output_path=...)
 INFO: Raw data loaded: shape=(5000, 7)
+INFO: Checking 30-minute time-series continuity ...
 INFO: Feature matrix ready: shape=(5000, 15) (47 rows with rolling-window warm-up NaNs; ...)
 INFO: Anomalies detected: 248 of 4953 scored rows
 INFO: Clean in-memory dataset ready: shape=(5000, 15), consumption_NaNs=0
@@ -116,11 +114,12 @@ Anomaly count, preview values, and metric floats are from an **example** local r
 
 ---
 
-## Ingestion, Features, Detect, Clean (Days 2–3)
+## Ingestion, Features, Detect, Clean
 
 | Step | API | Expected result |
 |------|-----|-----------------|
 | Load | `load_smart_meter_data(data_path)` | Shape `(5000, 7)` |
+| Continuity | `check_time_continuity(df)` | 30-minute cadence; no gaps / duplicates |
 | Features | `build_all_features(df)` | Shape `(5000, 15)`; ~47 warm-up NaN rows |
 | Detect | `detect_anomalies(..., model_type="isolation_forest")` | ~4953 scored rows |
 | Clean | `interpolate_anomalies(df_feat, predictions)` | Shape `(5000, 15)`; 0 consumption NaNs |
@@ -129,7 +128,7 @@ Optional checkpoint: `python main.py --save_clean_data` → `data/processed/clea
 
 ---
 
-## Chronological Split (Day 4)
+## Chronological Split
 
 ```python
 train_df, val_df, test_df = time_series_split(df_clean)  # 70 / 15 / 15
@@ -147,24 +146,24 @@ Logged date ranges prove chronological order (no shuffle / no leakage).
 
 ---
 
-## Model Routing (Day 4)
+## Model Routing
 
-Implemented in `run_selected_forecast` — native prep matches [`compare_forecasts.py`](forecast-model-comparison.md):
+Implemented in `run_selected_forecast` — native prep matches [`compare_forecasts.py`](forecast-model-comparison.md) for naive / Prophet / XGBoost. **LSTM in `main.py` differs:** it splits chronological rows first, then windows sequences **within** each split so windows never cross train/val/test boundaries.
 
 | `--model` | Prep | Train / predict | Test predictions (example) |
 |-----------|------|-----------------|----------------------------|
 | `naive` | Step-1 `train_df` / `test_df` | `naive_seasonal_forecast` (48-step) | **750** |
 | `prophet` | Step-1 splits | `train_prophet_model` | **750** |
 | `xgboost` | `create_supervised_lags(df_clean)` then **re-split** | `train_xgboost_model` + `predict` | **743** |
-| `lstm` | `create_sequences` on 7 features, sequence-index 70/15/15 | `EnergyLSTM` + `train_lstm_model(epochs=args.epochs)` + `predict_lstm` | **747** |
+| `lstm` | **Split rows first**, then `create_sequences` on each split (7 features, `seq_length=24`) | `EnergyLSTM` + `train_lstm_model(epochs=args.epochs)` + `predict_lstm` | **747** |
 
-XGBoost and LSTM rebuild splits after lag/sequence warm-up so incomplete early rows never enter the model — same as the individual evaluate scripts.
+XGBoost rebuilds splits after lag warm-up so incomplete early rows never enter the model. LSTM uses the already-split frames and windows inside each — same length outcome as the research sequence path, without leaking across boundaries.
 
 `run_selected_forecast` returns length-matched `(timestamps, y_true, y_pred)` for the model’s native test window. The CLI logs `prediction_length` and a five-value preview.
 
 ---
 
-## Evaluation & Export (Day 5)
+## Evaluation & Export
 
 After forecasting:
 
@@ -177,24 +176,24 @@ For side-by-side ladder metrics across all four models, keep using `compare_fore
 
 ---
 
-## What's Next
+## Related
 
-1. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md) · [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb)
-2. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
-3. Side-by-side metrics remain via `python scripts/compare_forecasts.py` — [Forecast Model Comparison](forecast-model-comparison.md)
-
-The **Week 8 E2E consolidation** (scaffold → detect/clean → forecast routing → eval/export) is complete.
+- [Forecast Model Comparison](forecast-model-comparison.md) — four-model MAE/RMSE table and plot (`compare_forecasts.py`)
+- [Forecasting Tutorial](forecasting-tutorial.md) · [`notebooks/04_forecasting_tutorial.ipynb`](../notebooks/04_forecasting_tutorial.ipynb)
+- [Forecasting Research](forecasting-research.md) — findings write-up
 
 ---
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>
 
-**Modularity:** `main.py` imports public helpers only — ingest, features, `detect_anomalies`, `interpolate_anomalies`, `time_series_split`, forecast trainers, `EnergyLSTM`, and forecast metric helpers.
+**Modularity:** `main.py` imports public helpers only — ingest, `check_time_continuity`, features, `detect_anomalies`, `interpolate_anomalies`, `time_series_split`, forecast trainers, `EnergyLSTM`, and forecast metric helpers.
 
 **CLI parsing:** `parse_args()` returns `data_path`, `model`, `epochs`, `save_clean_data`, and `output_path`.
 
-**Constants:** Target `Electricity_Consumed`; seasonal periods 48; LSTM `seq_length=24`, `batch_size=32`; feature column lists match `compare_forecasts.py`.
+**Constants:** Target `Electricity_Consumed`; seasonal periods 48; LSTM `seq_length=24`, `batch_size=32`; feature column lists match `compare_forecasts.py` where applicable.
+
+**LSTM boundary rule:** Comment in `run_selected_forecast`: split rows first, then window within each split so sequences never cross train/val/test boundaries. Test timestamps are `test_df["Timestamp"].iloc[SEQ_LENGTH:]`.
 
 **Smoke tests:**
 

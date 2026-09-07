@@ -1,19 +1,15 @@
-# Forecast Model Comparison — Phase 3, Week 8 (Day 1)
+# Forecast Model Comparison
 
-Working notes for the unified script that runs **Naive**, **Prophet**, **XGBoost**, and **LSTM** on their native test pipelines, prints a copy-paste Markdown metrics table, and saves a presentation-ready comparison plot.
+Unified script that runs **Naive**, **Prophet**, **XGBoost**, and **LSTM** on their native test pipelines, prints a Markdown metrics table, and saves a presentation-ready comparison plot.
 
-<div class="admonition success" markdown="1">
-<p class="admonition-title">Executive summary</p>
+!!! success "Executive summary"
 
-- **One script, four models:** `compare_forecasts.py` aggregates the full Phase 3 forecasting ladder for research reporting.
-- **Copy-paste metrics:** Console prints a Markdown table (MAE / RMSE) ready for MkDocs or grant write-ups.
-- **Presentation plot:** 2×2 subplot chart saved to `docs/assets/forecast_comparison.png` — last **3 days** (144 steps) of each model's test window.
-- **Headline result:** Prophet leads MAE/RMSE on this run; LSTM beats naive and XGBoost; all advanced models beat the naive floor.
-- **Terms:** [Glossary](glossary.md) — forecast model comparison, normalized forecast metrics, MAE, RMSE.
+    - **One script, four models:** `compare_forecasts.py` aggregates the Phase 3 forecasting ladder for research reporting.
+    - **Copy-paste metrics:** Console prints a Markdown table (MAE / RMSE) ready for MkDocs or grant write-ups.
+    - **Presentation plot:** 2×2 subplot chart saved to `docs/assets/forecast_comparison.png` — last **3 days** (144 steps) of each model's test window.
+    - **Headline result:** Prophet leads MAE/RMSE on this run; LSTM beats naive and XGBoost; all advanced models beat the naive floor.
+    - **Terms:** [Glossary](glossary.md) — forecast model comparison, normalized forecast metrics, MAE, RMSE.
 
-</div>
-
-**Status:** Week 8 Day 1 complete — unified prediction collection, metrics table, visualization  
 **Script:** `scripts/compare_forecasts.py`  
 **Asset:** `docs/assets/forecast_comparison.png`  
 **Builds on:** [Forecasting Baseline](forecasting-baseline.md), [Prophet Baseline](prophet-baseline.md), [XGBoost Forecasting](xgboost-forecasting.md), [LSTM Forecasting](lstm-forecasting.md)
@@ -129,7 +125,7 @@ Module: `scripts/compare_forecasts.py`
 
 Supporting helpers reused from individual pipelines: `run_naive_forecast`, `run_prophet_forecast`, `run_xgboost_forecast`, `run_lstm_forecast`, `split_sequence_arrays`.
 
-**Related API added in Week 8 Step 1:** `predict_lstm` in `src/models/train_forecast_models.py` — inference helper for LSTM test batches.
+**Related API:** `predict_lstm` in `src/models/train_forecast_models.py` — inference helper for LSTM test batches.
 
 ---
 
@@ -168,17 +164,12 @@ Use individual scripts for quick single-model checks; use the comparison script 
 
 ---
 
-## What's Next
+## Related
 
-Per [Phase 3 Strategy](phase3-strategy.md):
-
-1. ~~**E2E pipeline consolidation**~~ — **done:** [E2E Pipeline](e2e-pipeline.md) (Days 2–5); `compare_forecasts.py` remains the side-by-side MAE/RMSE ladder aggregator
-2. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-3. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
-4. Hyperparameter tuning across models
-5. Optional: aligned timestamp intersection for single-panel overlay plots
-
-The **model ladder**, **E2E CLI** (Week 8 Days 2–5), **forecasting tutorial**, and **research write-up** (Week 9) are complete.
+- [E2E Pipeline](e2e-pipeline.md) — single-model CLI (`main.py`); this page remains the side-by-side MAE/RMSE aggregator
+- [Forecasting Tutorial](forecasting-tutorial.md)
+- [Forecasting Research](forecasting-research.md)
+- Still open: hyperparameter tuning across models; optional aligned timestamp intersection for single-panel overlay plots
 
 ---
 
@@ -220,9 +211,9 @@ mkdocs serve   # preview docs with embedded PNGs
 - [XGBoost Forecasting](xgboost-forecasting.md) — tabular gradient-boosted model
 - [LSTM Prep](lstm-prep.md) — 3D sequence generation
 - [LSTM Forecasting](lstm-forecasting.md) — recurrent model training and inference
-- [E2E Pipeline](e2e-pipeline.md) — Week 8 Days 2–5 root CLI (ingest → forecast → metrics → CSV)
-- [Forecasting Tutorial](forecasting-tutorial.md) — Week 9 CMU educational notebook
-- [Forecasting Research](forecasting-research.md) — Week 9 research write-up
+- [E2E Pipeline](e2e-pipeline.md) — root CLI (ingest → forecast → metrics → CSV)
+- [Forecasting Tutorial](forecasting-tutorial.md) — CMU educational notebook
+- [Forecasting Research](forecasting-research.md) — research write-up
 - [Phase 3 Strategy](phase3-strategy.md) — model ladder and evaluation protocol
 - [Architecture](architecture.md) — repository layout and script inventory
 - [Glossary](glossary.md) — MAE, RMSE, forecast model comparison

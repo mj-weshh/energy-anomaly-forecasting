@@ -1,4 +1,4 @@
-# Forecasting Baseline — Phase 3, Week 6 (Day 1–2)
+# Forecasting Baseline
 
 Working notes for the Phase 3 foundation: prove the Phase 2 clean artifact is forecast-ready, split chronologically (no shuffle), define MAE / RMSE / MAPE, and lock a **naive seasonal** floor that advanced models must beat.
 
@@ -13,7 +13,7 @@ Working notes for the Phase 3 foundation: prove the Phase 2 clean artifact is fo
 
 </div>
 
-**Status:** Week 6 Day 1–2 complete — clean-state audit, chronological split, metrics module, naive baseline scored  
+**Status:** Implementation notes — clean-state audit, chronological split, metrics module, naive baseline scored  
 **Modules:** `src/data/make_forecast_dataset.py`, `src/models/evaluate_forecast.py`, `src/models/train_forecast_models.py`  
 **Scripts:** `scripts/verify_phase2_state.py`, `scripts/evaluate_naive_baseline.py`  
 **Builds on:** [Clean Dataset](clean-data.md), [Phase 3 Strategy](phase3-strategy.md)
@@ -110,19 +110,13 @@ Re-run the script after regenerating the clean artifact; numbers may shift sligh
 
 ---
 
-## What's Next
+## Related
 
-Per [Phase 3 Strategy](phase3-strategy.md):
-
-1. ~~Statistical baselines (Prophet)~~ — **done:** [Prophet Baseline](prophet-baseline.md) (Auto-ARIMA still deferred)
-2. ~~XGBoost with lag + temporal features~~ — **done:** [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md)
-3. ~~LSTM sliding windows~~ — **done:** [LSTM Prep](lstm-prep.md) · [LSTM Forecasting](lstm-forecasting.md)
-4. ~~Unified model comparison~~ — **done:** [Forecast Model Comparison](forecast-model-comparison.md)
-5. ~~E2E CLI~~ — **done:** [E2E Pipeline](e2e-pipeline.md) uses `time_series_split` + naive (and other `--model` routes)
-6. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-7. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
-
-Each model must be scored with the same chronological cut and `evaluate_forecast` helpers.
+- [Prophet Baseline](prophet-baseline.md)
+- [Forecast Model Comparison](forecast-model-comparison.md)
+- [E2E Pipeline](e2e-pipeline.md)
+- [Phase 3 Strategy](phase3-strategy.md)
+- [Forecasting Tutorial](forecasting-tutorial.md)
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>

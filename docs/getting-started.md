@@ -1,13 +1,14 @@
 # Getting Started
 
-Install the project, load the dataset, and verify schema completeness.
+Install the project, verify the dataset, and run the main pipeline.
 
-!!! success "Executive summary"
+!!! success "In one minute"
 
-    - **Start here:** Clone, install dependencies, run `python -m src.data.ingest_data` — **PASS** means 5,000 rows, zero nulls, perfect 30-minute spacing.
-    - **Phase 2:** Run feature verification, anomaly scripts, and `generate_clean_data.py` to produce the forecasting-ready CSV.
-    - **PASS criteria:** Schema shape `(5000, 7)`, continuity **PASS**, clean output `(5000, 15)` with zero consumption NaNs.
-    - **Terms:** [Glossary](glossary.md) — continuity check, profile.
+    - Clone, create a virtual environment, `pip install -r requirements.txt`.
+    - Place `smart_meter_data.csv` (or use the bundled copy).
+    - Smoke-check: `python -m src.data.ingest_data` → continuity **PASS**.
+    - Full path: `python main.py --model naive` → see [E2E Pipeline](e2e-pipeline.md).
+    - Terms: [Glossary](glossary.md).
 
 ---
 
@@ -21,7 +22,7 @@ Install the project, load the dataset, and verify schema completeness.
 
 ---
 
-## 1. Clone and Set Up (Local)
+## 1. Clone and set up
 
 ```bash
 git clone https://github.com/mj-weshh/energy-anomaly-forecasting.git
@@ -40,416 +41,90 @@ pip install -r requirements.txt
 
 ---
 
-## 2. Obtain the Dataset
+## 2. Obtain the dataset
 
-### Option A — Use the bundled local copy
+**Option A — Bundled copy** (if already in the repo):
 
-If the CSV is already in the repository under:
-
-```
+```text
 Smart Meter Electricity Consumption Dataset/smart_meter_data.csv
 ```
 
-No additional download is required. The ingestion script will find it automatically.
+**Option B — Download from Kaggle:** [dataset page](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset). Place the CSV at the path above or at `data/raw/smart_meter_data.csv`.
 
-### Option B — Download from Kaggle
-
-1. Create a Kaggle account and accept the dataset terms.
-2. Go to [Smart Meter Electricity Consumption Dataset](https://www.kaggle.com/datasets/ziya07/smart-meter-electricity-consumption-dataset).
-3. Download `smart_meter_data.csv`.
-4. Place it in either:
-   - `Smart Meter Electricity Consumption Dataset/smart_meter_data.csv`, or
-   - `data/raw/smart_meter_data.csv` (recommended canonical location)
-
-### Option C — Kaggle API
+**Option C — Kaggle API:**
 
 ```bash
 pip install kaggle
-# Place kaggle.json in ~/.kaggle/ (Linux/macOS) or C:\Users\<you>\.kaggle\ (Windows)
-
 kaggle datasets download -d ziya07/smart-meter-electricity-consumption-dataset -p data/raw --unzip
 ```
 
 ---
 
-## 3. Run Ingestion and Verification
+## 3. Smoke-check ingestion
 
 ```bash
 python -m src.data.ingest_data
 ```
 
-Expected output sections:
+Expect: schema summary shape `(5000, 7)`, zero nulls, continuity check **PASS**.
 
-1. **Project root** and **Loaded CSV** paths
-2. **SCHEMA SUMMARY** — shape `(5000, 7)`, dtypes, zero nulls
-3. **TIME-SERIES CONTINUITY CHECK** — result `PASS`
+Optional notebook: `notebooks/01_data_ingestion_and_schema_check.ipynb` (Colab/Kaggle path tips are in the notebook cells).
 
 ---
 
-## 4. Run the Ingestion Notebook
-
-Open and execute all cells in:
-
-```
-notebooks/01_data_ingestion_and_schema_check.ipynb
-```
-
-### Local (default)
-
-Cell 2 uses:
-
-```python
-PROJECT_ROOT = Path("..").resolve()
-```
-
-No changes needed if the notebook is opened from the `notebooks/` directory.
-
-### Google Colab
-
-Uncomment the Colab block in cell 2:
-
-```python
-from google.colab import drive
-drive.mount("/content/drive")
-PROJECT_ROOT = Path("/content/drive/MyDrive/energy-anomaly-forecasting")
-```
-
-Clone or copy the repo to Google Drive first, and ensure the CSV is present.
-
-### Kaggle Notebooks
-
-Uncomment the Kaggle block in cell 2:
-
-```python
-!pip install -q kaggle
-!kaggle datasets download -d ziya07/smart-meter-electricity-consumption-dataset -p /tmp/data --unzip
-PROJECT_ROOT = Path("/tmp/data")
-```
-
-Alternatively, add the dataset through the Kaggle notebook **Add Data** sidebar and point `PROJECT_ROOT` to `/kaggle/input/<dataset-slug>`.
-
----
-
-## 5. Run the EDA Notebook
-
-After ingestion passes, open and execute:
-
-```
-notebooks/02_exploratory_data_analysis.ipynb
-```
-
-This notebook profiles feature distributions, temporal load patterns, weather correlations, and the anomaly label baseline using `src/visualization/visualize.py`.
-
-Documented findings and figures: [EDA Insights](eda-insights.md).
-
----
-
-## 6. Regenerate EDA Documentation Assets
-
-To refresh PNG figures embedded in the docs site:
+## 4. Run the end-to-end pipeline
 
 ```bash
-python scripts/export_eda_assets.py
+python main.py --model naive
 ```
 
-Output directory: `docs/assets/eda/`
+This runs ingest → features → anomaly detection → cleaning → time-ordered split → forecast → metrics → `data/processed/final_predictions.csv`.
+
+Other models: `--model prophet`, `xgboost`, or `lstm`. Full flags and logs: [E2E Pipeline](e2e-pipeline.md).
 
 ---
 
-## 7. Phase 2 Anomaly Detection Scripts
+## 5. Useful follow-ons
 
-After feature engineering is in place, run the Phase 2 verification and clean-data scripts:
+| Task | Command or link |
+|------|-----------------|
+| Explore patterns | `notebooks/02_exploratory_data_analysis.ipynb` · [EDA Insights](eda-insights.md) |
+| Produce Phase 2 clean CSV for scripts | `python scripts/generate_clean_data.py` · [Clean Dataset](clean-data.md) |
+| Compare all forecast models | `python scripts/compare_forecasts.py` · [Forecast Model Comparison](forecast-model-comparison.md) |
+| Teaching walkthrough | `notebooks/04_forecasting_tutorial.ipynb` · [Forecasting Tutorial](forecasting-tutorial.md) |
+| Preview docs site | `mkdocs serve` → http://127.0.0.1:8000 |
 
-```bash
-python scripts/verify_features.py
-python scripts/test_isolation_forest.py
-python scripts/tune_dbscan.py
-python scripts/generate_clean_data.py
-```
-
-Expected outcomes:
-
-- `verify_features.py` — engineered columns present; rolling warm-up NaNs as designed
-- `test_isolation_forest.py` — IF baseline F1 ≈ 0.331 on 4,953 eval rows
-- `tune_dbscan.py --legacy` — legacy coarse grid; enhanced mode uses scaled features
-- `generate_clean_data.py` — writes `data/processed/clean_smart_meter_data.csv` (5000 × 15, 0 NaNs)
-
-Research tuning (enhanced features, temporal 60/20/20 splits):
-
-```bash
-python scripts/tune_isolation_forest.py
-python scripts/tune_isolation_forest.py --drop-weather
-python scripts/tune_dbscan.py
-python scripts/tune_ensemble.py
-python scripts/compare_anomaly_models.py
-python scripts/analyze_detection_errors.py
-python scripts/tune_isolation_forest_by_segment.py
-```
-
-Research clean-data profiles (optional artifacts):
-
-```bash
-python scripts/generate_clean_data.py --profile legacy_threshold
-python scripts/generate_clean_data.py --profile enhanced
-python scripts/compare_clean_artifacts.py
-```
-
-Expected (held-out test): legacy IF **0.331** (full) / **0.340** (test) / **0.389** (test + val threshold); enhanced IF **0.460**; ensemble union **0.40** (see `anomaly_config.py`).
-
-Full results: [Anomaly Tuning Results](anomaly-tuning-results.md) · [Anomaly Detection — Research Tuning](anomaly-detection.md#research-tuning-enhanced-features--temporal-splits) · [Clean Dataset](clean-data.md)
-
----
-
-## 8. Run the Anomaly Detection Notebook
-
-Open and execute all cells in:
-
-```
-notebooks/03_anomaly_detection.ipynb
-```
-
-This CMU-Africa educational tutorial walks through load → features → IF/DBSCAN benchmark → interpolation, importing canonical modules from `src/` rather than reimplementing logic inline.
-
-Documented workflow: [Anomaly Detection — Educational Notebook (Day 4)](anomaly-detection.md#educational-notebook-day-4) · [Clean Dataset](clean-data.md)
-
----
-
-## 9. Regenerate Architecture PNGs (Optional)
-
-To refresh the system-overview and ingestion-pipeline figures embedded in [Architecture](architecture.md):
-
-```bash
-python scripts/generate_mermaid_assets.py
-```
-
-Output directory: `docs/assets/` (`system-overview.png`, `ingestion-pipeline.png`). Requires network access — the script fetches rendered PNGs from [mermaid.ink](https://mermaid.ink).
-
----
-
-## 10. Build Documentation Site (Optional)
-
-```bash
-pip install mkdocs mkdocs-material
-mkdocs serve    # preview at http://127.0.0.1:8000
-mkdocs build    # output to site/
-```
+More Phase 2 scripts (tuning, notebooks): [Anomaly Detection](anomaly-detection.md). Individual model pages live under **Forecasting** in the site nav.
 
 ---
 
 ## Troubleshooting
 
-### `FileNotFoundError: No CSV found under ...`
+### `FileNotFoundError: No CSV found`
 
-**Cause:** The ingestion script cannot locate `smart_meter_data.csv`.
-
-**Fix:** Confirm the file exists at one of these paths:
-
-```
-data/raw/smart_meter_data.csv
-Smart Meter Electricity Consumption Dataset/smart_meter_data.csv
-```
-
-### Wrong `PROJECT_ROOT` in the notebook
-
-**Cause:** Notebook is running from an unexpected working directory.
-
-**Fix:** Set `PROJECT_ROOT` to the absolute path of the repository root:
-
-```python
-PROJECT_ROOT = Path("/full/path/to/energy-anomaly-forecasting")
-```
+Put the file at `data/raw/smart_meter_data.csv` or `Smart Meter Electricity Consumption Dataset/smart_meter_data.csv`.
 
 ### `ModuleNotFoundError: No module named 'pandas'`
 
-**Cause:** Virtual environment not activated or dependencies not installed.
+Activate `.venv` and run `pip install -r requirements.txt`. In Jupyter, select the `.venv` kernel.
 
-**Fix:**
+### Wrong `PROJECT_ROOT` in a notebook
 
-```bash
-.venv\Scripts\activate   # Windows
-pip install -r requirements.txt
-```
-
-### `ImportError` or slow pandas import in the notebook
-
-**Cause:** Kernel using a different Python interpreter than the venv.
-
-**Fix:** In VS Code or Jupyter, select the kernel associated with `.venv`.
+Set `PROJECT_ROOT` to the absolute path of the repository root.
 
 ---
 
-## Next Steps
+## Next reading
 
-After ingestion and Phase 2 pass:
-
-1. Review the [Data Schema](data-schema.md) reference
-2. Confirm Week 1 results in the [Verification Report](verification-report.md)
-3. Run `notebooks/02_exploratory_data_analysis.ipynb` and review [EDA Insights](eda-insights.md)
-4. Run Phase 2 scripts (§7) and `notebooks/03_anomaly_detection.ipynb` (§8)
-5. Generate the Phase 3 artifact: `python scripts/generate_clean_data.py`
-6. **Phase 3 foundation** — verify clean state, chronological split, score naive baseline (see §9 and [Forecasting Baseline](forecasting-baseline.md))
-7. **Phase 3 Prophet + XGBoost** — statistical and tabular forecast baselines (see §10–11)
-8. **Phase 3 LSTM + comparison** — sequence prep, LSTM training, unified ladder (see §12–14)
-9. **E2E CLI** — root `main.py` ingest → detect → clean → forecast → metrics → CSV (see §15 and [E2E Pipeline](e2e-pipeline.md))
-10. **Forecasting tutorial** — open `notebooks/04_forecasting_tutorial.ipynb` (see §16 and [Forecasting Tutorial](forecasting-tutorial.md))
-11. **Forecasting research** — read [Forecasting Research](forecasting-research.md); optionally regenerate the importance chart (see §17)
-
----
-
-## 9. Phase 3 Foundation (Week 6 Day 1–2)
-
-After the clean CSV exists:
-
-```bash
-python scripts/verify_phase2_state.py
-python -m src.data.make_forecast_dataset
-python scripts/evaluate_naive_baseline.py
-```
-
-Expect: clean-state **PASS**, chronological boundary **PASS**, and printed test MAE / RMSE / MAPE for the naive seasonal floor. Details: [Forecasting Baseline](forecasting-baseline.md) · [Phase 3 Strategy](phase3-strategy.md).
-
----
-
-## 10. Prophet Baseline (Week 6 Day 3)
-
-After the clean CSV and foundation scripts pass:
-
-```bash
-python scripts/evaluate_prophet.py
-```
-
-Expect: Prophet test MAE / RMSE printed with comparison to the naive floor; **PASS** when MAE and RMSE beat naive. Requires `prophet>=1.1.5` in the project `.venv`. Details: [Prophet Baseline](prophet-baseline.md).
-
----
-
-## 11. XGBoost (Week 7 Day 1–2)
-
-Verify supervised lag prep, then train and score the regressor:
-
-```bash
-python scripts/verify_xgboost_prep.py
-python scripts/evaluate_xgboost.py
-```
-
-Expect: tabular frame shape `(4952, 18)` after lag warm-up; XGBoost test metrics compared to naive and Prophet floors. Requires `xgboost>=2.0.0` in the project `.venv`. Details: [XGBoost Prep](xgboost-prep.md) · [XGBoost Forecasting](xgboost-forecasting.md).
-
----
-
-## 12. LSTM Prep (Week 7 Day 3)
-
-Verify 3D sequence tensors before training:
-
-```bash
-python scripts/verify_lstm_prep.py
-```
-
-Expect: example slice shape `(176, 24, 7)` on a 200-row test; **PASS** confirmation. Requires `torch>=2.0.0` in the project `.venv`. Details: [LSTM Prep](lstm-prep.md).
-
----
-
-## 13. LSTM Forecasting (Week 7 Days 4–5)
-
-Train and score the LSTM via the unified comparison script (trains 20 epochs as part of the full ladder):
-
-```bash
-python scripts/compare_forecasts.py
-```
-
-For LSTM-only context, see [LSTM Forecasting](lstm-forecasting.md). Example test MAE ≈ **0.122**, RMSE ≈ **0.151** on the default clean artifact.
-
----
-
-## 14. Forecast Model Comparison (Week 8 Day 1)
-
-Run all four models and generate the presentation asset:
-
-```bash
-python scripts/compare_forecasts.py
-```
-
-Expect:
-
-1. Per-model progress and LSTM epoch loss lines
-2. Copy-paste Markdown metrics table on stdout
-3. `Saved comparison plot: .../docs/assets/forecast_comparison.png`
-4. Final line: `PASS — predictions collected, metrics table and plot generated.`
-
-Requires `prophet>=1.1.5`, `xgboost>=2.0.0`, and `torch>=2.0.0`. Runtime ~1–2 minutes on CPU. Details: [Forecast Model Comparison](forecast-model-comparison.md).
-
----
-
-## 15. E2E Pipeline (Week 8 Days 2–5)
-
-Run the consolidating root CLI (ingest → detect → clean → split → forecast → metrics → CSV):
-
-```bash
-python main.py --model naive
-python main.py --model xgboost
-python main.py --save_clean_data
-python main.py --output_path data/processed/final_predictions.csv
-```
-
-Expect INFO logs similar to:
-
-```text
-INFO: E2E pipeline starting (model=naive, epochs=20, data_path=..., save_clean_data=..., output_path=...)
-INFO: Raw data loaded: shape=(5000, 7)
-INFO: Feature matrix ready: shape=(5000, 15) (47 rows with rolling-window warm-up NaNs; ...)
-INFO: Anomalies detected: 248 of 4953 scored rows
-INFO: Clean in-memory dataset ready: shape=(5000, 15), consumption_NaNs=0
-INFO: Chronological train/val/test split (70/15/15) ...
-INFO: train split: rows=3500, ...
-INFO: Forecast complete for model=naive: prediction_length=750
-INFO: Prediction preview (first 5 values): [...]
-INFO: Final Model Evaluation - MAE: ...
-INFO: Final Model Evaluation - RMSE: ...
-INFO: Final Model Evaluation - MAPE: ...%
-INFO: Saved final predictions (750 rows) to .../final_predictions.csv
-INFO: Pipeline execution completed successfully.
-```
-
-With `--model xgboost`, expect `prediction_length=743` after lag warm-up. With `--save_clean_data`, also expect a save line for `data/processed/clean_pipeline_output.csv`.
-
-Flags: `--data_path`, `--model` (`naive` / `prophet` / `xgboost` / `lstm`), `--epochs` (LSTM), `--save_clean_data`, `--output_path`. Details: [E2E Pipeline](e2e-pipeline.md).
-
-## 16. Forecasting Tutorial (Week 9)
-
-After the clean CSV exists:
-
-```bash
-python scripts/generate_clean_data.py   # if needed
-jupyter notebook notebooks/04_forecasting_tutorial.ipynb
-```
-
-Walk through chronological split, lag features, XGBoost training, MAE/RMSE, and an Actual vs Predicted chart. Details: [Forecasting Tutorial](forecasting-tutorial.md).
-
-## 17. Forecasting Research (Week 9)
-
-Read the Phase 3 findings write-up (Prophet ladder winner; weather vs history importance):
-
-```bash
-python scripts/compare_forecasts.py
-python scripts/export_xgboost_feature_importance.py
-```
-
-The first command refreshes `docs/assets/forecast_comparison.png`. The second refreshes `docs/assets/xgboost_feature_importance.png` used in [Forecasting Research](forecasting-research.md).
+1. [Architecture](architecture.md) — how the repo is organized  
+2. [E2E Pipeline](e2e-pipeline.md) — CLI details  
+3. [Forecast Model Comparison](forecast-model-comparison.md) — results table  
+4. [Glossary](glossary.md) — shared terms  
 
 ??? info "Technical deep dive"
 
-    **Phase 1:** `python -m src.data.ingest_data` · `notebooks/01_*` · `notebooks/02_*`
-
-    **Phase 2:** `scripts/verify_features.py`, `test_isolation_forest.py`, `tune_*.py`, `compare_anomaly_models.py`, research scripts (`analyze_detection_errors.py`, `compare_clean_artifacts.py`, `tune_isolation_forest_by_segment.py`), `generate_clean_data.py [--profile]`, `notebooks/03_*`
-
-    **Phase 3 (Day 1–2):** `verify_phase2_state.py`, `python -m src.data.make_forecast_dataset`, `evaluate_naive_baseline.py` · modules `make_forecast_dataset.py`, `evaluate_forecast.py`, `train_forecast_models.py`
-
-    **Phase 3 (Day 3 + Week 7):** `evaluate_prophet.py`, `verify_xgboost_prep.py`, `evaluate_xgboost.py`, `verify_lstm_prep.py`, `evaluate_lstm.py` · `create_supervised_lags` and `create_sequences` in `build_features.py` · Prophet, XGBoost, and LSTM trainers in `train_forecast_models.py` · `EnergyLSTM` in `lstm_model.py`
-
-    **Phase 3 (Week 7 LSTM + Week 8 comparison):** `verify_lstm_prep.py`, `compare_forecasts.py` · `create_sequences` in `build_features.py` · `EnergyLSTM` in `lstm_model.py` · `predict_lstm` in `train_forecast_models.py`
-
-    **Phase 3 (Week 8 Days 2–5 E2E):** `python main.py --model naive` — ingest → detect → clean → split → forecast → metrics → `final_predictions.csv`; optional `--save_clean_data` / `--output_path`
-
-    **Phase 3 (Week 9 tutorial):** `notebooks/04_forecasting_tutorial.ipynb` — [Forecasting Tutorial](forecasting-tutorial.md)
-
-    **Phase 3 (Week 9 research):** [Forecasting Research](forecasting-research.md) · `python scripts/export_xgboost_feature_importance.py`
-
-    **Docs build:** `pip install mkdocs mkdocs-material && mkdocs serve`
+    **Ingest:** `python -m src.data.ingest_data`  
+    **E2E:** `python main.py --model naive` (optional `--save_clean_data`, `--output_path`)  
+    **Clean artifact for offline scripts:** `python scripts/generate_clean_data.py`  
+    **Ladder:** `python scripts/compare_forecasts.py`  
+    **Docs:** `mkdocs serve`

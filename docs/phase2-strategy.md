@@ -10,16 +10,16 @@ Planning notes for the anomaly detection engine. Phase 1 is done — ingestion, 
     - **Outcome:** Phase 2 complete — clean dataset ready; enhanced tuning shows better future-window performance but production path unchanged.
     - **Terms:** [Glossary](glossary.md) — contamination, F1, temporal split.
 
-**Status:** Week 4 complete — detectors benchmarked; clean dataset pipeline ready for Phase 3  
+**Status:** Phase 2 complete — detectors benchmarked; clean dataset pipeline ready for Phase 3  
 **Builds on:** [EDA Insights](eda-insights.md), [Verification Report](verification-report.md), [Feature Engineering](feature-engineering.md), [Anomaly Detection](anomaly-detection.md), [Clean Dataset](clean-data.md)
 
 ---
 
 ## What Phase 1 Gave Us (The Good)
 
-I'm starting Phase 2 from a strong baseline. Week 1 proved the pipeline works: `python -m src.data.ingest_data` loads 5,000 rows at 30-minute intervals with **zero nulls**, correct dtypes, and a continuity check **PASS** — no gaps, no duplicates, no irregular spacing.
+I'm starting Phase 2 from a strong baseline. Phase 1 proved the pipeline works: `python -m src.data.ingest_data` loads 5,000 rows at 30-minute intervals with **zero nulls**, correct dtypes, and a continuity check **PASS** — no gaps, no duplicates, no irregular spacing.
 
-Week 2 EDA confirmed the dataset is ready for modeling without heavy cleanup:
+EDA confirmed the dataset is ready for modeling without heavy cleanup:
 
 - **Pre-normalized features (0–1).** `Electricity_Consumed`, weather columns, and `Avg_Past_Consumption` all sit in a tight 0–1 range. That saves us from building a scaling pipeline for Phase 2 — we can focus on context and multivariate patterns instead of fighting unit mismatches.
 - **Clear time structure.** Consumption isn't flat across the day. Mean load peaks around **02:00**, with secondary bumps mid-morning. Day-of-week effects exist but are subtle (weekend mean slightly above weekday). Anomaly detection has to respect *when* a reading happened, not just *how high* it is.
@@ -104,12 +104,11 @@ Both models are context-friendly when fed the engineered features above. Static 
 
 ### What Phase 2 delivered
 
-- ~~Canonical module under `src/models/`~~ — **done** (`evaluate_models.py`, `train_anomaly_models.py`)
-- ~~Isolation Forest baseline~~ — **done** (F1 = 0.331 on benchmark; see [Anomaly Detection](anomaly-detection.md))
-- ~~DBSCAN detector and comparison~~ — **done** (best F1 = 0.125; IF wins on current grid)
-- ~~Updated docs with results~~ — **done** (see [Anomaly Detection](anomaly-detection.md), [Clean Dataset](clean-data.md))
-- ~~Clean interpolated dataset for Phase 3 forecasting~~ — **done** (IF default; see [Clean Dataset](clean-data.md))
-- ~~Notebook for experiment traceability~~ — **done** — [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb)
+- Canonical modules under `src/models/` (`evaluate_models.py`, `train_anomaly_models.py`)
+- Isolation Forest baseline (F1 = 0.331 on benchmark; see [Anomaly Detection](anomaly-detection.md))
+- DBSCAN detector and comparison (best F1 = 0.125; IF wins on current grid)
+- Clean interpolated dataset for Phase 3 forecasting (IF default; see [Clean Dataset](clean-data.md))
+- Experiment notebook — [`notebooks/03_anomaly_detection.ipynb`](../notebooks/03_anomaly_detection.ipynb)
 
 ### Explicitly not in Phase 2
 
@@ -123,11 +122,11 @@ Both models are context-friendly when fed the engineered features above. Static 
 
 These were open during planning; all are now closed:
 
-1. **Rolling window length** — *resolved in Week 3:* both 3-hour and 24-hour windows implemented. See [Feature Engineering](feature-engineering.md).
-2. **NaN warm-up rows** — *resolved in Week 4:* drop rows with incomplete rolling windows before training (4953 eval rows).
-3. **DBSCAN hyperparameters** — *resolved:* legacy coarse grid F1 = 0.125; enhanced scaled grid test F1 = **0.297** at `eps=10`, `min_samples=10`, manhattan. See [Anomaly Tuning Results](anomaly-tuning-results.md).
-4. **Ensemble vs pick-one** — *resolved for cleaning:* IF chosen as default cleaner (F1 0.331 vs DBSCAN 0.125). Ensemble union test F1 = 0.400 — below enhanced IF alone (0.460).
-5. **Isolation Forest tuning** — *resolved:* enhanced IF test F1 = **0.460** vs legacy fair test F1 = **0.340** (production params) / **0.389** (val threshold). Production pipeline still uses legacy defaults. See [Anomaly Tuning Results](anomaly-tuning-results.md).
+1. **Rolling window length** — both 3-hour and 24-hour windows implemented. See [Feature Engineering](feature-engineering.md).
+2. **NaN warm-up rows** — drop rows with incomplete rolling windows before training (4953 eval rows).
+3. **DBSCAN hyperparameters** — legacy coarse grid F1 = 0.125; enhanced scaled grid test F1 = **0.297** at `eps=10`, `min_samples=10`, manhattan. See [Anomaly Tuning Results](anomaly-tuning-results.md).
+4. **Ensemble vs pick-one** — IF chosen as default cleaner (F1 0.331 vs DBSCAN 0.125). Ensemble union test F1 = 0.400 — below enhanced IF alone (0.460).
+5. **Isolation Forest tuning** — enhanced IF test F1 = **0.460** vs legacy fair test F1 = **0.340** (production params) / **0.389** (val threshold). Production pipeline still uses legacy defaults. See [Anomaly Tuning Results](anomaly-tuning-results.md).
 
 ??? info "Technical deep dive"
 

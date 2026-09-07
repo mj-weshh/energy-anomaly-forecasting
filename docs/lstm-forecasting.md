@@ -1,4 +1,4 @@
-# LSTM Forecasting — Phase 3, Week 7 (Days 4–5)
+# LSTM Forecasting
 
 Working notes for the PyTorch LSTM regressor: architecture, training loop, test-set inference, and scoring against the Phase 3 model ladder.
 
@@ -14,7 +14,7 @@ Working notes for the PyTorch LSTM regressor: architecture, training loop, test-
 
 </div>
 
-**Status:** Week 7 Days 4–5 complete — architecture, training, inference  
+**Status:** Implementation notes — architecture, training, inference  
 **Modules:** `src/models/lstm_model.py`, `src/models/train_forecast_models.py`, `src/models/evaluate_forecast.py`  
 **Scripts:** `scripts/compare_forecasts.py` (unified comparison; trains LSTM as part of the full ladder)  
 **Builds on:** [LSTM Prep](lstm-prep.md), [Forecasting Baseline](forecasting-baseline.md), [XGBoost Forecasting](xgboost-forecasting.md)
@@ -130,12 +130,9 @@ Chronological split sizes **after sequence warm-up**:
 | Validation | 746 |
 | Test | 747 |
 
-| Metric | LSTM | Naive floor | Prophet floor | XGBoost floor |
-|--------|------|-------------|---------------|---------------|
-| MAE | **0.122156** | 0.171150 | 0.121071 | 0.125274 |
-| RMSE | **0.151200** | 0.214034 | 0.148670 | 0.153876 |
+**LSTM result:** MAE **0.122156**, RMSE **0.151200** (beats naive and XGBoost; slightly above Prophet on this default run).
 
-**Interpretation:** LSTM beats the naive and XGBoost floors on MAE and RMSE but is slightly above Prophet on this first-pass hyperparameter run — reasonable without tuning or early stopping.
+Canonical ladder: [Forecast Model Comparison](forecast-model-comparison.md).
 
 Re-run after regenerating the clean artifact or changing features; numbers may shift.
 
@@ -149,17 +146,13 @@ If LSTM-specific scaling is added later, apply `scaler.inverse_transform` to bot
 
 ---
 
-## What's Next
+## Related
 
-Per [Phase 3 Strategy](phase3-strategy.md):
-
-1. ~~**Unified model comparison**~~ — **done:** [Forecast Model Comparison](forecast-model-comparison.md)
-2. ~~Tutorial notebook~~ — **done:** [Forecasting Tutorial](forecasting-tutorial.md)
-3. ~~Research write-up~~ — **done:** [Forecasting Research](forecasting-research.md)
-4. Hyperparameter tuning (hidden size, epochs, learning rate)
-5. Early stopping and model checkpointing
-
----
+- [LSTM Prep](lstm-prep.md)
+- [Forecast Model Comparison](forecast-model-comparison.md)
+- [XGBoost Forecasting](xgboost-forecasting.md)
+- [E2E Pipeline](e2e-pipeline.md)
+- [Forecasting Research](forecasting-research.md)
 
 <details class="info" markdown="1">
 <summary>Technical deep dive</summary>

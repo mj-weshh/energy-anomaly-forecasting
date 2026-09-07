@@ -1,6 +1,6 @@
-# EDA Insights — Phase 1, Week 2
+# EDA Insights
 
-I ran exploratory analysis on the public Kaggle Smart Meter Electricity Consumption Dataset after Week 1 ingestion passed. These are the findings I'm basing the Phase 2 anomaly detection design on.
+Exploratory findings on the public Kaggle smart-meter dataset after ingestion passed. These shape how we design anomaly detection.
 
 !!! success "Executive summary"
 
